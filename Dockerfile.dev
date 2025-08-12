@@ -1,0 +1,100 @@
+# Development Dockerfile for Datacompose with VS Code integration
+FROM python:3.12
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    vim \
+    build-essential \
+    openssh-client \
+    postgresql-client \
+    # Java for PySpark
+    openjdk-17-jdk-headless \
+    # Clean up
+    && rm -rf /var/lib/apt/lists/*
+
+# Set JAVA_HOME dynamically based on architecture
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> /etc/environment; \
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64; \
+    else \
+        echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-${ARCH}" >> /etc/environment; \
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-${ARCH}; \
+    fi
+
+# Set JAVA_HOME for the build process
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# Create non-root user with sudo access
+ARG USERNAME=datacompose
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy dependency files
+COPY pyproject.toml setup.cfg ./
+
+# Install Python dependencies as root to ensure system-wide installation
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -e ".[dev,docs]" && \
+    pip install \
+        pyspark \
+        ipython \
+        jupyter \
+        notebook \
+        jupyterlab \
+        pandas \
+        numpy \
+        psycopg2-binary \
+        sqlalchemy \
+        pytest-cov \
+        debugpy \
+        pylint \
+        autopep8 \
+        rope
+
+# Switch to non-root user
+USER $USERNAME
+
+# Configure git
+RUN git config --global --add safe.directory /workspace
+
+# Install Claude CLI for the user
+RUN curl -fsSL https://claude.ai/install.sh | bash || true
+
+# Create directories for VS Code
+RUN mkdir -p /home/${USERNAME}/.vscode-server/extensions \
+    /home/${USERNAME}/.vscode-server-insiders/extensions \
+    /home/${USERNAME}/.datacompose
+
+# Configure bash environment
+RUN echo 'export PATH="/home/datacompose/.local/bin:${PATH}"' >> ~/.bashrc && \
+    echo 'export PYTHONPATH="/workspace:${PYTHONPATH}"' >> ~/.bashrc && \
+    echo 'alias ll="ls -alF"' >> ~/.bashrc && \
+    echo 'alias la="ls -A"' >> ~/.bashrc && \
+    echo 'alias l="ls -CF"' >> ~/.bashrc
+
+# Set environment variables for the container
+ENV DATACOMPOSE_HOME=/home/${USERNAME}/.datacompose
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
+ENV PYTHONPATH="/workspace:${PYTHONPATH}"
+
+# Suppress Spark/Ivy logging
+ENV SPARK_SUBMIT_OPTS="-Divy.message.logger.level=ERROR -Dlog4j.logger.org.apache.ivy=ERROR"
+ENV PYTHONWARNINGS="ignore"
+
+# Keep container running
+CMD ["sleep", "infinity"]

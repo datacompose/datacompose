@@ -1,0 +1,38 @@
+# Include documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# Include all YAML specifications
+recursive-include datacompose/transformers *.yaml
+
+# Include all Jinja2 templates
+recursive-include datacompose/transformers *.j2
+recursive-include datacompose/generators *.j2
+
+# Include type hints
+recursive-include datacompose py.typed
+
+# Include test data (optional, remove if you don't want tests in distribution)
+recursive-include tests *.py
+recursive-include tests *.csv
+recursive-include tests *.yaml
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude .git*
+global-exclude *.swp
+global-exclude *~
+
+# Exclude development files
+exclude .pre-commit-config.yaml
+exclude .gitignore
+exclude docker-compose.yml
+exclude Dockerfile
+exclude Makefile
+prune docs/build
+prune notebooks
+prune scripts

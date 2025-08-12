@@ -1,0 +1,117 @@
+{
+  "name": "Datacompose Development",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "datacompose-dev",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "datacompose",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.debugpy",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "ms-toolsai.vscode-jupyter-slideshow",
+        "ms-azuretools.vscode-docker",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "yzhang.markdown-all-in-one",
+        "github.vscode-pull-request-github",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker",
+        "njpwerner.autodocstring",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackPath": "/usr/local/bin/black",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        },
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter"
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.watcherExclude": {
+          "**/__pycache__/**": true,
+          "**/.pytest_cache/**": true,
+          "**/spark-warehouse/**": true,
+          "**/.ruff_cache/**": true,
+          "**/build/**": true,
+          "**/dist/**": true,
+          "**/*.egg-info/**": true
+        }
+      }
+    }
+  },
+  
+  "forwardPorts": [
+    5432,
+    5050,
+    7077,
+    8080,
+    8081,
+    9000,
+    9001
+  ],
+  
+  "portsAttributes": {
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "5050": {
+      "label": "pgAdmin",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Spark Master UI",
+      "onAutoForward": "notify"
+    },
+    "8081": {
+      "label": "Spark Worker UI",
+      "onAutoForward": "notify"
+    },
+    "9001": {
+      "label": "MinIO Console",
+      "onAutoForward": "notify"
+    }
+  },
+  
+  "postCreateCommand": "pip install -e . && echo 'Datacompose development environment ready!'",
+  "postStartCommand": "git config --global --add safe.directory /workspace",
+  
+  "remoteEnv": {
+    "PYTHONPATH": "/workspace:${PYTHONPATH}"
+  },
+  
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/datacompose/.ssh,type=bind,consistency=cached,readonly"
+  ],
+  
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined"
+  ]
+}

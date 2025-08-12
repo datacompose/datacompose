@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datacompose"
+version = "0.2.4"
+description = "Copy-pasteable data transformation primitives for PySpark. Inspired by shadcn-svelte."
+authors = [
+    {name = "Your Name", email = "your.email@example.com"},
+]
+maintainers = [
+    {name = "Your Name", email = "your.email@example.com"},
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+keywords = [
+    "data-cleaning",
+    "data-quality",
+    "udf",
+    "spark",
+    "postgres",
+    "code-generation",
+    "data-pipeline",
+    "etl",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "jinja2>=3.0.0",
+    "pyyaml>=6.0",
+    "click>=8.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/datacompose"
+Documentation = "https://github.com/yourusername/datacompose/tree/main/docs"
+Repository = "https://github.com/yourusername/datacompose.git"
+Issues = "https://github.com/yourusername/datacompose/issues"
+Changelog = "https://github.com/yourusername/datacompose/blob/main/CHANGELOG.md"
+
+[project.scripts]
+datacompose = "datacompose.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["datacompose*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+docs = [
+    "sphinx>=7.2.0",
+    "furo>=2024.1.0",
+    "myst-parser>=2.0.0",
+    "sphinx-autodoc-typehints>=1.25.0",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-tabs>=3.4.0",
+    "sphinx-click>=5.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/integration"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+addopts = ["-v", "--tb=short"]
+markers = [
+    "spark: tests requiring Spark cluster",
+    "unit: unit tests that don't require external services",
+    "integration: integration tests that may require external services"
+]

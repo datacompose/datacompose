@@ -1,0 +1,149 @@
+services:
+  # Spark Master
+  spark-master:
+    image: bitnami/spark:4.0.0
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8080:8080" # Spark Master Web UI
+      - "7077:7077" # Spark Master port
+    volumes:
+      - ./notebooks:/opt/notebooks
+      - ./data:/opt/data
+    networks:
+      - spark-network
+
+  # Spark Worker
+  spark-worker:
+    image: bitnami/spark:4.0.0
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081" # Spark Worker Web UI
+    volumes:
+      - ./notebooks:/opt/notebooks
+      - ./data:/opt/data
+    networks:
+      - spark-network
+
+  # Datacompose Development Container
+  datacompose-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: datacompose-dev
+    volumes:
+      - .:/workspace:cached
+      - ~/.ssh:/home/datacompose/.ssh:ro
+      - datacompose_home:/home/datacompose/.datacompose
+      - vscode_extensions:/home/datacompose/.vscode-server/extensions
+      - vscode_extensions_insiders:/home/datacompose/.vscode-server-insiders/extensions
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 --packages org.postgresql:postgresql:42.7.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 pyspark-shell
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=datawarehouse
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+    networks:
+      - spark-network
+    depends_on:
+      - spark-master
+      - postgres
+      - minio
+    command: sleep infinity
+
+  # MinIO (S3-compatible storage)
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    ports:
+      - "9000:9000" # MinIO API
+      - "9001:9001" # MinIO Console
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - spark-network
+
+  # MinIO Client for initial setup
+  minio-client:
+    image: minio/mc:latest
+    container_name: minio-client
+    depends_on:
+      - minio
+    networks:
+      - spark-network
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio:9000 minioadmin minioadmin123;
+      /usr/bin/mc mb minio/datalake;
+      /usr/bin/mc mb minio/warehouse;
+      /usr/bin/mc policy set public minio/datalake;
+      /usr/bin/mc policy set public minio/warehouse;
+      echo 'MinIO buckets created successfully';
+      "
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      - POSTGRES_DB=datawarehouse
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - spark-network
+
+  # pgAdmin for PostgreSQL management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - spark-network
+
+volumes:
+  minio_data:
+  postgres_data:
+  datacompose_home:
+  vscode_extensions:
+  vscode_extensions_insiders:
+
+networks:
+  spark-network:
+    driver: bridge
