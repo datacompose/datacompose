@@ -182,13 +182,15 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
                 print(dim(f"   Hash: {result.get('hash', 'N/A')}"))
         else:
             print(success(f"✓ UDF generated: {result['output_path']}"))
-            print(success(f"✓ Test created: {result['test_path']}"))
+            if result.get('test_path'):
+                print(success(f"✓ Test created: {result['test_path']}"))
             print(highlight(f"Function name: {result['function_name']}"))
             if verbose:
                 print(dim(f"   Target: {target}"))
                 print(highlight("\nGenerated package contents:"))
                 print(f"  - UDF code: {result['output_path']}")
-                print(f"  - Test file: {result['test_path']}")
+                if result.get('test_path'):
+                    print(f"  - Test file: {result['test_path']}")
 
         return 0
 

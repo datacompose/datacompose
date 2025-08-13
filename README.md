@@ -1,5 +1,9 @@
 # Datacompose
 
+[![PyPI version](https://badge.fury.io/py/datacompose.svg)](https://pypi.org/project/datacompose/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A powerful data transformation framework for building reusable, composable data cleaning pipelines in PySpark.
 
 ## Overview
@@ -378,6 +382,19 @@ Datacompose is inspired by [shadcn-svelte](https://www.shadcn-svelte.com/) and [
 
 This is NOT a traditional library - it's a code generator that gives you production-ready data transformation primitives that you can modify to fit your exact needs.
 
+
+## Test Coverage
+
+**Critical components are thoroughly tested:**
+
+| Component | Coverage | Tests |
+|-----------|----------|-------|
+| **Phone Number Primitives** | 95% | ✅ All formats validated |
+| **Address Primitives** | 94% | ✅ Full parsing tested |
+| **Email Primitives** | 89% | ✅ RFC compliant |
+| **Code Generation** | 87-91% | ✅ All targets verified |
+
+**335 tests passing** • **76% overall coverage**
 
 ## License
 

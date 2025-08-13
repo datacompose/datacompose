@@ -47,11 +47,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/datacompose/datacompose"
-Documentation = "https://github.com/datacompose/datacompose/tree/main/docs"
-Repository = "https://github.com/datacompose/datacompose.git"
-Issues = "https://github.com/datacompose/datacompose/issues"
-Changelog = "https://github.com/datacompose/datacompose/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/tc-cole/datacompose"
+Documentation = "https://github.com/tc-cole/datacompose/tree/main/docs"
+Repository = "https://github.com/tc-cole/datacompose.git"
+Issues = "https://github.com/tc-cole/datacompose/issues"
+Changelog = "https://github.com/tc-cole/datacompose/blob/main/CHANGELOG.md"
 
 [project.scripts]
 datacompose = "datacompose.cli.main:main"

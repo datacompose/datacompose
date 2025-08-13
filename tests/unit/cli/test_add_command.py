@@ -170,7 +170,7 @@ class TestAddCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(
                 cli_command,
-                ["add", "clean_emails", "--target", "pyspark", "--type", "generator"],
+                ["add", "clean_emails", "--target", "pyspark"],
             )
             assert result.exit_code == 0
             assert "generated:" in result.output.lower()

@@ -209,47 +209,8 @@ def {{ udf_name }}(input_value):
         assert (temp_dir / "build" / "spark" / "__init__.py").exists()
         assert (temp_dir / "build" / "spark" / "email_cleaner" / "__init__.py").exists()
 
-    def test_generate_test_file(self, spark_generator, temp_dir):
-        """Test file generation."""
-        spec = {"name": "email_cleaner"}
-        spec_hash = "abcd1234"
-        output_path = temp_dir / "email_cleaner_udf.py"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        test_file_path = spark_generator._generate_test_file(
-            spec, spec_hash, output_path
-        )
-
-        expected_path = output_path.parent / "test_email_cleaner_udf.py"
-        assert test_file_path == expected_path
-        assert test_file_path.exists()
-
-        # Check test file content contains expected elements
-        test_content = test_file_path.read_text()
-        assert "email_cleaner" in test_content
-        assert "abcd1234" in test_content
-        assert "import pytest" in test_content
-        assert "class TestEmailCleanerUDF" in test_content
-        assert "email_cleaner_udf" in test_content
-
-    def test_create_test_content_structure(self, spark_generator, temp_dir):
-        """Test that created test content has proper structure."""
-        spec = {"name": "address_cleaner"}
-        spec_hash = "abcd1234"
-        output_path = temp_dir / "address_cleaner_udf.py"
-
-        test_content = spark_generator._create_test_content(
-            spec, spec_hash, output_path
-        )
-
-        # Check for essential test components
-        assert "import pytest" in test_content
-        assert "from pyspark.sql import SparkSession" in test_content
-        assert "from address_cleaner_udf import address_cleaner_udf" in test_content
-        assert "class TestAddressCleanerUDF" in test_content
-        assert "def test_basic_functionality" in test_content
-        assert "def test_empty_input" in test_content
-        assert "def test_edge_cases" in test_content
+    # Test file generation methods were removed in refactoring
+    # The generator no longer creates test files, only primitives files
 
     def test_output_filename_generation(self, spark_generator):
         """Test that generator produces correct output filename."""

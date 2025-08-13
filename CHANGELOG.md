@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.4] - 2024-08-12
+## [0.2.4] - 2025-08-13
 
 ### Added
+- **Published to PyPI**: Package is now available via `pip install datacompose`
 - **Phone Number Primitives**: Complete set of 45+ phone number transformation functions
   - NANP validation and formatting (North American Numbering Plan)
   - International phone support with E.164 formatting
