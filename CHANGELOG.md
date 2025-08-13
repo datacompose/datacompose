@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - PrimitiveRegistry class embedded with generated code
   - No runtime dependency on datacompose package
   - Fallback imports for maximum compatibility
+- **Comprehensive Test Coverage**: Improved test coverage from 87% to 92%
+  - Added 18 new tests for primitives.py module (70% → 86% coverage)
+  - Created comprehensive test suites for all CLI commands
+  - Added full end-to-end integration tests (init → add → transform)
+  - validation.py achieved 100% coverage
+  - add.py improved to 99% coverage
 
 ### Changed
 - **BREAKING**: Renamed `PrimitiveNameSpace` to `PrimitiveRegistry` throughout codebase
@@ -40,11 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `clean_phone_numbers` → `phone_primitives.py`
 
 ### Fixed
+- **Critical**: Fixed utils/primitives.py output location to be shared across all transformers
+  - Utils module now generates at top-level build/utils/ instead of per-transformer
+  - All transformers share the same PrimitiveRegistry implementation
+  - Prevents duplicate utils modules and ensures consistency
 - Phone `normalize_separators` now correctly handles parentheses: `(555)123-4567` → `555-123-4567`
 - Street extraction for numbered streets ("5th Avenue" issue)
 - Compose decorator now requires namespace to be passed explicitly for proper method resolution
 - `standardize_street_suffix` applies both custom and default mappings correctly
 - Test failures due to namespace resolution in compose decorator
+- Generator initialization error handling in add command
 
 ### Removed
 - All YAML/spec file functionality
