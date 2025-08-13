@@ -68,3 +68,6 @@ data/
 critical_design_decisions.md
 
 artifacts*
+
+# PyPI credentials
+.pypirc

@@ -7,10 +7,10 @@ name = "datacompose"
 version = "0.2.4"
 description = "Copy-pasteable data transformation primitives for PySpark. Inspired by shadcn-svelte."
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "Datacompose Contributors"},
 ]
 maintainers = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "Datacompose Contributors"},
 ]
 readme = "README.md"
 license = {text = "MIT"}
@@ -47,11 +47,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/datacompose"
-Documentation = "https://github.com/yourusername/datacompose/tree/main/docs"
-Repository = "https://github.com/yourusername/datacompose.git"
-Issues = "https://github.com/yourusername/datacompose/issues"
-Changelog = "https://github.com/yourusername/datacompose/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/datacompose/datacompose"
+Documentation = "https://github.com/datacompose/datacompose/tree/main/docs"
+Repository = "https://github.com/datacompose/datacompose.git"
+Issues = "https://github.com/datacompose/datacompose/issues"
+Changelog = "https://github.com/datacompose/datacompose/blob/main/CHANGELOG.md"
 
 [project.scripts]
 datacompose = "datacompose.cli.main:main"
