@@ -11,7 +11,9 @@ import pytest
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from datacompose.generators.pyspark.generator import SparkPandasUDFGenerator  # noqa: E402
+from datacompose.generators.pyspark.generator import (
+    SparkPandasUDFGenerator,  # noqa: E402
+)
 
 
 @pytest.mark.unit
@@ -146,46 +148,6 @@ def {{ udf_name }}(input_value):
         should_skip = spark_generator._should_skip_generation(output_path, spec_hash)
         assert should_skip is False
 
-    def test_prepare_template_vars_complete_spec(self, spark_generator):
-        """Test template variable preparation with complete spec."""
-        spec = {
-            "name": "email_cleaner",
-            "typo_map": {"gmial": "gmail"},
-            "regex": {"pattern": r".*@.*"},
-            "flags": {"lowercase": True},
-            "options": {"strict": False},
-            "custom_rules": {"rule1": "value1"},
-        }
-        spec_hash = "abcd1234"
-
-        vars = spark_generator._prepare_template_vars(spec, spec_hash)
-
-        assert vars["transformer_name"] == "email_cleaner"
-        assert vars["udf_name"] == "email_cleaner_udf"
-        assert vars["hash"] == "abcd1234"
-        assert "generation_timestamp" in vars
-        assert vars["typo_map"] == {"gmial": "gmail"}
-        assert vars["regex_patterns"] == {"pattern": r".*@.*"}
-        assert vars["flags"] == {"lowercase": True}
-        assert vars["options"] == {"strict": False}
-        assert vars["custom_rules"] == {"rule1": "value1"}
-
-    def test_prepare_template_vars_minimal_spec(self, spark_generator):
-        """Test template variable preparation with minimal spec."""
-        spec = {"name": "minimal_spec"}
-        spec_hash = "abcd1234"
-
-        vars = spark_generator._prepare_template_vars(spec, spec_hash)
-
-        assert vars["transformer_name"] == "minimal_spec"
-        assert vars["udf_name"] == "minimal_spec_udf"
-        assert vars["hash"] == "abcd1234"
-        assert vars["typo_map"] == {}
-        assert vars["regex_patterns"] == {}
-        assert vars["flags"] == {}
-        assert vars["options"] == {}
-        assert vars["custom_rules"] == {}
-
     def test_write_output_creates_directories(self, spark_generator, temp_dir):
         """Test that write_output creates necessary directories."""
         output_path = temp_dir / "nested" / "directories" / "file.py"
@@ -227,26 +189,7 @@ def {{ udf_name }}(input_value):
         transformer_dir.mkdir()
 
         with pytest.raises(FileNotFoundError):
-            spark_generator._get_template_content(transformer_dir)
-
-    def test_generators_handle_empty_spec_fields(self, spark_generator):
-        """Test that generator handles specs with missing optional fields."""
-        generator = spark_generator
-
-        # Test with completely minimal spec
-        minimal_spec = {"name": "test_spec"}
-        spec_hash = "test1234"
-
-        vars = generator._prepare_template_vars(minimal_spec, spec_hash)
-
-        # Should not crash and should provide default empty values
-        assert vars["transformer_name"] == "test_spec"
-        assert vars["udf_name"] == "test_spec_udf"
-        assert isinstance(vars["typo_map"], dict)
-        assert isinstance(vars["regex_patterns"], dict)
-        assert isinstance(vars["flags"], dict)
-        assert isinstance(vars["options"], dict)
-        assert isinstance(vars["custom_rules"], dict)
+            spark_generator._get_primitives_file(transformer_dir)
 
     def test_hash_includes_template_content(self, spark_generator):
         """Test that hash calculation includes template content changes."""
@@ -258,34 +201,3 @@ def {{ udf_name }}(input_value):
         hash2 = spark_generator._calculate_hash(spec, template2)
 
         assert hash1 != hash2, "Hash should change when template content changes"
-
-    def test_verbose_mode_differences(self, temp_dir, temp_template_dir, output_dir):
-        """Test that verbose mode affects generator behavior."""
-        verbose_gen = SparkPandasUDFGenerator(
-            temp_template_dir, output_dir, verbose=True
-        )
-        quiet_gen = SparkPandasUDFGenerator(
-            temp_template_dir, output_dir, verbose=False
-        )
-
-        assert verbose_gen.verbose is True
-        assert quiet_gen.verbose is False
-
-        # Both should work the same way, just different output
-        spec = {"name": "test"}
-        hash_val = "test1234"
-        vars_verbose = verbose_gen._prepare_template_vars(spec, hash_val)
-        vars_quiet = quiet_gen._prepare_template_vars(spec, hash_val)
-
-        # Compare everything except timestamp (which will be different)
-        assert vars_verbose["transformer_name"] == vars_quiet["transformer_name"]
-        assert vars_verbose["udf_name"] == vars_quiet["udf_name"]
-        assert vars_verbose["hash"] == vars_quiet["hash"]
-        assert vars_verbose["typo_map"] == vars_quiet["typo_map"]
-        assert vars_verbose["regex_patterns"] == vars_quiet["regex_patterns"]
-        assert vars_verbose["flags"] == vars_quiet["flags"]
-        assert vars_verbose["options"] == vars_quiet["options"]
-        assert vars_verbose["custom_rules"] == vars_quiet["custom_rules"]
-        # Timestamps should be present but may differ slightly
-        assert "generation_timestamp" in vars_verbose
-        assert "generation_timestamp" in vars_quiet

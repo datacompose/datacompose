@@ -21,7 +21,7 @@ DEFAULT_CONFIG = {
     "aliases": {"utils": "./src/utils"},
     "targets": {
         "pyspark": {
-            "output": "./build/pyspark",
+            "output": "./build",
         }
     },
 }
@@ -57,7 +57,7 @@ class InitCommand:
     def get_config_template(template_name: str) -> Dict[str, Any]:
         """Get configuration template by name."""
         if template_name == "minimal":
-            return {"version": "1.0", "targets": {"pyspark": {"output": "./build/pyspark"}}}
+            return {"version": "1.0", "targets": {"pyspark": {"output": "./build"}}}
         elif template_name == "advanced":
             config = DEFAULT_CONFIG.copy()
             config.update(

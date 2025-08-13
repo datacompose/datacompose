@@ -8,7 +8,6 @@ def __get_output_filename as well as any other build steps that you want.
 
 import hashlib
 from abc import ABC, abstractmethod
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -45,16 +44,11 @@ class BaseGenerator(ABC):
             Dictionary with generation results
         """
         # Create a minimal spec-like dict from transformer name for compatibility
-        spec = {"name": transformer_name}
+        transformer = {"name": transformer_name}
 
-        # Get template content
-        template_content = self._get_template_content(transformer_dir)
-
-        # Calculate hash for caching
-        spec_hash = self._calculate_hash(spec, template_content)
-
-        # Determine output path
-        output_file = self._get_output_filename(spec["name"])
+        file_content: str = self._get_primitives_file(transformer_dir)
+        spec_hash = self._calculate_hash(transformer, file_content)
+        output_file = self._get_output_filename(transformer["name"])
         output_path = self.output_dir / output_file
 
         # Check if regeneration is needed
@@ -63,18 +57,18 @@ class BaseGenerator(ABC):
                 "skipped": True,
                 "output_path": str(output_path),
                 "hash": spec_hash,
-                "function_name": f"{spec['name']}_udf",
+                "function_name": f"{transformer['name']}_udf",
             }
         
         # Copy utils/primitives.py to the output directory
         self._copy_utils_files(output_path)
-
+        self._write_output(output_path, file_content)
 
         return {
             "skipped": False,
             "output_path": str(output_path),
             "hash": spec_hash,
-            "function_name": f"{spec['name']}_udf",
+            "function_name": f"{transformer['name']}_udf",
         }
 
     @staticmethod
@@ -82,6 +76,7 @@ class BaseGenerator(ABC):
         """Calculate hash for cache invalidation."""
         content = str(spec) + template_content
         return hashlib.sha256(content.encode("utf-8")).hexdigest()[:8]
+    
 
     @staticmethod
     def _should_skip_generation(output_path: Path, spec_hash: str) -> bool:
@@ -100,8 +95,6 @@ class BaseGenerator(ABC):
         """Write generated content to output file."""
         # Create output directory if it doesn't exist
         output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Create __init__.py files to make directories importable as Python packages
         self._ensure_init_files(output_path)
 
         with open(output_path, "w") as f:
@@ -138,26 +131,20 @@ class BaseGenerator(ABC):
                 if self.verbose:
                     print(f"Created {init_file}")
 
-    @staticmethod
-    def _prepare_template_vars(spec: Dict[str, Any], spec_hash: str) -> Dict[str, Any]:
-        """Prepare variables for template rendering."""
-        return {
-            "transformer_name": spec["name"],
-            "udf_name": f"{spec['name']}_udf",
-            "hash": spec_hash,
-            "generation_timestamp": datetime.now().isoformat(),
-            "typo_map": spec.get("typo_map", {}),
-            "regex_patterns": spec.get("regex", {}),
-            "flags": spec.get("flags", {}),
-            "options": spec.get("options", {}),
-            "custom_rules": spec.get("custom_rules", {}),
-        }
-
 
     def _copy_utils_files(self, output_path: Path):
-        """Copy utility files like primitives.py to the output directory."""
-        # Create utils directory at the same level as the output file
-        utils_dir = output_path.parent / "utils"
+        """Copy utility files like primitives.py to the build root directory."""
+        # Find the build directory root
+        path_parts = output_path.parts
+        try:
+            build_index = path_parts.index("build")
+            build_root = Path(*path_parts[:build_index + 1])
+        except ValueError:
+            # Fallback to parent directory if no 'build' in path
+            build_root = output_path.parent.parent
+        
+        # Create utils directory at build root
+        utils_dir = build_root / "utils"
         utils_dir.mkdir(parents=True, exist_ok=True)
         
         # Create __init__.py in utils directory
@@ -179,12 +166,12 @@ class BaseGenerator(ABC):
 
     @classmethod
     @abstractmethod
-    def _get_template_location(cls, transformer_dir: Path | None) -> Path | None:
+    def _get_primitives_location(cls, transformer_dir: Path | None) -> Path | None:
         pass
 
     @abstractmethod
-    def _get_template_content(self, transformer_dir: Path | None) -> str:
-        """Get the template content for this generator."""
+    def _get_primitives_file(self, transformer_dir: Path | None) -> str:
+        """Get the file content for this generator."""
         pass
 
     @abstractmethod

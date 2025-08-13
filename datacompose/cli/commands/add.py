@@ -2,7 +2,6 @@
 Add command for generating UDFs.
 """
 
-import json
 from pathlib import Path
 
 import click
@@ -155,21 +154,18 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
         print(info(f"Available generators: {', '.join(discovery.list_generators())}"))
         return 1
 
-    # Determine output directory
-    # Extract platform from target (e.g., "pyspark.pandas_udf" -> "pyspark")
-    platform = target.split(".")[0]
-
+    # Determine output directory - no platform subdirectory needed
     if not output:
-        output_dir = f"build/{platform}/{transformer_name}"
+        output_dir = f"build/{transformer_name}"
     else:
-        output_dir = f"{output}/{platform}/{transformer_name}"
-
-    # Create generator instance
-    generator = generator_class(
-        template_dir=Path(template_dir), output_dir=Path(output_dir), verbose=verbose
-    )
+        output_dir = f"{output}/{transformer_name}"
 
     try:
+        # Create generator instance
+        generator = generator_class(
+            template_dir=Path(template_dir), output_dir=Path(output_dir), verbose=verbose
+        )
+        
         # Generate the UDF
         result = generator.generate(
             transformer_name, force=False, transformer_dir=transformer_dir
@@ -201,17 +197,4 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
 
             traceback.print_exc()
         return 1
-
-
-def _load_config() -> dict:
-    """Load datacompose.json configuration if it exists."""
-    config_path = Path("datacompose.json")
-    if config_path.exists():
-        try:
-            with open(config_path, "r") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
-
 
