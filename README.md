@@ -2,8 +2,6 @@
 
 [![PyPI version](https://badge.fury.io/py/datacompose.svg)](https://pypi.org/project/datacompose/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://github.com/your-username/datacompose/actions/workflows/tests.yml/badge.svg)](https://github.com/your-username/datacompose/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/your-username/datacompose/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/datacompose)
 [![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen.svg)](https://github.com/your-username/datacompose)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
