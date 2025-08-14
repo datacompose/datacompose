@@ -78,8 +78,19 @@ def scan_transformers_directory(transformers_dir: Path) -> Dict[str, Dict[str, A
                 'import_path': primitive_name
             })
             
-            # Scan for Python files
+            # Scan for Python files in pyspark subdirectory
             methods = []
+            pyspark_dir = subdir / 'pyspark'
+            
+            if pyspark_dir.exists():
+                for py_file in pyspark_dir.glob('*.py'):
+                    if py_file.name not in ['__init__.py', 'setup.py']:
+                        functions = extract_functions_from_file(py_file)
+                        for func in functions:
+                            func['source_file'] = py_file.name
+                        methods.extend(functions)
+            
+            # Also check root directory of primitive
             for py_file in subdir.glob('*.py'):
                 if py_file.name not in ['__init__.py', 'setup.py']:
                     functions = extract_functions_from_file(py_file)
@@ -212,16 +223,27 @@ def custom_transformation(df, column_name):
 
 
 def generate_individual_method_docs(primitives: Dict[str, Dict[str, Any]], output_dir: Path):
-    """Generate individual markdown files for each method."""
+    """Generate individual markdown files for each method in organized folders."""
     for primitive_name, primitive_data in primitives.items():
-        # Create directory for this primitive's methods
-        primitive_dir = output_dir / 'methods' / primitive_name
+        # Create main directory for this primitive (e.g., emails, addresses, phone-numbers)
+        clean_name = primitive_name.replace('clean_', '').replace('_', '-')
+        primitive_dir = output_dir / clean_name / 'pyspark'
         primitive_dir.mkdir(parents=True, exist_ok=True)
         
+        # Group methods by source file
+        methods_by_file = {}
+        for method in primitive_data['methods']:
+            source = method.get('source_file', 'unknown')
+            if source not in methods_by_file:
+                methods_by_file[source] = []
+            methods_by_file[source].append(method)
+        
+        # Generate a markdown file for each method
         for method in primitive_data['methods']:
             method_markdown = f"""---
 title: {method['name']}
 primitive: {primitive_data['title']}
+category: pyspark
 ---
 
 # `{method['name']}()`
@@ -242,17 +264,67 @@ def pipeline(df):
     return df.{method['name']}("column_name")
 ```
 
+## Example
+
+```python
+# Import the library
+from datacompose import {primitive_data['import_path']}
+from pyspark.sql import SparkSession
+
+# Create Spark session
+spark = SparkSession.builder.appName("DataCompose").getOrCreate()
+
+# Create a sample DataFrame
+df = spark.createDataFrame([
+    ("example_data_1",),
+    ("example_data_2",),
+], ["input_column"])
+
+# Apply the transformation
+@{primitive_data['import_path']}.compose()
+def transform_pipeline(df):
+    return df.{method['name']}("input_column")
+
+result_df = transform_pipeline(df)
+result_df.show()
+```
+
 ## Source
 
-Found in: `transformers/{primitive_name}/{method.get('source_file', 'unknown')}`
+Found in: `transformers/text/{primitive_name}/pyspark/{method.get('source_file', 'unknown')}`
 
 ---
-[← Back to {primitive_data['title']}](/primitives/{primitive_name})
+[← Back to {primitive_data['title']}](/primitives/{clean_name})
 """
             
             method_file = primitive_dir / f"{method['name']}.md"
             with open(method_file, 'w') as f:
                 f.write(method_markdown)
+        
+        # Create an index file for this primitive's methods
+        index_markdown = f"""---
+title: {primitive_data['title']} - PySpark Methods
+description: All available PySpark methods for {primitive_data['title']}
+---
+
+# {primitive_data['title']} - PySpark Methods
+
+## Available Methods ({len(primitive_data['methods'])} total)
+
+"""
+        # Group by category/file
+        for source_file, file_methods in sorted(methods_by_file.items()):
+            if source_file != 'unknown':
+                category = source_file.replace('pyspark_primitives.py', '').replace('.py', '').replace('_', ' ').title()
+                if not category:
+                    category = "Core Methods"
+                index_markdown += f"\n### {category}\n\n"
+                for method in sorted(file_methods, key=lambda x: x['name']):
+                    index_markdown += f"- [`{method['name']}()`](./{method['name']}.md) - {method['docstring'].split('.')[0] if method['docstring'] else 'No description'}\n"
+        
+        index_file = primitive_dir / "index.md"
+        with open(index_file, 'w') as f:
+            f.write(index_markdown)
 
 
 def main():
@@ -261,7 +333,7 @@ def main():
     # Get paths
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    transformers_dir = project_root / 'datacompose' / 'transformers'
+    transformers_dir = project_root / 'datacompose' / 'transformers' / 'text'
     
     if not transformers_dir.exists():
         print(f"❌ Transformers directory not found at: {transformers_dir}")
@@ -286,20 +358,37 @@ def main():
     
     # Generate markdown for each primitive
     for name, primitive_data in primitives.items():
+        # Use directory name for consistency with routes
+        clean_name = name.replace('clean_', '').replace('_', '-')
+        
+        # Create main directory for primitive
+        primitive_dir = output_dir / clean_name
+        primitive_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate overview markdown
         markdown = generate_markdown_for_primitive(name, primitive_data)
         
-        # Use directory name for consistency with routes
-        file_name = name.replace('clean_', '').replace('_', '-') + '.md'
-        file_path = output_dir / file_name
+        # Add link to detailed method documentation
+        markdown += f"""
+
+## Detailed Method Documentation
+
+For detailed documentation of each method, see:
+
+- [PySpark Methods →](./{clean_name}/pyspark/) - All {len(primitive_data['methods'])} available PySpark methods
+
+"""
+        
+        file_path = primitive_dir / 'index.md'
         
         with open(file_path, 'w') as f:
             f.write(markdown)
         
         print(f"✅ Generated: {file_path}")
     
-    # Generate individual method documentation (optional)
+    # Generate individual method documentation in organized folders
     generate_individual_method_docs(primitives, output_dir)
-    print(f"✅ Generated individual method documentation in {output_dir / 'methods'}")
+    print(f"✅ Generated individual method documentation in organized folders")
     
     # Generate index file
     index_markdown = f"""---
