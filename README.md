@@ -384,19 +384,6 @@ Datacompose is inspired by [shadcn-svelte](https://www.shadcn-svelte.com/) and [
 This is NOT a traditional library - it's a code generator that gives you production-ready data transformation primitives that you can modify to fit your exact needs.
 
 
-## Test Coverage
-
-**Critical components are thoroughly tested:**
-
-| Component | Coverage | Tests |
-|-----------|----------|-------|
-| **Phone Number Primitives** | 95% | ✅ All formats validated |
-| **Address Primitives** | 94% | ✅ Full parsing tested |
-| **Email Primitives** | 89% | ✅ RFC compliant |
-| **Code Generation** | 87-91% | ✅ All targets verified |
-
-**335 tests passing** • **76% overall coverage**
-
 ## License
 
 MIT License - see LICENSE file for details
