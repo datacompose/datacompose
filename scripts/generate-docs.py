@@ -297,11 +297,14 @@ Found in: `transformers/text/{primitive_name}/pyspark/{method.get('source_file',
 [← Back to {primitive_data['title']}](/primitives/{clean_name})
 """
             
-            method_file = primitive_dir / f"{method['name']}.md"
+            # Create directory for each method
+            method_dir = primitive_dir / method['name']
+            method_dir.mkdir(parents=True, exist_ok=True)
+            method_file = method_dir / '+page.md'
             with open(method_file, 'w') as f:
                 f.write(method_markdown)
         
-        # Create an index file for this primitive's methods
+        # Create an index file for the pyspark methods directory
         index_markdown = f"""---
 title: {primitive_data['title']} - PySpark Methods
 description: All available PySpark methods for {primitive_data['title']}
@@ -320,10 +323,10 @@ description: All available PySpark methods for {primitive_data['title']}
                     category = "Core Methods"
                 index_markdown += f"\n### {category}\n\n"
                 for method in sorted(file_methods, key=lambda x: x['name']):
-                    index_markdown += f"- [`{method['name']}()`](./{method['name']}.md) - {method['docstring'].split('.')[0] if method['docstring'] else 'No description'}\n"
+                    index_markdown += f"- [`{method['name']}()`](/primitives/{clean_name}/pyspark/{method['name']}) - {method['docstring'].split('.')[0] if method['docstring'] else 'No description'}\n"
         
-        index_file = primitive_dir / "index.md"
-        with open(index_file, 'w') as f:
+        pyspark_index_file = primitive_dir / "+page.md" 
+        with open(pyspark_index_file, 'w') as f:
             f.write(index_markdown)
 
 
@@ -352,8 +355,8 @@ def main():
     for name in primitives:
         print(f"  - {name}: {len(primitives[name]['methods'])} methods")
     
-    # Create output directory
-    output_dir = project_root / 'docs-svelte' / 'content' / 'primitives'
+    # Create output directory - now directly in routes for MDsveX
+    output_dir = project_root / 'docs-svelte' / 'src' / 'routes' / 'primitives'
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate markdown for each primitive
@@ -379,7 +382,7 @@ For detailed documentation of each method, see:
 
 """
         
-        file_path = primitive_dir / 'index.md'
+        file_path = primitive_dir / '+page.md'
         
         with open(file_path, 'w') as f:
             f.write(markdown)
