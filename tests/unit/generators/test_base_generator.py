@@ -18,7 +18,7 @@ from datacompose.generators.pyspark.generator import (
 
 @pytest.mark.unit
 class TestBaseGeneratorThroughRealGenerators:
-    """Test BaseGenerator functionality through real generator implementations."""
+    """Test BaseGenerator functionality through real gecanerator implementations."""
 
     @pytest.fixture
     def temp_dir(self):

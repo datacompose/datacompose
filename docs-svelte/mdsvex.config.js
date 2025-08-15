@@ -1,7 +1,7 @@
 import { defineMDSveXConfig as defineConfig } from "mdsvex";
 
 const config = defineConfig({
-  extensions: [".svelte.md", ".md", ".svx"],
+  extensions: [".md"],
 
   smartypants: {
     dashes: "oldschool",
@@ -10,20 +10,10 @@ const config = defineConfig({
   remarkPlugins: [],
   rehypePlugins: [],
 
-  highlight: {
-    highlighter: async (code, lang = "text") => {
-      const { getHighlighter } = await import("shiki");
-      const highlighter = await getHighlighter({
-        theme: "github-dark",
-      });
-      const html = highlighter.codeToHtml(code, { lang });
-      return `{@html \`${html}\`}`;
-    },
-  },
+  // Disable built-in highlighting, we'll use CSS
+  highlight: false,
 
-  layout: {
-    _: "./src/lib/components/markdown-layout.svelte",
-  },
+  layout: "$lib/components/markdown-layout.svelte"
 });
 
 export default config;
