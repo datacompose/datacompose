@@ -6,19 +6,16 @@
 		{
 			title: "Email Primitives",
 			description: "Clean, validate, and transform email addresses with PySpark",
-			icon: "📧",
 			href: "/primitives/email"
 		},
 		{
 			title: "Address Primitives",
 			description: "Standardize and validate physical addresses at scale",
-			icon: "🏠",
 			href: "/primitives/address"
 		},
 		{
 			title: "Phone Primitives",
 			description: "Format and validate phone numbers from any region",
-			icon: "📱",
 			href: "/primitives/phone"
 		}
 	];
@@ -62,7 +59,6 @@
 			{#each features as feature}
 				<Card>
 					<CardHeader>
-						<div class="text-4xl mb-2">{feature.icon}</div>
 						<CardTitle>{feature.title}</CardTitle>
 						<CardDescription>{feature.description}</CardDescription>
 					</CardHeader>
