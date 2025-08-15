@@ -3,8 +3,8 @@
 	import AppSidebar from "$lib/components/app-sidebar.svelte";
 	import TableOfContents from "$lib/components/table-of-contents.svelte";
 	import favicon from '$lib/assets/favicon.svg';
-	import { page } from '$app/stores';
-	import { Search, Sun, Moon, Github } from 'lucide-svelte';
+	import { page } from '$app/state';
+	import { Search, Sun, Moon } from 'lucide-svelte';
 	import { Button } from "$lib/components/ui/button";
 	import * as Sidebar from "$lib/components/ui/sidebar";
 	
@@ -24,13 +24,13 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<Sidebar.Provider>
+<Sidebar.Provider open={false}>
 <div class="min-h-screen bg-background">
 	<!-- Header -->
-	<header class="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-black/80 backdrop-blur">
+	<header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 		<div class="flex h-16 items-center px-4 md:px-6">
 			<!-- Sidebar trigger -->
-			<Sidebar.Trigger class="-ml-1" />
+			<Sidebar.Trigger class="mr-2 text-foreground hover:bg-accent" />
 
 			<!-- Logo -->
 			<a href="/" class="flex items-center space-x-2 mr-6">
@@ -78,7 +78,6 @@
 
 				<!-- GitHub -->
 				<Button variant="ghost" size="icon" class="text-gray-600 dark:text-gray-400">
-					<Github class="h-5 w-5" />
 				</Button>
 			</div>
 		</div>
@@ -98,7 +97,7 @@
 				</main>
 
 				<!-- Right sidebar - Table of contents -->
-				{#if $page.url.pathname.startsWith('/primitives')}
+				{#if page.url.pathname.startsWith('/primitives')}
 				<aside class="hidden xl:block w-64 border-l border-border h-full sticky top-0 overflow-y-auto">
 					<TableOfContents />
 				</aside>
