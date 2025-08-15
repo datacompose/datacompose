@@ -1,7 +1,5 @@
+@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 @layer base {
   :root {
@@ -64,35 +62,41 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
 /* Syntax highlighting theme */
 .shiki {
-  @apply rounded-lg p-4 overflow-x-auto;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
 }
 
 .shiki code {
-  @apply font-mono text-sm;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  @apply w-2 h-2;
+  width: 0.5rem;
+  height: 0.5rem;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/30;
+  background: hsl(var(--muted-foreground) / 0.3);
 }
