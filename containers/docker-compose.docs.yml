@@ -1,0 +1,38 @@
+# Place this file in your TRANSFORMERS repository as docker-compose.docs.yml
+# It will clone the docs repo and use your local transformer files
+
+services:
+  docs:
+    build:
+      context: ..
+      dockerfile: containers/Dockerfile.docs
+      args:
+        DOCS_REPO: ${DOCS_REPO:-https://github.com/datacompose/datacompose-docs}
+        DOCS_BRANCH: ${DOCS_BRANCH:-main}
+    ports:
+      - "${DOCS_PORT:-3000}:3000"
+    volumes:
+      # Mount your local transformers directory into the docs container
+      - ./transformers:/app/transformers:ro
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - NODE_ENV=development
+    # Remove the command override - let the Dockerfile CMD run
+
+  # Production build for testing
+  docs-prod:
+    build:
+      context: ..
+      dockerfile: containers/Dockerfile.docs
+      args:
+        DOCS_REPO: ${DOCS_REPO:-https://github.com/datacompose/datacompose-docs}
+        DOCS_BRANCH: ${DOCS_BRANCH:-main}
+    ports:
+      - "${DOCS_PORT:-3001}:3000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - NODE_ENV=production
+    profiles:
+      - production
