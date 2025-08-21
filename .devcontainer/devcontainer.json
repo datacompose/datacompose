@@ -1,17 +1,15 @@
 {
   "name": "Datacompose Development",
-  "dockerComposeFile": [
-    "../docker-compose.yml"
-  ],
+  "dockerComposeFile": ["../containers/docker-compose.dev.yml"],
   "service": "datacompose-dev",
   "workspaceFolder": "/workspace",
   "remoteUser": "datacompose",
-  
+
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  
+
   "customizations": {
     "vscode": {
       "extensions": [
@@ -41,9 +39,7 @@
         "python.formatting.provider": "black",
         "python.formatting.blackPath": "/usr/local/bin/black",
         "python.testing.pytestEnabled": true,
-        "python.testing.pytestArgs": [
-          "tests"
-        ],
+        "python.testing.pytestArgs": ["tests"],
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.organizeImports": true
@@ -64,17 +60,9 @@
       }
     }
   },
-  
-  "forwardPorts": [
-    5432,
-    5050,
-    7077,
-    8080,
-    8081,
-    9000,
-    9001
-  ],
-  
+
+  "forwardPorts": [5432, 5050, 7077, 8080, 8081, 9000, 9001],
+
   "portsAttributes": {
     "5432": {
       "label": "PostgreSQL",
@@ -97,21 +85,17 @@
       "onAutoForward": "notify"
     }
   },
-  
+
   "postCreateCommand": "pip install -e . && echo 'Datacompose development environment ready!'",
   "postStartCommand": "git config --global --add safe.directory /workspace",
-  
+
   "remoteEnv": {
     "PYTHONPATH": "/workspace:${PYTHONPATH}"
   },
-  
+
   "mounts": [
     "source=${localEnv:HOME}/.ssh,target=/home/datacompose/.ssh,type=bind,consistency=cached,readonly"
   ],
-  
-  "runArgs": [
-    "--cap-add=SYS_PTRACE",
-    "--security-opt",
-    "seccomp=unconfined"
-  ]
+
+  "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"]
 }

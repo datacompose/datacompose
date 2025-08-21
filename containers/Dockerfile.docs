@@ -1,0 +1,59 @@
+# Place this file in your TRANSFORMERS repository as Dockerfile.docs
+# It clones the docs repo and uses your local transformer files
+
+FROM oven/bun:1 AS builder
+
+# Install Python and git for documentation generation
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Clone the documentation repository first
+ARG DOCS_REPO=https://github.com/datacompose/datacompose-docs
+ARG DOCS_BRANCH=main
+
+RUN git clone --branch ${DOCS_BRANCH} --depth 1 ${DOCS_REPO} .
+
+# Install dependencies from the cloned docs repo
+RUN bun install
+
+# Copy transformers from the build context (your local transformers)
+# Excluding __init__.py files
+COPY ./datacompose/transformers/text ./transformers/text/
+RUN find ./transformers -name "__init__.py" -type f -delete
+
+# Generate documentation from your transformers
+RUN python3 scripts/sync-transformers.py
+
+# Build the application for production
+RUN bun run build
+
+# Stage 2: Production
+FROM oven/bun:1-slim
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy everything from the builder stage
+COPY --from=builder /app .
+
+EXPOSE 3000
+
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV NODE_ENV=production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
+
+# Run production server - use bun to run preview for now
+CMD ["bun", "run", "preview", "--host", "0.0.0.0", "--port", "3000"]
