@@ -181,7 +181,7 @@ class TestCompositionFramework:
         configured_lower = email.lower()
 
         @email.compose(steps=[configured_trim, configured_lower], debug=True)
-        def clean_emails():
+        def emails():
             pass
 
         # This one needs the namespace passed
@@ -191,11 +191,11 @@ class TestCompositionFramework:
             email.lower()  # type: ignore
 
         # Check what's in the pipeline
-        # print(f"Pipeline steps: {clean_emails.steps}")
-        # print(f"Step types: {[type(s) for s in clean_emails.steps]}")
+        # print(f"Pipeline steps: {emails.steps}")
+        # print(f"Step types: {[type(s) for s in emails.steps]}")
 
         result = sample_spark_df.withColumn(
-            "clean_email", clean_emails(f.col("email"))  # type: ignore
+            "clean_email", emails(f.col("email"))  # type: ignore
         )
 
         # Verify the transformation worked

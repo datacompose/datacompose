@@ -6,7 +6,7 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-from datacompose.transformers.text.clean_emails.pyspark.pyspark_primitives import emails
+from datacompose.transformers.text.emails.pyspark.pyspark_primitives import emails
 
 
 @pytest.fixture(scope="session")

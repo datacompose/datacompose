@@ -28,7 +28,7 @@ class TestFullWorkflow:
             
             # Step 2: Add email transformer
             result = subprocess.run(
-                ["datacompose", "add", "clean_emails", "-t", "pyspark"],
+                ["datacompose", "add", "emails", "-t", "pyspark"],
                 capture_output=True,
                 text=True,
                 cwd=tmpdir
@@ -36,7 +36,7 @@ class TestFullWorkflow:
             assert result.returncode == 0, f"Add failed: {result.stderr}"
             
             # Verify generated files
-            email_file = tmpdir / "build" / "clean_emails" / "email_primitives.py"
+            email_file = tmpdir / "build" / "emails" / "email_primitives.py"
             utils_file = tmpdir / "build" / "utils" / "primitives.py"
             assert email_file.exists(), f"Email primitives not generated at {email_file}"
             assert utils_file.exists(), f"Utils not generated at {utils_file}"
@@ -48,7 +48,7 @@ import sys
 from pathlib import Path
 
 # Add generated code to path
-sys.path.insert(0, str(Path(__file__).parent / "build" / "clean_emails"))
+sys.path.insert(0, str(Path(__file__).parent / "build" / "emails"))
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -107,7 +107,7 @@ spark.stop()
             
             # Add phone transformer
             result = subprocess.run(
-                ["datacompose", "add", "clean_phone_numbers", "-t", "pyspark"],
+                ["datacompose", "add", "phone_numbers", "-t", "pyspark"],
                 capture_output=True,
                 text=True,
                 cwd=tmpdir
@@ -119,7 +119,7 @@ spark.stop()
             test_script.write_text("""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent / "build" / "clean_phone_numbers"))
+sys.path.insert(0, str(Path(__file__).parent / "build" / "phone_numbers"))
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -171,7 +171,7 @@ spark.stop()
             
             # Add address transformer
             result = subprocess.run(
-                ["datacompose", "add", "clean_addresses", "-t", "pyspark"],
+                ["datacompose", "add", "addresses", "-t", "pyspark"],
                 capture_output=True,
                 text=True,
                 cwd=tmpdir
@@ -183,7 +183,7 @@ spark.stop()
             test_script.write_text("""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent / "build" / "clean_addresses"))
+sys.path.insert(0, str(Path(__file__).parent / "build" / "addresses"))
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -234,7 +234,7 @@ spark.stop()
             )
             
             # Add all transformers
-            for transformer in ["clean_emails", "clean_phone_numbers", "clean_addresses"]:
+            for transformer in ["emails", "phone_numbers", "addresses"]:
                 result = subprocess.run(
                     ["datacompose", "add", transformer, "-t", "pyspark"],
                     capture_output=True,
@@ -244,9 +244,9 @@ spark.stop()
                 assert result.returncode == 0, f"Failed to add {transformer}"
             
             # Verify all files exist
-            assert (tmpdir / "build" / "clean_emails" / "email_primitives.py").exists()
-            assert (tmpdir / "build" / "clean_phone_numbers" / "phone_primitives.py").exists()
-            assert (tmpdir / "build" / "clean_addresses" / "address_primitives.py").exists()
+            assert (tmpdir / "build" / "emails" / "email_primitives.py").exists()
+            assert (tmpdir / "build" / "phone_numbers" / "phone_primitives.py").exists()
+            assert (tmpdir / "build" / "addresses" / "address_primitives.py").exists()
             assert (tmpdir / "build" / "utils" / "primitives.py").exists()
             
             # Create combined test
@@ -255,9 +255,9 @@ spark.stop()
 import sys
 from pathlib import Path
 # Add all transformer paths
-sys.path.insert(0, str(Path(__file__).parent / "build" / "clean_emails"))
-sys.path.insert(0, str(Path(__file__).parent / "build" / "clean_phone_numbers"))
-sys.path.insert(0, str(Path(__file__).parent / "build" / "clean_addresses"))
+sys.path.insert(0, str(Path(__file__).parent / "build" / "emails"))
+sys.path.insert(0, str(Path(__file__).parent / "build" / "phone_numbers"))
+sys.path.insert(0, str(Path(__file__).parent / "build" / "addresses"))
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F

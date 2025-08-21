@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, StructField, StructType
 
-from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,
 )
 
@@ -64,7 +64,7 @@ class TestCityStateExtraction:
 
     def test_extract_city(self, spark):
         """Test city extraction from various address formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
         )
 
@@ -86,7 +86,7 @@ class TestCityStateExtraction:
 
     def test_extract_state(self, spark):
         """Test state extraction and standardization."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_state,
         )
 
@@ -107,7 +107,7 @@ class TestCityStateExtraction:
 
     def test_validate_state(self, spark):
         """Test state validation."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_state,
         )
 
@@ -128,7 +128,7 @@ class TestCityStateExtraction:
 
     def test_standardize_state(self, spark):
         """Test state standardization."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             standardize_state,
         )
 
@@ -156,7 +156,7 @@ class TestCityStateExtraction:
 
     def test_get_state_name(self, spark):
         """Test converting state abbreviation to full name."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             get_state_name,
         )
 
@@ -183,7 +183,7 @@ class TestCityStateExtraction:
 
     def test_city_extraction_edge_cases(self, spark):
         """Test city extraction with edge cases."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
         )
 
@@ -213,7 +213,7 @@ class TestCityStateExtraction:
 
     def test_combined_city_state_extraction(self, spark):
         """Test extracting both city and state together."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
             extract_state,
         )
@@ -244,7 +244,7 @@ class TestCityStateExtraction:
 
     def test_null_safety(self, spark):
         """Test that all functions handle nulls safely."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
             extract_state,
             get_state_name,
@@ -276,7 +276,7 @@ class TestCityStateExtraction:
 
     def test_case_insensitive_extraction(self, spark):
         """Test that extraction works regardless of case."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
             extract_state,
         )
@@ -307,7 +307,7 @@ class TestCityStateExtraction:
 
     def test_territories_support(self, spark):
         """Test support for US territories."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_state,
             get_state_name,
             validate_state,
@@ -695,7 +695,7 @@ class TestExtensibility:
 
     def test_validate_city(self, spark):
         """Test city validation functionality."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             addresses,
         )
 
@@ -749,7 +749,7 @@ class TestExtensibility:
 
     def test_standardize_city(self, spark):
         """Test city name standardization."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             addresses,
         )
 

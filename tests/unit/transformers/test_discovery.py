@@ -28,20 +28,20 @@ class TestTransformerDiscovery:
         # Should return a list (may be empty if no transformers found)
 
     def test_resolve_transformer_with_dot_notation(self, discovery):
-        """Test resolving transformer with dot notation (e.g., 'text.clean_emails')."""
+        """Test resolving transformer with dot notation (e.g., 'text.emails')."""
         # This should work with the old format
-        transformer_name, transformer_path = discovery.resolve_transformer("text.clean_emails")
+        transformer_name, transformer_path = discovery.resolve_transformer("text.emails")
         # May return None if transformer doesn't exist, but should not raise error
         assert transformer_name is None
         assert transformer_path is None
 
     def test_resolve_transformer_without_dot_notation(self, discovery):
-        """Test resolving transformer without dot notation (e.g., 'clean_emails')."""
+        """Test resolving transformer without dot notation (e.g., 'emails')."""
         # This should work with the new format
-        transformer_name, transformer_path = discovery.resolve_transformer("clean_emails")
+        transformer_name, transformer_path = discovery.resolve_transformer("emails")
         # May return None if transformer doesn't exist, but should not raise error
         if transformer_name:
-            assert transformer_name == "clean_emails"
+            assert transformer_name == "emails"
             assert transformer_path.exists()
             assert transformer_path.is_dir()
 
@@ -102,7 +102,7 @@ class TestTransformerDiscovery:
     def test_resolve_transformer_whitespace(self, discovery):
         """Test transformer resolution with whitespace."""
         # Should not match with spaces
-        transformer_name, transformer_path = discovery.resolve_transformer(" clean_emails ")
+        transformer_name, transformer_path = discovery.resolve_transformer(" emails ")
         assert transformer_name is None
         assert transformer_path is None
 

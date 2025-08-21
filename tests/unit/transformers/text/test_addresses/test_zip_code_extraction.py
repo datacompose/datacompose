@@ -172,7 +172,7 @@ class TestZipCodeExtraction:
 
     def test_valid_zip_codes(self, valid_zip_codes_df):
         """Test extraction of valid ZIP code formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -189,7 +189,7 @@ class TestZipCodeExtraction:
 
     def test_invalid_zip_codes(self, invalid_zip_codes_df):
         """Test handling of invalid ZIP code formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -206,7 +206,7 @@ class TestZipCodeExtraction:
 
     def test_zip_codes_in_text(self, zip_codes_in_text_df):
         """Test extraction of ZIP codes from text strings."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -223,7 +223,7 @@ class TestZipCodeExtraction:
 
     def test_special_cases(self, special_cases_df):
         """Test special ZIP code cases and formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -240,7 +240,7 @@ class TestZipCodeExtraction:
 
     def test_international_postal_codes(self, international_postal_codes_df):
         """Test that international postal codes are handled correctly."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -257,7 +257,7 @@ class TestZipCodeExtraction:
 
     def test_boundary_zip_codes(self, boundary_zip_codes_df):
         """Test ZIP codes at the boundaries of valid ranges."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -274,7 +274,7 @@ class TestZipCodeExtraction:
 
     def test_unicode_and_special_chars(self, unicode_special_chars_df):
         """Test ZIP code extraction with Unicode and special characters."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -291,7 +291,7 @@ class TestZipCodeExtraction:
 
     def test_null_handling(self, null_handling_df):
         """Test proper handling of null values."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -310,7 +310,7 @@ class TestZipCodeExtraction:
 
     def test_column_operations(self, spark, valid_zip_codes_df):
         """Test ZIP code extraction with various column operations."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -337,7 +337,7 @@ class TestZipCodeExtraction:
 
     def test_chained_transformations(self, spark, zip_codes_in_text_df):
         """Test ZIP code extraction in combination with other transformations."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -359,7 +359,7 @@ class TestZipCodeExtraction:
         """Test performance with large dataset."""
         import time
 
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -389,7 +389,7 @@ class TestZipCodeExtraction:
 
     def test_multiple_zip_extraction_precedence(self, spark):
         """Test that first valid ZIP is extracted when multiple are present."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -414,7 +414,7 @@ class TestZipCodeExtraction:
 
     def test_zip_with_different_separators(self, spark):
         """Test ZIP codes with various separator characters."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -440,7 +440,7 @@ class TestZipCodeExtraction:
 
     def test_extreme_edge_cases(self, spark):
         """Test extreme edge cases that might break the regex."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -489,7 +489,7 @@ class TestZipCodeExtraction:
 
     def test_malformed_input_handling(self, spark):
         """Test handling of malformed and malicious inputs."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -532,7 +532,7 @@ class TestZipCodeExtraction:
 
     def test_consistency_across_runs(self, spark):
         """Test that results are consistent across multiple runs."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -560,7 +560,7 @@ class TestZipCodeExtraction:
         """Test patterns that could cause regex performance issues."""
         import time
 
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -595,7 +595,7 @@ class TestZipCodeExtraction:
 
     def test_boundary_word_detection(self, spark):
         """Test word boundary detection edge cases."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -650,7 +650,7 @@ class TestZipCodeValidation:
 
     def test_validate_zip_code_valid_formats(self, spark):
         """Test validation of valid ZIP code formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_zip_code,
         )
 
@@ -676,7 +676,7 @@ class TestZipCodeValidation:
 
     def test_validate_zip_code_invalid_formats(self, spark):
         """Test validation of invalid ZIP code formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_zip_code,
         )
 
@@ -709,7 +709,7 @@ class TestZipCodeValidation:
 
     def test_is_valid_zip_code_alias(self, spark):
         """Test that is_valid_zip_code is an alias for validate_zip_code."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             is_valid_zip_code,
             validate_zip_code,
         )
@@ -736,7 +736,7 @@ class TestZipCodeValidation:
 
     def test_standardize_zip_code(self, spark):
         """Test ZIP code standardization."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             standardize_zip_code,
         )
 
@@ -766,7 +766,7 @@ class TestZipCodeValidation:
 
     def test_get_zip_code_type(self, spark):
         """Test ZIP code type detection."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             get_zip_code_type,
         )
 
@@ -797,7 +797,7 @@ class TestZipCodeValidation:
 
     def test_split_zip_code(self, spark):
         """Test ZIP code splitting into base and extension."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             split_zip_code,
         )
 
@@ -841,7 +841,7 @@ class TestZipCodeValidation:
 
     def test_combined_workflow(self, spark):
         """Test a combined workflow using multiple functions."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
             get_zip_code_type,
             split_zip_code,
@@ -897,7 +897,7 @@ class TestZipCodeValidation:
 
     def test_validation_edge_cases(self, spark):
         """Test validation with edge cases."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_zip_code,
         )
 
@@ -934,7 +934,7 @@ class TestZipCodeValidation:
         # Create DataFrame with nulls
         from pyspark.sql.types import StringType, StructField, StructType
 
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             get_zip_code_type,
             split_zip_code,
             standardize_zip_code,
@@ -965,7 +965,7 @@ class TestZipCodeValidation:
 
     def test_validation_with_extraction(self, spark):
         """Test validation after extraction from text."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
             validate_zip_code,
         )

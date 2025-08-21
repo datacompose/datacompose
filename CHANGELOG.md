@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2025-08-21
+
+### Changed
+- **Documentation**: Streamlined README to be more concise
+  - Removed extensive code examples (now on website)
+  - Reduced from 390 lines to 44 lines
+  - Focused on core features and philosophy
+  - Added link to datacompose.io for detailed documentation
+
+### Fixed
+- **Test Suite**: Fixed failing CLI tests for `add` command
+  - Tests now properly mock ConfigLoader for isolated filesystem environments
+  - `test_add_invalid_transformer` correctly validates transformer not found error
+  - `test_complete_transformer_success` updated to match actual transformer names
+  - All CLI command tests passing with proper configuration mocking
+
 ## [0.2.4] - 2025-08-13
 
 ### Added
@@ -41,9 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed `validate` command completely
 - **Import Strategy**: Primitives now try local utils import first, fall back to datacompose package
 - **File Naming**: Generated files use plural form with primitives suffix
-  - `clean_emails` → `email_primitives.py`
-  - `clean_addresses` → `address_primitives.py`
-  - `clean_phone_numbers` → `phone_primitives.py`
+  - `emails` → `email_primitives.py`
+  - `addresses` → `address_primitives.py`
+  - `phone_numbers` → `phone_primitives.py`
 
 ### Fixed
 - **Critical**: Fixed utils/primitives.py output location to be shared across all transformers

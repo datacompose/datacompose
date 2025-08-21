@@ -320,7 +320,7 @@ def generate_performance_test_data(n=10000):
 
 
 # ========================================================================
-# ADDRESS TEST DATA FROM test_clean_addresses.py
+# ADDRESS TEST DATA FROM test_addresses.py
 # ========================================================================
 
 # Full address test data with components

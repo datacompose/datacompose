@@ -30,19 +30,25 @@ class TestAddCommandCompletion:
         """Test transformer name completion with available transformers."""
         with patch('datacompose.cli.commands.add.TransformerDiscovery') as MockDiscovery:
             mock_instance = MockDiscovery.return_value
-            mock_instance.list_transformers.return_value = ['clean_emails', 'clean_addresses', 'clean_phone_numbers']
+            mock_instance.list_transformers.return_value = ['emails', 'addresses', 'phone_numbers']
             
-            # Test partial match
-            result = complete_transformer(None, None, 'clean_')
-            assert len(result) == 3
-            assert all(isinstance(item, click.shell_completion.CompletionItem) for item in result)
-            assert all(item.value.startswith('clean_') for item in result)
-            
-            # Test specific match
-            result = complete_transformer(None, None, 'clean_em')
+            # Test partial match for 'em' prefix
+            result = complete_transformer(None, None, 'em')
             assert len(result) == 1
             assert isinstance(result[0], click.shell_completion.CompletionItem)
-            assert result[0].value == 'clean_emails'
+            assert result[0].value == 'emails'
+            
+            # Test partial match for 'add' prefix
+            result = complete_transformer(None, None, 'add')
+            assert len(result) == 1
+            assert isinstance(result[0], click.shell_completion.CompletionItem)
+            assert result[0].value == 'addresses'
+            
+            # Test partial match for 'phone' prefix
+            result = complete_transformer(None, None, 'phone')
+            assert len(result) == 1
+            assert isinstance(result[0], click.shell_completion.CompletionItem)
+            assert result[0].value == 'phone_numbers'
             
             # Test no match
             result = complete_transformer(None, None, 'xyz')
@@ -160,7 +166,7 @@ class TestRunAddFunction:
     def test_run_add_transformer_not_found(self, mock_discovery):
         """Test _run_add when transformer is not found."""
         mock_discovery.resolve_transformer.return_value = (None, None)
-        mock_discovery.list_transformers.return_value = ['clean_emails', 'clean_addresses']
+        mock_discovery.list_transformers.return_value = ['emails', 'addresses']
         
         exit_code = _run_add('invalid_transformer', 'pyspark', None, 'templates', False)
         
@@ -169,11 +175,11 @@ class TestRunAddFunction:
 
     def test_run_add_generator_not_found(self, mock_discovery):
         """Test _run_add when generator is not found."""
-        mock_discovery.resolve_transformer.return_value = ('clean_emails', Path('/path/to/transformer'))
+        mock_discovery.resolve_transformer.return_value = ('emails', Path('/path/to/transformer'))
         mock_discovery.resolve_generator.return_value = None
         mock_discovery.list_generators.return_value = ['pyspark.generator']
         
-        exit_code = _run_add('clean_emails', 'invalid_target', None, 'templates', False)
+        exit_code = _run_add('emails', 'invalid_target', None, 'templates', False)
         
         assert exit_code == 1
         mock_discovery.resolve_generator.assert_called_once_with('invalid_target')
@@ -181,7 +187,7 @@ class TestRunAddFunction:
     def test_run_add_success_new_file(self, mock_discovery):
         """Test successful generation of new UDF."""
         transformer_path = Path('/path/to/transformer')
-        mock_discovery.resolve_transformer.return_value = ('clean_emails', transformer_path)
+        mock_discovery.resolve_transformer.return_value = ('emails', transformer_path)
         
         mock_generator_class = MagicMock()
         mock_generator_instance = MagicMock()
@@ -189,17 +195,17 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = mock_generator_class
         
         mock_generator_instance.generate.return_value = {
-            'output_path': 'build/clean_emails/email_primitives.py',
-            'test_path': 'build/clean_emails/test_email_primitives.py',
+            'output_path': 'build/emails/email_primitives.py',
+            'test_path': 'build/emails/test_email_primitives.py',
             'function_name': 'clean_email',
             'skipped': False
         }
         
-        exit_code = _run_add('clean_emails', 'pyspark', None, 'templates', False)
+        exit_code = _run_add('emails', 'pyspark', None, 'templates', False)
         
         assert exit_code == 0
         mock_generator_instance.generate.assert_called_once_with(
-            'clean_emails', 
+            'emails', 
             force=False, 
             transformer_dir=transformer_path
         )
@@ -207,7 +213,7 @@ class TestRunAddFunction:
     def test_run_add_success_skipped(self, mock_discovery):
         """Test when UDF already exists and is skipped."""
         transformer_path = Path('/path/to/transformer')
-        mock_discovery.resolve_transformer.return_value = ('clean_emails', transformer_path)
+        mock_discovery.resolve_transformer.return_value = ('emails', transformer_path)
         
         mock_generator_class = MagicMock()
         mock_generator_instance = MagicMock()
@@ -215,20 +221,20 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = mock_generator_class
         
         mock_generator_instance.generate.return_value = {
-            'output_path': 'build/clean_emails/email_primitives.py',
+            'output_path': 'build/emails/email_primitives.py',
             'function_name': 'clean_email',
             'skipped': True,
             'hash': 'abc123'
         }
         
-        exit_code = _run_add('clean_emails', 'pyspark', None, 'templates', True)
+        exit_code = _run_add('emails', 'pyspark', None, 'templates', True)
         
         assert exit_code == 0
 
     def test_run_add_with_custom_output(self, mock_discovery):
         """Test _run_add with custom output directory."""
         transformer_path = Path('/path/to/transformer')
-        mock_discovery.resolve_transformer.return_value = ('clean_emails', transformer_path)
+        mock_discovery.resolve_transformer.return_value = ('emails', transformer_path)
         
         mock_generator_class = MagicMock()
         mock_generator_instance = MagicMock()
@@ -236,23 +242,23 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = mock_generator_class
         
         mock_generator_instance.generate.return_value = {
-            'output_path': 'custom/clean_emails/email_primitives.py',
+            'output_path': 'custom/emails/email_primitives.py',
             'function_name': 'clean_email',
             'skipped': False
         }
         
-        exit_code = _run_add('clean_emails', 'pyspark', 'custom', 'templates', False)
+        exit_code = _run_add('emails', 'pyspark', 'custom', 'templates', False)
         
         assert exit_code == 0
         # Verify generator was initialized with custom output
         mock_generator_class.assert_called_once()
         call_kwargs = mock_generator_class.call_args[1]
-        assert str(call_kwargs['output_dir']) == 'custom/clean_emails'
+        assert str(call_kwargs['output_dir']) == 'custom/emails'
 
     def test_run_add_exception_handling(self, mock_discovery):
         """Test _run_add handles exceptions properly."""
         transformer_path = Path('/path/to/transformer')
-        mock_discovery.resolve_transformer.return_value = ('clean_emails', transformer_path)
+        mock_discovery.resolve_transformer.return_value = ('emails', transformer_path)
         
         mock_generator_class = MagicMock()
         mock_generator_instance = MagicMock()
@@ -261,14 +267,14 @@ class TestRunAddFunction:
         
         mock_generator_instance.generate.side_effect = Exception("Generation failed")
         
-        exit_code = _run_add('clean_emails', 'pyspark', None, 'templates', False)
+        exit_code = _run_add('emails', 'pyspark', None, 'templates', False)
         
         assert exit_code == 1
 
     def test_run_add_exception_with_verbose(self, mock_discovery, capsys):
         """Test _run_add shows traceback in verbose mode."""
         transformer_path = Path('/path/to/transformer')
-        mock_discovery.resolve_transformer.return_value = ('clean_emails', transformer_path)
+        mock_discovery.resolve_transformer.return_value = ('emails', transformer_path)
         
         mock_generator_class = MagicMock()
         mock_generator_instance = MagicMock()
@@ -277,7 +283,7 @@ class TestRunAddFunction:
         
         mock_generator_instance.generate.side_effect = ValueError("Specific error")
         
-        exit_code = _run_add('clean_emails', 'pyspark', None, 'templates', True)
+        exit_code = _run_add('emails', 'pyspark', None, 'templates', True)
         
         assert exit_code == 1
         captured = capsys.readouterr()
@@ -298,7 +304,7 @@ class TestAddCommandIntegration:
         with patch('datacompose.cli.commands.add.validate_platform') as mock_validate:
             mock_validate.return_value = False
             
-            result = runner.invoke(cli, ['add', 'clean_emails', '--target', 'invalid'])
+            result = runner.invoke(cli, ['add', 'emails', '--target', 'invalid'])
             assert result.exit_code == 1
 
     def test_add_command_type_validation_failure(self, runner):
@@ -310,7 +316,7 @@ class TestAddCommandIntegration:
                 
                 result = runner.invoke(
                     cli, 
-                    ['add', 'clean_emails', '--target', 'pyspark', '--type', 'invalid_type']
+                    ['add', 'emails', '--target', 'pyspark', '--type', 'invalid_type']
                 )
                 assert result.exit_code == 1
 
@@ -321,23 +327,27 @@ class TestAddCommandIntegration:
                 mock_platform.return_value = True
                 mock_run.return_value = 0
                 
-                result = runner.invoke(cli, ['add', 'clean_emails', '--target', 'pyspark'])
+                result = runner.invoke(cli, ['add', 'emails', '--target', 'pyspark'])
                 assert result.exit_code == 0
 
     def test_add_command_template_dir_option(self, runner):
         """Test add command with custom template directory."""
         with patch('datacompose.cli.commands.add.validate_platform') as mock_platform:
             with patch('datacompose.cli.commands.add._run_add') as mock_run:
-                mock_platform.return_value = True
-                mock_run.return_value = 0
-                
-                result = runner.invoke(
-                    cli, 
-                    ['add', 'clean_emails', '--template-dir', 'custom/templates']
-                )
-                assert result.exit_code == 0
-                mock_run.assert_called_once()
-                assert mock_run.call_args[0][3] == 'custom/templates'
+                with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
+                    with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
+                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                        mock_target.return_value = "pyspark"
+                        mock_platform.return_value = True
+                        mock_run.return_value = 0
+                        
+                        result = runner.invoke(
+                            cli, 
+                            ['add', 'emails', '--template-dir', 'custom/templates']
+                        )
+                        assert result.exit_code == 0
+                        mock_run.assert_called_once()
+                        assert mock_run.call_args[0][3] == 'custom/templates'
 
     def test_add_command_short_options(self, runner):
         """Test add command with short option flags."""
@@ -348,7 +358,7 @@ class TestAddCommandIntegration:
                 
                 result = runner.invoke(
                     cli, 
-                    ['add', 'clean_emails', '-t', 'pyspark', '-o', 'output', '-v']
+                    ['add', 'emails', '-t', 'pyspark', '-o', 'output', '-v']
                 )
                 assert result.exit_code == 0
                 mock_run.assert_called_once()
@@ -386,22 +396,26 @@ class TestAddCommandEdgeCases:
         """Test add command with absolute path for output."""
         with patch('datacompose.cli.commands.add.validate_platform') as mock_platform:
             with patch('datacompose.cli.commands.add._run_add') as mock_run:
-                mock_platform.return_value = True
-                mock_run.return_value = 0
-                
-                result = runner.invoke(
-                    cli, 
-                    ['add', 'clean_emails', '--output', '/absolute/path/to/output']
-                )
-                assert result.exit_code == 0
-                mock_run.assert_called_once()
-                assert mock_run.call_args[0][2] == '/absolute/path/to/output'
+                with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
+                    with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
+                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                        mock_target.return_value = "pyspark"
+                        mock_platform.return_value = True
+                        mock_run.return_value = 0
+                        
+                        result = runner.invoke(
+                            cli, 
+                            ['add', 'emails', '--output', '/absolute/path/to/output']
+                        )
+                        assert result.exit_code == 0
+                        mock_run.assert_called_once()
+                        assert mock_run.call_args[0][2] == '/absolute/path/to/output'
 
     def test_add_handles_generator_initialization_error(self):
         """Test handling of generator initialization errors."""
         with patch('datacompose.cli.commands.add.TransformerDiscovery') as MockDiscovery:
             mock_instance = MockDiscovery.return_value
-            mock_instance.resolve_transformer.return_value = ('clean_emails', Path('/path'))
+            mock_instance.resolve_transformer.return_value = ('emails', Path('/path'))
             mock_instance.list_generators.return_value = ['pyspark.generator']
             
             # Create a mock that raises on instantiation  
@@ -413,7 +427,7 @@ class TestAddCommandEdgeCases:
             mock_instance.resolve_generator.return_value = mock_generator_class
             
             # Test that the error is caught and handled properly
-            exit_code = _run_add('clean_emails', 'pyspark', None, 'templates', False)
+            exit_code = _run_add('emails', 'pyspark', None, 'templates', False)
             assert exit_code == 1
 
     def test_add_with_path_traversal_attempt(self, runner):
@@ -423,10 +437,14 @@ class TestAddCommandEdgeCases:
                 mock_platform.return_value = True
                 mock_run.return_value = 0
                 
-                result = runner.invoke(
-                    cli, 
-                    ['add', 'clean_emails', '--output', '../../../etc']
-                )
-                # Should still proceed - security is handled by generator
-                assert result.exit_code == 0
-                mock_run.assert_called_once()
+                with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
+                    with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
+                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                        mock_target.return_value = "pyspark"
+                        result = runner.invoke(
+                            cli, 
+                            ['add', 'emails', '--output', '../../../etc']
+                        )
+                        # Should still proceed - security is handled by generator
+                        assert result.exit_code == 0
+                        mock_run.assert_called_once()

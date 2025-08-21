@@ -58,9 +58,9 @@ def scan_transformers_directory(transformers_dir: Path) -> Dict[str, Dict[str, D
     
     # Define the primitive library directories
     library_dirs = {
-        'emails': 'clean_emails',
-        'addresses': 'clean_addresses',
-        'phone-numbers': 'clean_phone_numbers'
+        'emails': 'emails',
+        'addresses': 'addresses',
+        'phone-numbers': 'phone_numbers'
     }
     
     for lib_name, lib_dir in library_dirs.items():

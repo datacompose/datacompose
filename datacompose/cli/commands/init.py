@@ -18,6 +18,7 @@ from datacompose.cli.colors import dim, error, highlight, info, success
 
 DEFAULT_CONFIG = {
     "version": "1.0",
+    "default_target": "pyspark",
     "aliases": {"utils": "./src/utils"},
     "targets": {
         "pyspark": {
@@ -57,7 +58,7 @@ class InitCommand:
     def get_config_template(template_name: str) -> Dict[str, Any]:
         """Get configuration template by name."""
         if template_name == "minimal":
-            return {"version": "1.0", "targets": {"pyspark": {"output": "./build"}}}
+            return {"version": "1.0", "default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
         elif template_name == "advanced":
             config = DEFAULT_CONFIG.copy()
             config.update(
@@ -199,6 +200,31 @@ class InitCommand:
 
         # Update targets with user selections
         config["targets"] = selected_targets
+        
+        # Set default target to the first selected target (or only target if single)
+        target_keys = list(selected_targets.keys())
+        if len(target_keys) == 1:
+            config["default_target"] = target_keys[0]
+        elif len(target_keys) > 1:
+            # Ask user to select default target
+            print(highlight("\nSelect Default Target"))
+            print(dim("Which platform should be used by default when running 'datacompose add'?\n"))
+            for i, key in enumerate(target_keys, 1):
+                print(f"  {i}. {key}")
+            print()
+            
+            while True:
+                choice = input(f"Select default target (1-{len(target_keys)}): ").strip()
+                try:
+                    choice_idx = int(choice) - 1
+                    if 0 <= choice_idx < len(target_keys):
+                        config["default_target"] = target_keys[choice_idx]
+                        print(dim(f"Default target set to: {target_keys[choice_idx]}\n"))
+                        break
+                    else:
+                        print(error("Invalid selection. Please try again."))
+                except ValueError:
+                    print(error("Please enter a number."))
 
         print()  # Add spacing
         return config
@@ -403,11 +429,11 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
                     "2. Source your shell config or restart terminal for tab completion"
                 )
                 print(
-                    "3. Add your first transformer: datacompose add clean_emails --target pyspark"
+                    "3. Add your first transformer: datacompose add emails"
                 )
             else:
                 print(
-                    "2. Add your first transformer: datacompose add clean_emails --target pyspark"
+                    "2. Add your first transformer: datacompose add emails"
                 )
                 if not skip_completion:
                     print(
@@ -419,7 +445,7 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
                 print(success("✓ Tab completion configured"))
                 print(
                     highlight(
-                        "\nRun 'datacompose add clean_emails --target pyspark' to get started"
+                        "\nRun 'datacompose add emails' to get started"
                     )
                 )
                 print(
@@ -430,7 +456,7 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
             else:
                 print(
                     highlight(
-                        "\nRun 'datacompose add clean_emails --target pyspark' to get started"
+                        "\nRun 'datacompose add emails' to get started"
                     )
                 )
                 if not skip_completion and not yes:

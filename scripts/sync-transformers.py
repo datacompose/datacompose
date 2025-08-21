@@ -14,9 +14,9 @@ class TransformerDocGenerator:
     
     # Mapping from source directory names to output names
     NAME_MAPPING = {
-        'clean_addresses': 'addresses',
-        'clean_emails': 'emails',
-        'clean_phone_numbers': 'phone-numbers'
+        'addresses': 'addresses',
+        'emails': 'emails',
+        'phone_numbers': 'phone_numbers'
     }
     
     # Transformers that should use table-only display
@@ -244,7 +244,7 @@ class TransformerDocGenerator:
     def get_registry_name(self, source_dir_name: str) -> str:
         """Get the registry name from the source directory name."""
         # Special cases
-        if source_dir_name == 'clean_phone_numbers':
+        if source_dir_name == 'phone_numbers':
             return 'phones'
         # Map clean_X to X, replacing underscores with nothing for registry names
         if source_dir_name.startswith('clean_'):
@@ -254,7 +254,7 @@ class TransformerDocGenerator:
     def process_transformer(self, source_path: Path):
         """Process a single transformer directory."""
         # Get the transformer names
-        source_name = source_path.name  # e.g., 'clean_addresses'
+        source_name = source_path.name  # e.g., 'addresses'
         output_name = self.NAME_MAPPING.get(source_name, source_name)  # e.g., 'addresses'
         registry_name = self.get_registry_name(source_name)  # e.g., 'addresses'
         

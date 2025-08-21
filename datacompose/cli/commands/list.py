@@ -95,7 +95,7 @@ class ListCommand:
                 print(f"    • {transformer_name}")
 
         print("\nUsage: datacompose add <transformer> --target <platform> [--type <type>]")
-        print("Example: datacompose add clean_emails --target pyspark")
+        print("Example: datacompose add emails --target pyspark")
         return 0
 
     @staticmethod
@@ -114,5 +114,5 @@ class ListCommand:
                 print(f"    • {gen_type} ({gen_class.__name__})")
 
         print("\nUsage: datacompose add <transformer> --target <platform> [--type <type>]")
-        print("Example: datacompose add clean_emails --target pyspark")
+        print("Example: datacompose add emails --target pyspark")
         return 0

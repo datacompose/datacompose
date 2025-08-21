@@ -6,7 +6,7 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,
 )
 

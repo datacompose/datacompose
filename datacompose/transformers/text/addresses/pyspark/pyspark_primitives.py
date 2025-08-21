@@ -1005,7 +1005,7 @@ def format_secondary_address(unit_type: Column, unit_number: Column) -> Column:
         Column with formatted secondary address
 
     Example:
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_udf import format_secondary_address
+        from datacompose.transformers.text.addresses.pyspark.pyspark_udf import format_secondary_address
         df.select(format_secondary_address(F.lit("Apartment"), F.lit("5B")))
         # -> "Apt 5B"
     """

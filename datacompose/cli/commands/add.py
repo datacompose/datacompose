@@ -7,6 +7,7 @@ from pathlib import Path
 import click
 
 from datacompose.cli.colors import dim, error, highlight, info, success
+from datacompose.cli.config import ConfigLoader
 from datacompose.cli.validation import validate_platform, validate_type_for_platform
 from datacompose.transformers.discovery import TransformerDiscovery
 
@@ -85,16 +86,16 @@ _MODULE_DIR = Path(__file__).parent
 @click.option(
     "--target",
     "-t",
-    default="pyspark",
+    default=None,
     shell_complete=complete_target,
-    help="Target platform (e.g., 'pyspark', 'postgres', 'snowflake'). Default: pyspark",
+    help="Target platform (e.g., 'pyspark', 'postgres', 'snowflake'). Uses default from datacompose.json if not specified",
 )
 @click.option(
     "--type",
     shell_complete=complete_type,
     help="UDF type for the platform (e.g., 'pandas_udf', 'sql_udf'). Uses platform default if not specified",
 )
-@click.option("--output", "-o", help="Output directory (default: build/{target})")
+@click.option("--output", "-o", help="Output directory (default: from config or build/{target})")
 @click.option(
     "--template-dir",
     default="src/transformers/templates",
@@ -105,8 +106,21 @@ _MODULE_DIR = Path(__file__).parent
 def add(ctx, transformer, target, type, output, template_dir, verbose):
     """Add UDFs for transformers.
 
-    TRANSFORMER: Transformer to add UDF for (e.g., 'clean_emails')
+    TRANSFORMER: Transformer to add UDF for (e.g., 'emails')
     """
+    # Load config to get default target if not specified
+    config = ConfigLoader.load_config()
+    
+    if target is None:
+        # Try to get default target from config
+        target = ConfigLoader.get_default_target(config)
+        if target is None:
+            print(error("Error: No target specified and no default target found in datacompose.json"))
+            print(info("Please specify a target with --target or run 'datacompose init' to set up defaults"))
+            ctx.exit(1)
+        elif verbose:
+            print(dim(f"Using default target from config: {target}"))
+    
     # Initialize discovery for validation
     discovery = TransformerDiscovery()
 
@@ -154,9 +168,15 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
         print(info(f"Available generators: {', '.join(discovery.list_generators())}"))
         return 1
 
-    # Determine output directory - no platform subdirectory needed
+    # Determine output directory
     if not output:
-        output_dir = f"build/{transformer_name}"
+        # Try to get output from config first
+        config = ConfigLoader.load_config()
+        config_output = ConfigLoader.get_target_output(config, target)
+        if config_output:
+            output_dir = f"{config_output}/{transformer_name}"
+        else:
+            output_dir = f"build/{transformer_name}"
     else:
         output_dir = f"{output}/{transformer_name}"
 

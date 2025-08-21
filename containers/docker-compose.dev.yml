@@ -44,11 +44,11 @@ services:
   # Datacompose Development Container
   datacompose-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: containers/Dockerfile.dev
     container_name: datacompose-dev
     volumes:
-      - .:/workspace:cached
+      - ..:/workspace:cached
       - ~/.ssh:/home/datacompose/.ssh:ro
       - datacompose_home:/home/datacompose/.datacompose
       - vscode_extensions:/home/datacompose/.vscode-server/extensions

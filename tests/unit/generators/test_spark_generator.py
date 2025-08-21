@@ -86,13 +86,13 @@ def validate_format(col):
     def test_get_output_filename(self, spark_generator):
         """Test output filename generation for PySpark primitives."""
         # Test known transformer names
-        filename = spark_generator._get_output_filename("clean_emails")
+        filename = spark_generator._get_output_filename("emails")
         assert filename == "email_primitives.py"
 
-        filename = spark_generator._get_output_filename("clean_addresses")
+        filename = spark_generator._get_output_filename("addresses")
         assert filename == "address_primitives.py"
 
-        filename = spark_generator._get_output_filename("clean_phone_numbers")
+        filename = spark_generator._get_output_filename("phone_numbers")
         assert filename == "phone_primitives.py"
 
         # Test unknown transformer (should use fallback)
@@ -183,9 +183,9 @@ def validate_format(col):
     def test_spark_udf_naming_convention(self, spark_generator):
         """Test PySpark primitives naming follows convention."""
         test_cases = [
-            ("clean_emails", "email_primitives.py"),
-            ("clean_addresses", "address_primitives.py"),
-            ("clean_phone_numbers", "phone_primitives.py"),
+            ("emails", "email_primitives.py"),
+            ("addresses", "address_primitives.py"),
+            ("phone_numbers", "phone_primitives.py"),
             ("custom_transformer", "custom_transformer_primitives.py"),
         ]
 

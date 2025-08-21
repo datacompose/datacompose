@@ -1,3 +1,4 @@
+
 # Development Dockerfile for Datacompose with VS Code integration
 FROM python:3.12
 
@@ -10,22 +11,12 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     postgresql-client \
     # Java for PySpark
-    openjdk-17-jdk-headless \
+    default-jdk-headless \
     # Clean up
     && rm -rf /var/lib/apt/lists/*
 
-# Set JAVA_HOME dynamically based on architecture
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "amd64" ]; then \
-        echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> /etc/environment; \
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64; \
-    else \
-        echo "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-${ARCH}" >> /etc/environment; \
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-${ARCH}; \
-    fi
-
-# Set JAVA_HOME for the build process
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+# Set JAVA_HOME to use default-java symlink (works across architectures)
+ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Create non-root user with sudo access
@@ -72,6 +63,7 @@ USER $USERNAME
 RUN git config --global --add safe.directory /workspace
 
 # Install Claude CLI for the user
+# RUN curl -fsSL claude.ai/install.sh | bash
 
 # Create directories for VS Code
 RUN mkdir -p /home/${USERNAME}/.vscode-server/extensions \

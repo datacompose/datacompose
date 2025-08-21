@@ -25,7 +25,7 @@ class TestAddCommandValidation:
     def test_invalid_platform_shows_helpful_error(self, runner):
         """Test that invalid platform shows helpful error message."""
         result = runner.invoke(
-            cli, ["add", "clean_emails", "--target", "invalid_platform"]
+            cli, ["add", "emails", "--target", "invalid_platform"]
         )
 
         assert result.exit_code == 1
@@ -39,7 +39,7 @@ class TestAddCommandValidation:
         """Test that invalid type shows helpful error message."""
         result = runner.invoke(
             cli,
-            ["add", "clean_emails", "--target", "pyspark", "--type", "invalid_type"],
+            ["add", "emails", "--target", "pyspark", "--type", "invalid_type"],
         )
 
         assert result.exit_code == 1
@@ -52,7 +52,7 @@ class TestAddCommandValidation:
         """Test that valid platform and type combination works."""
         # Skip this test since we only have pyspark without typed variants
         result = runner.invoke(
-            cli, ["add", "clean_emails", "--target", "pyspark"]
+            cli, ["add", "emails", "--target", "pyspark"]
         )
 
         # Should succeed (exit code 0) or show "already exists" message  
@@ -61,7 +61,7 @@ class TestAddCommandValidation:
 
     def test_valid_platform_without_type_works(self, runner):
         """Test that valid platform without type uses defaults."""
-        result = runner.invoke(cli, ["add", "clean_emails", "--target", "pyspark"])
+        result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
 
         # Check what the actual error is
         if result.exit_code != 0:
@@ -80,7 +80,7 @@ class TestAddCommandValidation:
             cli,
             [
                 "add",
-                "clean_emails",
+                "emails",
                 "--target",
                 "invalid_platform",
                 "--type",

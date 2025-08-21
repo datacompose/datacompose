@@ -5,7 +5,7 @@ This avoids the deep expression tree problem of nested when/otherwise statements
 
 import pytest
 from pyspark.sql import SparkSession, functions as F
-from datacompose.transformers.text.clean_emails.pyspark.pyspark_primitives import (
+from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
     DOMAIN_TYPO_MAPPINGS,
     emails,
 )

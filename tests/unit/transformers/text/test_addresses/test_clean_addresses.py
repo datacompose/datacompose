@@ -123,7 +123,7 @@ class TestAddressCleaning:
 
     def test_extract_zipcode(self, spark, address_test_data):
         """Test zip code extraction from various formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -155,7 +155,7 @@ class TestAddressCleaning:
         self, spark, address_test_data, messy_address_data
     ):
         """Test zip code extraction from full address strings."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -198,7 +198,7 @@ class TestAddressCleaning:
 
     def test_extract_zipcode_edge_cases(self, spark):
         """Test zip code extraction with edge cases and invalid formats."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 
@@ -258,7 +258,7 @@ class TestAddressCleaning:
 
     def test_extract_zipcode_international(self, spark):
         """Test that international postal codes are handled appropriately."""
-        from datacompose.transformers.text.clean_addresses.pyspark.pyspark_primitives import (
+        from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
         )
 

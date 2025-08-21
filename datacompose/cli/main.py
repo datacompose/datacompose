@@ -25,9 +25,9 @@ def cli(ctx):
     """Generate data cleaning UDFs for various platforms.
 
     Examples:
-      datacompose init
-      datacompose add clean_emails --target pyspark
-      datacompose add clean_emails --target snowflake --output sql/udfs/
+      datacompose init                  # Set up project with default target
+      datacompose add emails            # Uses default target from config
+      datacompose add emails --target snowflake --output sql/udfs/
       datacompose list targets
     """
     pass

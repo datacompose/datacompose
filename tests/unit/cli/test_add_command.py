@@ -60,10 +60,18 @@ class TestAddCommand:
 
     def test_add_invalid_transformer(self, runner, temp_dir, cli_command):
         """Test add command with non-existent transformer."""
+        from unittest.mock import patch
         with runner.isolated_filesystem():
-            result = runner.invoke(cli_command, ["add", "nonexistent_transformer"])
-            assert result.exit_code == 1
-            assert "Transformer not found" in result.output
+            # Mock ConfigLoader to return a default config
+            with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
+                with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
+                    mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                    mock_target.return_value = "pyspark"
+                    result = runner.invoke(
+                        cli_command, ["add", "nonexistent_transformer"]
+                    )
+                    assert result.exit_code == 1
+                    assert "Transformer not found" in result.output
 
     def test_add_invalid_target(self, runner, temp_dir, cli_command):
         """Test add command with invalid target."""
@@ -170,8 +178,10 @@ class TestAddCommand:
         with runner.isolated_filesystem():
             result = runner.invoke(
                 cli_command,
-                ["add", "clean_emails", "--target", "pyspark"],
+                ["add", "emails", "--target", "pyspark"],
             )
             assert result.exit_code == 0
             assert "generated:" in result.output.lower()
-            assert "email_primitives.py" in result.output  # PySpark generates primitives files
+            assert (
+                "email_primitives.py" in result.output
+            )  # PySpark generates primitives files

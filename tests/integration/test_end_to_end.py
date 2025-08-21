@@ -42,9 +42,9 @@ class TestEndToEndWorkflow:
 
             # Step 2: Add transformers for each domain
             transformers = [
-                ("clean_emails", "email_primitives.py"),
-                ("clean_addresses", "address_primitives.py"),
-                ("clean_phone_numbers", "phone_primitives.py"),
+                ("emails", "email_primitives.py"),
+                ("addresses", "address_primitives.py"),
+                ("phone_numbers", "phone_primitives.py"),
             ]
 
             for transformer_name, expected_file in transformers:
@@ -84,7 +84,7 @@ class TestEndToEndWorkflow:
             
             # Step 3: Verify we can import and use the primitives
             # (This would work if PySpark was installed)
-            email_primitives = Path("build/clean_emails/email_primitives.py")
+            email_primitives = Path("build/emails/email_primitives.py")
             content = email_primitives.read_text()
 
             # Check for some expected primitive functions
@@ -96,12 +96,12 @@ class TestEndToEndWorkflow:
             # Step 4: Test list command shows our transformers
             result = runner.invoke(cli, ["list", "transformers"])
             assert result.exit_code == 0
-            assert "clean_emails" in result.output
-            assert "clean_addresses" in result.output
-            assert "clean_phone_numbers" in result.output
+            assert "emails" in result.output
+            assert "addresses" in result.output
+            assert "phone_numbers" in result.output
 
             # Step 5: Test regeneration works
-            result = runner.invoke(cli, ["add", "clean_emails", "--target", "pyspark"])
+            result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
             assert result.exit_code == 0
             # Should either skip (if hash matches) or regenerate successfully
             assert (
@@ -122,7 +122,7 @@ class TestEndToEndWorkflow:
                 cli,
                 [
                     "add",
-                    "clean_emails",
+                    "emails",
                     "--target",
                     "pyspark",
                     "--output",
@@ -133,7 +133,7 @@ class TestEndToEndWorkflow:
 
             # Verify files in custom location (no platform subdirectory)
             output_file = Path(
-                f"{custom_output}/clean_emails/email_primitives.py"
+                f"{custom_output}/emails/email_primitives.py"
             )
             assert output_file.exists()
 
@@ -141,7 +141,7 @@ class TestEndToEndWorkflow:
         """Test that add command works even without init."""
         with runner.isolated_filesystem():
             # Try to add without init
-            result = runner.invoke(cli, ["add", "clean_emails", "--target", "pyspark"])
+            result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
             # Should work - init is not required
             assert result.exit_code == 0
             assert "generated" in result.output.lower()
@@ -164,7 +164,7 @@ class TestEndToEndWorkflow:
             runner.invoke(cli, ["init", "--yes"])
 
             result = runner.invoke(
-                cli, ["add", "clean_emails", "--target", "invalid_platform"]
+                cli, ["add", "emails", "--target", "invalid_platform"]
             )
             assert result.exit_code == 1
             assert "Platform 'invalid_platform' not found" in result.output
@@ -177,7 +177,7 @@ class TestEndToEndWorkflow:
             runner.invoke(cli, ["init", "--yes"])
 
             result = runner.invoke(
-                cli, ["add", "clean_emails", "--target", "pyspark", "--verbose"]
+                cli, ["add", "emails", "--target", "pyspark", "--verbose"]
             )
             assert result.exit_code == 0
             # Verbose mode should show more details

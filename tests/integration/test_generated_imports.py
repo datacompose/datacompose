@@ -22,16 +22,16 @@ class TestGeneratedImports:
     def test_generated_code_imports_primitives_from_utils(self, runner):
         """Test that generated code can import PrimitiveRegistry from local utils."""
         with runner.isolated_filesystem():
-            # Generate clean_emails primitives
+            # Generate emails primitives
             result = runner.invoke(
-                cli, ["add", "clean_emails", "--target", "pyspark"]
+                cli, ["add", "emails", "--target", "pyspark"]
             )
             assert result.exit_code == 0
 
             # Add the build directory to path (for utils import)
             sys.path.insert(0, str(Path("build")))
             # Add the generated package to path
-            sys.path.insert(0, str(Path("build/clean_emails")))
+            sys.path.insert(0, str(Path("build/emails")))
 
             try:
                 # Import the generated module
@@ -49,8 +49,8 @@ class TestGeneratedImports:
 
             finally:
                 # Clean up sys.path
-                if str(Path("build/clean_emails")) in sys.path:
-                    sys.path.remove(str(Path("build/clean_emails")))
+                if str(Path("build/emails")) in sys.path:
+                    sys.path.remove(str(Path("build/emails")))
                 if str(Path("build")) in sys.path:
                     sys.path.remove(str(Path("build")))
 
@@ -58,9 +58,9 @@ class TestGeneratedImports:
         """Test that all transformers can import PrimitiveRegistry from utils."""
         with runner.isolated_filesystem():
             transformers = [
-                ("clean_emails", "email_primitives", "emails"),
-                ("clean_addresses", "address_primitives", "addresses"),
-                ("clean_phone_numbers", "phone_primitives", "phones"),
+                ("emails", "email_primitives", "emails"),
+                ("addresses", "address_primitives", "addresses"),
+                ("phone_numbers", "phone_primitives", "phones"),
             ]
 
             # Add build directory once for utils
@@ -103,7 +103,7 @@ class TestGeneratedImports:
         with runner.isolated_filesystem():
             # Generate a transformer
             result = runner.invoke(
-                cli, ["add", "clean_emails", "--target", "pyspark"]
+                cli, ["add", "emails", "--target", "pyspark"]
             )
             assert result.exit_code == 0
 
@@ -126,30 +126,30 @@ class TestGeneratedImports:
             assert "class SmartPrimitive" in content
             
             # Verify utils is NOT in transformer directory
-            transformer_utils = Path("build/clean_emails/utils")
+            transformer_utils = Path("build/emails/utils")
             assert not transformer_utils.exists()
             
             # Test multiple transformers share the same utils
             result2 = runner.invoke(
-                cli, ["add", "clean_addresses", "--target", "pyspark"]
+                cli, ["add", "addresses", "--target", "pyspark"]
             )
             assert result2.exit_code == 0
             
             # Should still be only one utils directory at build root
             assert utils_dir.exists()
-            assert not Path("build/clean_addresses/utils").exists()
+            assert not Path("build/addresses/utils").exists()
 
     def test_generated_code_fallback_import(self, runner):
         """Test that generated code falls back to datacompose import if utils not found."""
         with runner.isolated_filesystem():
             # Generate the transformer
             result = runner.invoke(
-                cli, ["add", "clean_emails", "--target", "pyspark"]
+                cli, ["add", "emails", "--target", "pyspark"]
             )
             assert result.exit_code == 0
 
             # Read the generated file to verify import fallback structure
-            email_primitives_file = Path("build/clean_emails/email_primitives.py")
+            email_primitives_file = Path("build/emails/email_primitives.py")
             content = email_primitives_file.read_text()
             
             # Check that the fallback import structure exists
@@ -160,7 +160,7 @@ class TestGeneratedImports:
             
             # Now test that it actually works with utils present
             sys.path.insert(0, str(Path("build")))
-            sys.path.insert(0, str(Path("build/clean_emails")))
+            sys.path.insert(0, str(Path("build/emails")))
             
             try:
                 import email_primitives
@@ -185,8 +185,8 @@ class TestGeneratedImports:
                 pass
             finally:
                 # Clean up
-                if str(Path("build/clean_emails")) in sys.path:
-                    sys.path.remove(str(Path("build/clean_emails")))
+                if str(Path("build/emails")) in sys.path:
+                    sys.path.remove(str(Path("build/emails")))
                 if str(Path("build")) in sys.path:
                     sys.path.remove(str(Path("build")))
                 if "email_primitives" in sys.modules:
@@ -197,23 +197,23 @@ class TestGeneratedImports:
         with runner.isolated_filesystem():
             # Generate a transformer
             result = runner.invoke(
-                cli, ["add", "clean_emails", "--target", "pyspark"]
+                cli, ["add", "emails", "--target", "pyspark"]
             )
             assert result.exit_code == 0
             
             # Verify structure is flat under build
-            assert Path("build/clean_emails/email_primitives.py").exists()
+            assert Path("build/emails/email_primitives.py").exists()
             assert not Path("build/pyspark").exists()
             
             # Generate another transformer
             result2 = runner.invoke(
-                cli, ["add", "clean_phone_numbers", "--target", "pyspark"]
+                cli, ["add", "phone_numbers", "--target", "pyspark"]
             )
             assert result2.exit_code == 0
             
             # Verify both are at same level
-            assert Path("build/clean_phone_numbers/phone_primitives.py").exists()
-            assert Path("build/clean_emails/email_primitives.py").exists()
+            assert Path("build/phone_numbers/phone_primitives.py").exists()
+            assert Path("build/emails/email_primitives.py").exists()
             
             # Still no platform directory
             assert not Path("build/pyspark").exists()

@@ -41,9 +41,9 @@ class SparkPandasUDFGenerator(BaseGenerator):
         """Get the output filename for PySpark primitives."""
         # Map transformer names to their primitive namespace names
         name_mapping = {
-            "clean_emails": "email_primitives",
-            "clean_addresses": "address_primitives", 
-            "clean_phone_numbers": "phone_primitives"
+            "emails": "email_primitives",
+            "addresses": "address_primitives", 
+            "phone_numbers": "phone_primitives"
         }
         
         # Use mapped name if available, otherwise fall back to transformer_name
