@@ -2,15 +2,16 @@
 Email transformation primitives for PySpark.
 
 Preview Output:
-+----------------------+----------------------+-------------+----------------+--------+
-|email                 |standardized          |username     |domain          |is_valid|
-+----------------------+----------------------+-------------+----------------+--------+
-|john.doe@gmail.com    |john.doe@gmail.com    |john.doe     |gmail.com       |true    |
-|JANE.SMITH@OUTLOOK.COM|jane.smith@outlook.com|jane.smith   |outlook.com     |true    |
-|info@company-name.org |info@company-name.org |info         |company-name.org|true    |
-|invalid.email@        |                      |invalid.email|                |false   |
-|user+tag@domain.co.uk |user@domain.co.uk     |user         |domain.co.uk    |true    |
-+----------------------+----------------------+-------------+----------------+--------+
++---------------------------+----------------------+-------------+----------------+--------+
+|email                      |standardized          |username     |domain          |is_valid|
++---------------------------+----------------------+-------------+----------------+--------+
+| John.Doe@Gmail.COM        |john.doe@gmail.com    |john.doe     |gmail.com       |true    |
+|JANE.SMITH@OUTLOOK.COM     |jane.smith@outlook.com|jane.smith   |outlook.com     |true    |
+|  info@company-name.org    |info@company-name.org |info         |company-name.org|true    |
+|invalid.email@             |null                  |null         |null            |false   |
+|user+tag@domain.co.uk      |user+tag@domain.co.uk |user+tag     |domain.co.uk    |true    |
+|bad email@test.com         |null                  |null         |null            |false   |
++---------------------------+----------------------+-------------+----------------+--------+
 
 Usage Example:
 from pyspark.sql import SparkSession
@@ -46,7 +47,7 @@ result_df.show(truncate=False)
 valid_emails = result_df.filter(F.col("is_valid") == True)
 
 Installation:
-datacompose add emails --target pyspark
+datacompose add emails
 """
 
 import re

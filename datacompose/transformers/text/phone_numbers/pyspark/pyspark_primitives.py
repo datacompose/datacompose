@@ -2,15 +2,16 @@
 Phone number transformation primitives for PySpark.
 
 Preview Output:
-+--------------------+------------+--------+---------+------------+-------+---------+------------+
-|phone               |standardized|is_valid|area_code|local_number|has_ext|extension|is_toll_free|
-+--------------------+------------+--------+---------+------------+-------+---------+------------+
-|(555) 123-4567      |555-123-4567|true    |555      |1234567     |false  |         |false       |
-|+1-800-555-1234     |800-555-1234|true    |800      |5551234     |false  |         |true        |
-|555.123.4567 ext 890|            |true    |         |            |true   |890      |false       |
-|123-45-67           |            |true    |         |            |false  |         |false       |
-|1-800-FLOWERS       |800-356-9377|false   |800      |3569377     |false  |         |true        |
-+--------------------+------------+--------+---------+------------+-------+---------+------------+
++------------------------+----------------+--------+---------+------------+-------+---------+------------+
+|phone                   |standardized    |is_valid|area_code|local_number|has_ext|extension|is_toll_free|
++------------------------+----------------+--------+---------+------------+-------+---------+------------+
+| (555) 123-4567         |(555) 123-4567  |true    |555      |1234567     |false  |null     |false       |
+|+1-800-555-1234         |+1 800-555-1234 |true    |800      |5551234     |false  |null     |true        |
+|555.123.4567 ext 890    |555.123.4567    |true    |555      |1234567     |true   |890      |false       |
+|123-45-67               |null            |false   |null     |null        |false  |null     |false       |
+|1-800-FLOWERS           |1-800-356-9377  |true    |800      |3569377     |false  |null     |true        |
+|  415  555  0123        |415-555-0123    |true    |415      |5550123     |false  |null     |false       |
++------------------------+----------------+--------+---------+------------+-------+---------+------------+
 
 Usage Example:
 from pyspark.sql import SparkSession
@@ -52,7 +53,7 @@ result_df = df.select(
 result_df.show(truncate=False)
 
 Installation:
-datacompose add phone_numbers --target pyspark
+datacompose add phone_numbers
 """
 
 import re

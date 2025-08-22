@@ -2,14 +2,15 @@
 Address transformation primitives for PySpark.
 
 Preview Output:
-+-----------------------------------------+-------------+-----------+-----------+-----+-----+
-|address                                  |street_number|street_name|city       |state|zip  |
-+-----------------------------------------+-------------+-----------+-----------+-----+-----+
-|123 Main St, New York, NY 10001          |123          |Main       |New York   |NY   |10001|
-|456 Oak Ave Apt 5B, Los Angeles, CA 90001|456          |Oak        |Los Angeles|CA   |90001|
-|789 Elm Street, Chicago, IL 60601        |789          |Elm        |Chicago    |IL   |60601|
-|321 Pine Road Suite 100, Boston, MA 02101|321          |Pine       |Boston     |MA   |02101|
-+-----------------------------------------+-------------+-----------+-----------+-----+-----+
++----------------------------------------------+-------------+-----------+-----------+-----+-------+
+|address                                       |street_number|street_name|city       |state|zip    |
++----------------------------------------------+-------------+-----------+-----------+-----+-------+
+|  123 Main St,   New York, NY 10001          |123          |Main       |New York   |NY   |10001  |
+|456 oak ave apt 5b, los angeles, ca 90001    |456          |Oak        |Los Angeles|CA   |90001  |
+|789 ELM STREET CHICAGO IL  60601             |789          |Elm        |Chicago    |IL   |60601  |
+|321 pine rd. suite 100,, boston massachusetts|321          |Pine       |Boston     |MA   |null   |
+|PO Box 789, Atlanta, GA 30301                |null         |null       |Atlanta    |GA   |30301  |
++----------------------------------------------+-------------+-----------+-----------+-----+-------+
 
 Usage Example:
 from pyspark.sql import SparkSession
@@ -45,7 +46,7 @@ result_df.show(truncate=False)
 valid_addresses = result_df.filter(addresses.validate_zip_code(F.col("zip")))
 
 Installation:
-datacompose add addresses --target pyspark
+datacompose add addresses
 """
 
 import re
