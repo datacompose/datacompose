@@ -40,7 +40,7 @@ class TestInitCommand:
         assert config["version"] == "1.0"
         assert "targets" in config
         assert "pyspark" in config["targets"]
-        assert config["targets"]["pyspark"]["output"] == "./build"
+        assert config["targets"]["pyspark"]["output"] == "./transformers/pyspark"
         assert "aliases" not in config
 
     def test_get_config_template_advanced(self):
@@ -51,7 +51,7 @@ class TestInitCommand:
         assert "pyspark" in config["targets"]
         assert "aliases" in config
         assert config["aliases"]["utils"] == "./src/utils"
-        assert config["aliases"]["build"] == "./build"
+        assert config["aliases"]["transformers"] == "./transformers"
         assert "style" in config
         assert config["style"] == "custom"
         assert "include" in config
@@ -117,8 +117,8 @@ class TestInitCommand:
         config = {
             "version": "1.0",
             "targets": {
-                "pyspark": {"output": "./build/pyspark"},
-                "postgres": {"output": "./build/postgres"}
+                "pyspark": {"output": "./transformers/pyspark"},
+                "postgres": {"output": "./transformers/postgres"}
             }
         }
         original_dir = os.getcwd()
@@ -126,7 +126,7 @@ class TestInitCommand:
             with tempfile.TemporaryDirectory() as tmpdir:
                 os.chdir(tmpdir)
                 InitCommand.create_directory_structure(config, verbose=True)
-                assert Path("build").exists()
+                assert Path("transformers").exists()
         finally:
             os.chdir(original_dir)
 
@@ -299,12 +299,12 @@ class TestPromptForTargets:
         mock_get_key.side_effect = [' ', '\n']
         
         available_targets = {
-            "pyspark": {"output": "./build/pyspark", "name": "PySpark (Apache Spark)"}
+            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark (Apache Spark)"}
         }
         
         result = InitCommand.prompt_for_targets(available_targets)
         assert "pyspark" in result
-        assert result["pyspark"]["output"] == "./build/pyspark"
+        assert result["pyspark"]["output"] == "./transformers/pyspark"
 
     @patch.object(InitCommand, 'get_key')
     @patch('builtins.print')
@@ -315,7 +315,7 @@ class TestPromptForTargets:
         
         with patch('builtins.input', return_value=''):
             available_targets = {
-                "pyspark": {"output": "./build/pyspark", "name": "PySpark"},
+                "pyspark": {"output": "./transformers/pyspark", "name": "PySpark"},
                 "postgres": {"output": "./build/postgres", "name": "PostgreSQL"}
             }
             
@@ -330,7 +330,7 @@ class TestPromptForTargets:
         mock_get_key.return_value = 'q'
         
         available_targets = {
-            "pyspark": {"output": "./build/pyspark", "name": "PySpark"}
+            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark"}
         }
         
         result = InitCommand.prompt_for_targets(available_targets)
@@ -344,7 +344,7 @@ class TestPromptForTargets:
         mock_get_key.return_value = '\x1b'
         
         available_targets = {
-            "pyspark": {"output": "./build/pyspark", "name": "PySpark"}
+            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark"}
         }
         
         result = InitCommand.prompt_for_targets(available_targets)
@@ -361,7 +361,7 @@ class TestPromptForTargets:
         mock_input.return_value = './custom/output'
         
         available_targets = {
-            "pyspark": {"output": "./build/pyspark", "name": "PySpark"}
+            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark"}
         }
         
         result = InitCommand.prompt_for_targets(available_targets)
@@ -376,7 +376,7 @@ class TestPromptForTargets:
         mock_get_key.side_effect = [' ', '\x1b[B', ' ', '\n']
         
         available_targets = {
-            "pyspark": {"output": "./build/pyspark", "name": "PySpark"},
+            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark"},
             "postgres": {"output": "./build/postgres", "name": "PostgreSQL"}
         }
         
@@ -394,7 +394,7 @@ class TestPromptForConfig:
     def test_prompt_for_config_success(self, mock_print, mock_targets):
         """Test successful config prompting."""
         mock_targets.return_value = {
-            "pyspark": {"output": "./build"}
+            "pyspark": {"output": "./transformers/pyspark"}
         }
         
         template = DEFAULT_CONFIG.copy()

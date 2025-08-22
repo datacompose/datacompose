@@ -95,32 +95,39 @@ _MODULE_DIR = Path(__file__).parent
     shell_complete=complete_type,
     help="UDF type for the platform (e.g., 'pandas_udf', 'sql_udf'). Uses platform default if not specified",
 )
-@click.option("--output", "-o", help="Output directory (default: from config or build/{target})")
 @click.option(
-    "--template-dir",
-    default="src/transformers/templates",
-    help="Directory containing templates (default: src/transformers/templates)",
+    "--output",
+    "-o",
+    help="Output directory (default: from config or transformers/{target})",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
-def add(ctx, transformer, target, type, output, template_dir, verbose):
+def add(ctx, transformer, target, type, output, verbose):
     """Add UDFs for transformers.
 
     TRANSFORMER: Transformer to add UDF for (e.g., 'emails')
     """
     # Load config to get default target if not specified
     config = ConfigLoader.load_config()
-    
+
     if target is None:
         # Try to get default target from config
         target = ConfigLoader.get_default_target(config)
         if target is None:
-            print(error("Error: No target specified and no default target found in datacompose.json"))
-            print(info("Please specify a target with --target or run 'datacompose init' to set up defaults"))
+            print(
+                error(
+                    "Error: No target specified and no default target found in datacompose.json"
+                )
+            )
+            print(
+                info(
+                    "Please specify a target with --target or run 'datacompose init' to set up defaults"
+                )
+            )
             ctx.exit(1)
         elif verbose:
             print(dim(f"Using default target from config: {target}"))
-    
+
     # Initialize discovery for validation
     discovery = TransformerDiscovery()
 
@@ -133,12 +140,12 @@ def add(ctx, transformer, target, type, output, template_dir, verbose):
         ctx.exit(1)
 
     # Combine target and type into generator reference
-    exit_code = _run_add(transformer, target, output, template_dir, verbose)
+    exit_code = _run_add(transformer, target, output, verbose)
     if exit_code != 0:
         ctx.exit(exit_code)
 
 
-def _run_add(transformer, target, output, template_dir, verbose) -> int:
+def _run_add(transformer, target, output, verbose) -> int:
     """Execute the add command."""
     # Initialize discovery
     discovery = TransformerDiscovery()
@@ -149,9 +156,7 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
     if not transformer_path:
         print(error(f"Error: Transformer not found: {transformer}"))
         print(
-            info(
-                f"Available transformers: {', '.join(discovery.list_transformers())}"
-            )
+            info(f"Available transformers: {', '.join(discovery.list_transformers())}")
         )
         return 1
     else:
@@ -174,18 +179,22 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
         config = ConfigLoader.load_config()
         config_output = ConfigLoader.get_target_output(config, target)
         if config_output:
-            output_dir = f"{config_output}/{transformer_name}"
+            # Config output already includes 'transformers/pyspark', so use it directly
+            output_dir = config_output
         else:
-            output_dir = f"build/{transformer_name}"
+            output_dir = f"transformers/{target}"
     else:
-        output_dir = f"{output}/{transformer_name}"
+        output_dir = output
 
     try:
         # Create generator instance
+        # Note: template_dir is required by base class but not used by current generators
         generator = generator_class(
-            template_dir=Path(template_dir), output_dir=Path(output_dir), verbose=verbose
+            template_dir=Path("."),  # Placeholder - not actually used
+            output_dir=Path(output_dir),
+            verbose=verbose,
         )
-        
+
         # Generate the UDF
         result = generator.generate(
             transformer_name, force=False, transformer_dir=transformer_dir
@@ -198,14 +207,14 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
                 print(dim(f"   Hash: {result.get('hash', 'N/A')}"))
         else:
             print(success(f"✓ UDF generated: {result['output_path']}"))
-            if result.get('test_path'):
+            if result.get("test_path"):
                 print(success(f"✓ Test created: {result['test_path']}"))
             print(highlight(f"Function name: {result['function_name']}"))
             if verbose:
                 print(dim(f"   Target: {target}"))
                 print(highlight("\nGenerated package contents:"))
                 print(f"  - UDF code: {result['output_path']}")
-                if result.get('test_path'):
+                if result.get("test_path"):
                     print(f"  - Test file: {result['test_path']}")
 
         return 0
@@ -217,4 +226,3 @@ def _run_add(transformer, target, output, template_dir, verbose) -> int:
 
             traceback.print_exc()
         return 1
-

@@ -1,3 +1,54 @@
+"""
+Address transformation primitives for PySpark.
+
+Preview Output:
++----------------------------------------------+-------------+-----------+-----------+-----+-------+
+|address                                       |street_number|street_name|city       |state|zip    |
++----------------------------------------------+-------------+-----------+-----------+-----+-------+
+|  123 Main St,   New York, NY 10001          |123          |Main       |New York   |NY   |10001  |
+|456 oak ave apt 5b, los angeles, ca 90001    |456          |Oak        |Los Angeles|CA   |90001  |
+|789 ELM STREET CHICAGO IL  60601             |789          |Elm        |Chicago    |IL   |60601  |
+|321 pine rd. suite 100,, boston massachusetts|321          |Pine       |Boston     |MA   |null   |
+|PO Box 789, Atlanta, GA 30301                |null         |null       |Atlanta    |GA   |30301  |
++----------------------------------------------+-------------+-----------+-----------+-----+-------+
+
+Usage Example:
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from transformers.pyspark.addresses import addresses
+
+# Initialize Spark
+spark = SparkSession.builder.appName("DataCleaning").getOrCreate()
+
+# Create sample data
+data = [
+    ("123 Main St, New York, NY 10001",),
+    ("456 Oak Ave Apt 5B, Los Angeles, CA 90001",),
+    ("789 Elm Street, Chicago, IL 60601",),
+    ("321 Pine Road Suite 100, Boston, MA 02101",),
+]
+df = spark.createDataFrame(data, ["address"])
+
+# Extract and standardize address components
+result_df = df.select(
+    F.col("address"),
+    addresses.extract_street_number(F.col("address")).alias("street_number"),
+    addresses.extract_street_name(F.col("address")).alias("street_name"),
+    addresses.extract_city(F.col("address")).alias("city"),
+    addresses.extract_state(F.col("address")).alias("state"),
+    addresses.extract_zip_code(F.col("address")).alias("zip")
+)
+
+# Show results
+result_df.show(truncate=False)
+
+# Filter to valid addresses
+valid_addresses = result_df.filter(addresses.validate_zip_code(F.col("zip")))
+
+Installation:
+datacompose add addresses
+"""
+
 import re
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -16,7 +67,7 @@ else:
 
 try:
     # Try local utils import first (for generated code)
-    from utils.primitives import PrimitiveRegistry 
+    from utils.primitives import PrimitiveRegistry  # type: ignore
 except ImportError:
     # Fall back to installed datacompose package
     from datacompose.operators.primitives import PrimitiveRegistry
@@ -345,8 +396,10 @@ def extract_street_name(col: Column) -> Column:
     trimmed_col = F.trim(col)
     without_number = F.when(
         # If it's just a numbered street (e.g., "5th Avenue", "1st Street")
-        trimmed_col.rlike(r"^(?i)\d+(?:st|nd|rd|th)\s+(?:" + "|".join(suffixes) + r")$"),
-        trimmed_col  # Keep as is - it's a numbered street name
+        trimmed_col.rlike(
+            r"^(?i)\d+(?:st|nd|rd|th)\s+(?:" + "|".join(suffixes) + r")$"
+        ),
+        trimmed_col,  # Keep as is - it's a numbered street name
     ).otherwise(
         # Otherwise remove the house number
         F.regexp_replace(trimmed_col, r"^\d+[\w\-/]*\s+", "")
@@ -354,9 +407,7 @@ def extract_street_name(col: Column) -> Column:
 
     # Remove directional prefix - case insensitive
     # Include full directional words and abbreviations
-    prefix_pattern = (
-        r"^(?i)(?:North|South|East|West|Northeast|Northwest|Southeast|Southwest|N\.?|S\.?|E\.?|W\.?|NE\.?|NW\.?|SE\.?|SW\.?)\s+"
-    )
+    prefix_pattern = r"^(?i)(?:North|South|East|West|Northeast|Northwest|Southeast|Southwest|N\.?|S\.?|E\.?|W\.?|NE\.?|NW\.?|SE\.?|SW\.?)\s+"
     without_prefix = F.regexp_replace(without_number, prefix_pattern, "")
 
     # Extract everything before the street suffix - case insensitive
@@ -434,8 +485,10 @@ def extract_street_suffix(col: Column) -> Column:
 
     # Build pattern to match the LAST suffix in the string
     # This handles cases like "St. James Place" where we want "Place" not "St"
-    suffix_pattern = r"\b(" + "|".join(suffixes) + r")\b(?!.*\b(?:" + "|".join(suffixes) + r")\b)"
-    
+    suffix_pattern = (
+        r"\b(" + "|".join(suffixes) + r")\b(?!.*\b(?:" + "|".join(suffixes) + r")\b)"
+    )
+
     # Extract the last matching suffix - case insensitive
     suffix_pattern_ci = r"(?i)" + suffix_pattern
     result = F.regexp_extract(col, suffix_pattern_ci, 1)
@@ -653,25 +706,27 @@ def standardize_street_suffix(
     if col is None:
         return F.lit("")
     col = F.when(col.isNull(), F.lit("")).otherwise(col)
-    
+
     # Convert to uppercase for matching
     upper_col = F.upper(F.trim(col))
 
     # Start with the original column
     result = col
-    
+
     # Apply custom mappings first if provided (they take precedence)
     if custom_mappings:
         for original, standard in custom_mappings.items():
             result = F.when(
                 upper_col == F.upper(F.lit(original)), F.lit(standard)
             ).otherwise(result)
-    
+
     # Then apply standard mappings for anything not already mapped
     # Need to check if result has changed to avoid overwriting custom mappings
     for original, standard in suffix_map.items():
         # Only apply if not already mapped by custom mappings
-        if custom_mappings and original.upper() in [k.upper() for k in custom_mappings.keys()]:
+        if custom_mappings and original.upper() in [
+            k.upper() for k in custom_mappings.keys()
+        ]:
             continue
         result = F.when(upper_col == original, F.lit(standard)).otherwise(result)
 

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5.2] - 2025-08-22
+
+### Fixed
+- **Import Paths**: Updated import paths in phone_numbers pyspark primitives for clarity and consistency
+- **Documentation**: Improved docstring documentation across primitives
+
+## [0.2.5.1] - 2025-08-22
+
+### Changed
+- **Import Paths**: Renamed imports to be more transparent and clear
+
+### Added
+- **Documentation**: Added clear module-level docstrings throughout the codebase
+- **Unit Tests**: Added comprehensive unit tests for default initialization and datacompose.json configuration
+  - Tests for default target auto-selection with single target
+  - Tests for explicit target override behavior
+  - Tests for configuration file validation
+  - Tests for output path resolution from config
+
+### Fixed
+- **CLI Tests**: Fixed all failing default target configuration tests
+  - Added proper validation mocks for non-existent platforms in tests
+  - Fixed error message assertion for invalid platform validation
+  - Properly mocked generator class hierarchy for output path testing
+  - All 13 CLI default target tests now passing (100% pass rate)
+
 ## [0.2.5] - 2025-08-21
 
 ### Changed

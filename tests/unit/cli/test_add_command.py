@@ -183,5 +183,5 @@ class TestAddCommand:
             assert result.exit_code == 0
             assert "generated:" in result.output.lower()
             assert (
-                "email_primitives.py" in result.output
-            )  # PySpark generates primitives files
+                "emails.py" in result.output
+            )  # PySpark generates transformer-named files

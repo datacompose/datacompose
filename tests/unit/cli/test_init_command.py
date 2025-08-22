@@ -61,7 +61,7 @@ class TestInitCommand:
             assert "targets" in config
             assert "pyspark" in config["targets"]
             # Only pyspark is in the default config now
-            assert config["targets"]["pyspark"]["output"] == "./build"
+            assert config["targets"]["pyspark"]["output"] == "./transformers/pyspark"
 
     def test_init_custom_output_path(self, runner, temp_dir):
         """Test init command with custom output path."""

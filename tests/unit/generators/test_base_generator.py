@@ -161,15 +161,15 @@ def {{ udf_name }}(input_value):
 
     def test_ensure_init_files_creates_init_files(self, spark_generator, temp_dir):
         """Test that __init__.py files are created properly."""
-        output_path = temp_dir / "build" / "spark" / "email_cleaner" / "file.py"
+        output_path = temp_dir / "transformers" / "spark" / "email_cleaner" / "file.py"
         output_path.parent.mkdir(parents=True)
 
         spark_generator._ensure_init_files(output_path)
 
-        # Check that __init__.py files are created
-        assert (temp_dir / "build" / "__init__.py").exists()
-        assert (temp_dir / "build" / "spark" / "__init__.py").exists()
-        assert (temp_dir / "build" / "spark" / "email_cleaner" / "__init__.py").exists()
+        # Check that __init__.py files are created in transformers hierarchy
+        assert (temp_dir / "transformers" / "__init__.py").exists()
+        assert (temp_dir / "transformers" / "spark" / "__init__.py").exists()
+        assert (temp_dir / "transformers" / "spark" / "email_cleaner" / "__init__.py").exists()
 
     # Test file generation methods were removed in refactoring
     # The generator no longer creates test files, only primitives files
@@ -180,7 +180,7 @@ def {{ udf_name }}(input_value):
 
         spark_filename = spark_generator._get_output_filename(spec_name)
 
-        assert spark_filename == "email_cleaner_primitives.py"
+        assert spark_filename == "email_cleaner.py"
 
     def test_template_content_error_handling(self, spark_generator, temp_dir):
         """Test error handling when template content is missing."""

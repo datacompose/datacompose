@@ -168,7 +168,7 @@ class TestRunAddFunction:
         mock_discovery.resolve_transformer.return_value = (None, None)
         mock_discovery.list_transformers.return_value = ['emails', 'addresses']
         
-        exit_code = _run_add('invalid_transformer', 'pyspark', None, 'templates', False)
+        exit_code = _run_add('invalid_transformer', 'pyspark', None, False)
         
         assert exit_code == 1
         mock_discovery.resolve_transformer.assert_called_once_with('invalid_transformer')
@@ -179,7 +179,7 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = None
         mock_discovery.list_generators.return_value = ['pyspark.generator']
         
-        exit_code = _run_add('emails', 'invalid_target', None, 'templates', False)
+        exit_code = _run_add('emails', 'invalid_target', None, False)
         
         assert exit_code == 1
         mock_discovery.resolve_generator.assert_called_once_with('invalid_target')
@@ -195,13 +195,13 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = mock_generator_class
         
         mock_generator_instance.generate.return_value = {
-            'output_path': 'build/emails/email_primitives.py',
-            'test_path': 'build/emails/test_email_primitives.py',
+            'output_path': 'transformers/pyspark/emails.py',
+            'test_path': 'transformers/pyspark/test_emails.py',
             'function_name': 'clean_email',
             'skipped': False
         }
         
-        exit_code = _run_add('emails', 'pyspark', None, 'templates', False)
+        exit_code = _run_add('emails', 'pyspark', None, False)
         
         assert exit_code == 0
         mock_generator_instance.generate.assert_called_once_with(
@@ -221,13 +221,13 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = mock_generator_class
         
         mock_generator_instance.generate.return_value = {
-            'output_path': 'build/emails/email_primitives.py',
+            'output_path': 'transformers/pyspark/emails.py',
             'function_name': 'clean_email',
             'skipped': True,
             'hash': 'abc123'
         }
         
-        exit_code = _run_add('emails', 'pyspark', None, 'templates', True)
+        exit_code = _run_add('emails', 'pyspark', None, True)
         
         assert exit_code == 0
 
@@ -242,18 +242,18 @@ class TestRunAddFunction:
         mock_discovery.resolve_generator.return_value = mock_generator_class
         
         mock_generator_instance.generate.return_value = {
-            'output_path': 'custom/emails/email_primitives.py',
+            'output_path': 'custom/emails.py',
             'function_name': 'clean_email',
             'skipped': False
         }
         
-        exit_code = _run_add('emails', 'pyspark', 'custom', 'templates', False)
+        exit_code = _run_add('emails', 'pyspark', 'custom', False)
         
         assert exit_code == 0
         # Verify generator was initialized with custom output
         mock_generator_class.assert_called_once()
         call_kwargs = mock_generator_class.call_args[1]
-        assert str(call_kwargs['output_dir']) == 'custom/emails'
+        assert str(call_kwargs['output_dir']) == 'custom'
 
     def test_run_add_exception_handling(self, mock_discovery):
         """Test _run_add handles exceptions properly."""
@@ -267,7 +267,7 @@ class TestRunAddFunction:
         
         mock_generator_instance.generate.side_effect = Exception("Generation failed")
         
-        exit_code = _run_add('emails', 'pyspark', None, 'templates', False)
+        exit_code = _run_add('emails', 'pyspark', None, False)
         
         assert exit_code == 1
 
@@ -283,7 +283,7 @@ class TestRunAddFunction:
         
         mock_generator_instance.generate.side_effect = ValueError("Specific error")
         
-        exit_code = _run_add('emails', 'pyspark', None, 'templates', True)
+        exit_code = _run_add('emails', 'pyspark', None, True)
         
         assert exit_code == 1
         captured = capsys.readouterr()
@@ -330,24 +330,25 @@ class TestAddCommandIntegration:
                 result = runner.invoke(cli, ['add', 'emails', '--target', 'pyspark'])
                 assert result.exit_code == 0
 
-    def test_add_command_template_dir_option(self, runner):
-        """Test add command with custom template directory."""
+    def test_add_command_with_default_target(self, runner):
+        """Test add command uses default target from config."""
         with patch('datacompose.cli.commands.add.validate_platform') as mock_platform:
             with patch('datacompose.cli.commands.add._run_add') as mock_run:
                 with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
                     with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
-                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./transformers/pyspark"}}}
                         mock_target.return_value = "pyspark"
                         mock_platform.return_value = True
                         mock_run.return_value = 0
                         
                         result = runner.invoke(
                             cli, 
-                            ['add', 'emails', '--template-dir', 'custom/templates']
+                            ['add', 'emails']
                         )
                         assert result.exit_code == 0
                         mock_run.assert_called_once()
-                        assert mock_run.call_args[0][3] == 'custom/templates'
+                        # Verify pyspark was used as default
+                        assert mock_run.call_args[0][1] == 'pyspark'
 
     def test_add_command_short_options(self, runner):
         """Test add command with short option flags."""
@@ -365,7 +366,7 @@ class TestAddCommandIntegration:
                 # Verify parameters
                 assert mock_run.call_args[0][1] == 'pyspark'  # target
                 assert mock_run.call_args[0][2] == 'output'   # output
-                assert mock_run.call_args[0][4] is True       # verbose
+                assert mock_run.call_args[0][3] is True       # verbose
 
 
 @pytest.mark.unit 
@@ -390,7 +391,7 @@ class TestAddCommandEdgeCases:
                 
                 result = runner.invoke(cli, ['add', 'clean-emails_v2', '--target', 'pyspark'])
                 assert result.exit_code == 0
-                mock_run.assert_called_once_with('clean-emails_v2', 'pyspark', None, 'src/transformers/templates', False)
+                mock_run.assert_called_once_with('clean-emails_v2', 'pyspark', None, False)
 
     def test_add_with_absolute_path_output(self, runner):
         """Test add command with absolute path for output."""
@@ -398,7 +399,7 @@ class TestAddCommandEdgeCases:
             with patch('datacompose.cli.commands.add._run_add') as mock_run:
                 with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
                     with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
-                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./transformers/pyspark"}}}
                         mock_target.return_value = "pyspark"
                         mock_platform.return_value = True
                         mock_run.return_value = 0
@@ -427,7 +428,7 @@ class TestAddCommandEdgeCases:
             mock_instance.resolve_generator.return_value = mock_generator_class
             
             # Test that the error is caught and handled properly
-            exit_code = _run_add('emails', 'pyspark', None, 'templates', False)
+            exit_code = _run_add('emails', 'pyspark', None, False)
             assert exit_code == 1
 
     def test_add_with_path_traversal_attempt(self, runner):
@@ -439,7 +440,7 @@ class TestAddCommandEdgeCases:
                 
                 with patch('datacompose.cli.commands.add.ConfigLoader.load_config') as mock_load:
                     with patch('datacompose.cli.commands.add.ConfigLoader.get_default_target') as mock_target:
-                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+                        mock_load.return_value = {"default_target": "pyspark", "targets": {"pyspark": {"output": "./transformers/pyspark"}}}
                         mock_target.return_value = "pyspark"
                         result = runner.invoke(
                             cli, 
