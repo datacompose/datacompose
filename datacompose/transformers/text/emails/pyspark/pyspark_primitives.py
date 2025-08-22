@@ -2,15 +2,15 @@
 Email transformation primitives for PySpark.
 
 Preview Output:
-+----------------------------------------+----------------+------------+-----------+--------+
-|email                                   |username        |domain      |is_valid   |cleaned |
-+----------------------------------------+----------------+------------+-----------+--------+
-|john.doe@gmail.com                      |john.doe        |gmail.com   |true       |john.doe@gmail.com      |
-|JANE.SMITH@OUTLOOK.COM                  |jane.smith      |outlook.com |true       |jane.smith@outlook.com  |
-|info@company-name.org                   |info            |company-name.org|true   |info@company-name.org   |
-|invalid.email@                          |invalid.email   |            |false      |                        |
-|user+tag@domain.co.uk                   |user            |domain.co.uk|true       |user@domain.co.uk       |
-+----------------------------------------+----------------+------------+-----------+--------+
++----------------------+----------------------+-------------+----------------+--------+
+|email                 |standardized          |username     |domain          |is_valid|
++----------------------+----------------------+-------------+----------------+--------+
+|john.doe@gmail.com    |john.doe@gmail.com    |john.doe     |gmail.com       |true    |
+|JANE.SMITH@OUTLOOK.COM|jane.smith@outlook.com|jane.smith   |outlook.com     |true    |
+|info@company-name.org |info@company-name.org |info         |company-name.org|true    |
+|invalid.email@        |                      |invalid.email|                |false   |
+|user+tag@domain.co.uk |user@domain.co.uk     |user         |domain.co.uk    |true    |
++----------------------+----------------------+-------------+----------------+--------+
 
 Usage Example:
 from pyspark.sql import SparkSession
@@ -31,11 +31,13 @@ data = [
 df = spark.createDataFrame(data, ["email"])
 
 # Extract and validate email components
-result_df = df \
-    .withColumn("username", emails.extract_username(F.col("email"))) \
-    .withColumn("domain", emails.extract_domain(F.col("email"))) \
-    .withColumn("is_valid", emails.validate_email(F.col("email"))) \
-    .withColumn("cleaned", emails.standardize_email(F.col("email")))
+result_df = df.select(
+    F.col("email"),
+    emails.standardize_email(F.col("email")).alias("standardized"),
+    emails.extract_username(F.col("email")).alias("username"),
+    emails.extract_domain(F.col("email")).alias("domain"),
+    emails.is_valid_email(F.col("email")).alias("is_valid")
+)
 
 # Show results
 result_df.show(truncate=False)

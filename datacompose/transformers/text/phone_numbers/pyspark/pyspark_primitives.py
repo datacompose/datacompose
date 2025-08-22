@@ -2,15 +2,15 @@
 Phone number transformation primitives for PySpark.
 
 Preview Output:
-+----------------------------------------+----------+--------+----------+-----------+----------------+
-|phone                                   |area_code |number  |extension |is_valid   |formatted       |
-+----------------------------------------+----------+--------+----------+-----------+----------------+
-|(555) 123-4567                          |555       |1234567 |          |true       |(555) 123-4567  |
-|+1-800-555-1234                         |800       |5551234 |          |true       |(800) 555-1234  |
-|555.123.4567 ext 890                    |555       |1234567 |890       |true       |(555) 123-4567  |
-|123-45-67                               |          |        |          |false      |                |
-|1-800-FLOWERS                           |800       |3569377 |          |true       |(800) 356-9377  |
-+----------------------------------------+----------+--------+----------+-----------+----------------+
++--------------------+------------+--------+---------+------------+-------+---------+------------+
+|phone               |standardized|is_valid|area_code|local_number|has_ext|extension|is_toll_free|
++--------------------+------------+--------+---------+------------+-------+---------+------------+
+|(555) 123-4567      |555-123-4567|true    |555      |1234567     |false  |         |false       |
+|+1-800-555-1234     |800-555-1234|true    |800      |5551234     |false  |         |true        |
+|555.123.4567 ext 890|            |true    |         |            |true   |890      |false       |
+|123-45-67           |            |true    |         |            |false  |         |false       |
+|1-800-FLOWERS       |800-356-9377|false   |800      |3569377     |false  |         |true        |
++--------------------+------------+--------+---------+------------+-------+---------+------------+
 
 Usage Example:
 from pyspark.sql import SparkSession
@@ -30,19 +30,26 @@ data = [
 ]
 df = spark.createDataFrame(data, ["phone"])
 
-# Extract and standardize phone components
-result_df = df \
-    .withColumn("area_code", phone_numbers.extract_area_code(F.col("phone"))) \
-    .withColumn("number", phone_numbers.extract_phone_number(F.col("phone"))) \
-    .withColumn("extension", phone_numbers.extract_extension(F.col("phone"))) \
-    .withColumn("is_valid", phone_numbers.validate_phone(F.col("phone"))) \
-    .withColumn("formatted", phone_numbers.format_phone_number(F.col("phone")))
+# Apply transformations
+result_df = df.select(
+    F.col("phone"),
+    phone_numbers.standardize_phone(F.col("phone")).alias("standardized"),
+    phone_numbers.is_valid_phone(F.col("phone")).alias("is_valid"),
+    phone_numbers.extract_area_code(
+        phone_numbers.standardize_phone(F.col("phone"))
+    ).alias("area_code"),
+    phone_numbers.extract_local_number(
+        phone_numbers.standardize_phone(F.col("phone"))
+    ).alias("local_number"),
+    phone_numbers.has_extension(F.col("phone")).alias("has_ext"),
+    phone_numbers.extract_extension(F.col("phone")).alias("extension"),
+    phone_numbers.is_toll_free(
+        phone_numbers.standardize_phone(F.col("phone"))
+    ).alias("is_toll_free")
+)
 
 # Show results
 result_df.show(truncate=False)
-
-# Filter to valid phone numbers only
-valid_phones = result_df.filter(F.col("is_valid") == True)
 
 Installation:
 datacompose add phone_numbers --target pyspark

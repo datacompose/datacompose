@@ -2,14 +2,14 @@
 Address transformation primitives for PySpark.
 
 Preview Output:
-+----------------------------------------+-------------+------------+-----------+-----+-------+
-|address                                 |street_number|street_name |city       |state|zip    |
-+----------------------------------------+-------------+------------+-----------+-----+-------+
-|123 Main St, New York, NY 10001        |123          |Main        |New York   |NY   |10001  |
-|456 Oak Ave Apt 5B, Los Angeles, CA... |456          |Oak         |Los Angeles|CA   |90001  |
-|789 Elm Street, Chicago, IL 60601      |789          |Elm         |Chicago    |IL   |60601  |
-|321 Pine Road Suite 100, Boston, MA... |321          |Pine        |Boston     |MA   |02101  |
-+----------------------------------------+-------------+------------+-----------+-----+-------+
++-----------------------------------------+-------------+-----------+-----------+-----+-----+
+|address                                  |street_number|street_name|city       |state|zip  |
++-----------------------------------------+-------------+-----------+-----------+-----+-----+
+|123 Main St, New York, NY 10001          |123          |Main       |New York   |NY   |10001|
+|456 Oak Ave Apt 5B, Los Angeles, CA 90001|456          |Oak        |Los Angeles|CA   |90001|
+|789 Elm Street, Chicago, IL 60601        |789          |Elm        |Chicago    |IL   |60601|
+|321 Pine Road Suite 100, Boston, MA 02101|321          |Pine       |Boston     |MA   |02101|
++-----------------------------------------+-------------+-----------+-----------+-----+-----+
 
 Usage Example:
 from pyspark.sql import SparkSession
@@ -29,12 +29,14 @@ data = [
 df = spark.createDataFrame(data, ["address"])
 
 # Extract and standardize address components
-result_df = df \
-    .withColumn("street_number", addresses.extract_street_number(F.col("address"))) \
-    .withColumn("street_name", addresses.extract_street_name(F.col("address"))) \
-    .withColumn("city", addresses.extract_city(F.col("address"))) \
-    .withColumn("state", addresses.standardize_state(F.col("address"))) \
-    .withColumn("zip", addresses.extract_zip_code(F.col("address")))
+result_df = df.select(
+    F.col("address"),
+    addresses.extract_street_number(F.col("address")).alias("street_number"),
+    addresses.extract_street_name(F.col("address")).alias("street_name"),
+    addresses.extract_city(F.col("address")).alias("city"),
+    addresses.extract_state(F.col("address")).alias("state"),
+    addresses.extract_zip_code(F.col("address")).alias("zip")
+)
 
 # Show results
 result_df.show(truncate=False)
