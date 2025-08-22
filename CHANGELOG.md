@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5.2] - 2025-08-22
+
+### Fixed
+- **Import Paths**: Updated import paths in phone_numbers pyspark primitives for clarity and consistency
+- **Documentation**: Improved docstring documentation across primitives
+
 ## [0.2.5.1] - 2025-08-22
 
 ### Changed
