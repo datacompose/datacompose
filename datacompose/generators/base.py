@@ -105,14 +105,14 @@ class BaseGenerator(ABC):
 
     def _ensure_init_files(self, output_path: Path):
         """Ensure __init__.py files exist to make directories importable."""
-        # Get all directories from build down to the target directory
+        # Get all directories from transformers down to the target directory
         path_parts = output_path.parts
 
-        # Find the build directory index
+        # Find the transformers directory index
         try:
-            build_index = path_parts.index("build")
+            transformers_index = path_parts.index("transformers")
         except ValueError:
-            # No build directory found, just create init for immediate parent
+            # No transformers directory found, just create init for immediate parent
             init_file = output_path.parent / "__init__.py"
             if not init_file.exists():
                 init_file.touch()
@@ -120,9 +120,9 @@ class BaseGenerator(ABC):
                     print(f"Created {init_file}")
             return
 
-        # Create __init__.py files for build and all subdirectories leading to output
+        # Create __init__.py files for transformers and all subdirectories leading to output
         for i in range(
-            build_index, len(path_parts) - 1
+            transformers_index, len(path_parts) - 1
         ):  # -1 to exclude the file itself
             dir_path = Path(*path_parts[: i + 1])
             init_file = dir_path / "__init__.py"
@@ -133,18 +133,19 @@ class BaseGenerator(ABC):
 
 
     def _copy_utils_files(self, output_path: Path):
-        """Copy utility files like primitives.py to the build root directory."""
-        # Find the build directory root
+        """Copy utility files like primitives.py to the transformers directory."""
+        # Find the transformers directory root
         path_parts = output_path.parts
         try:
-            build_index = path_parts.index("build")
-            build_root = Path(*path_parts[:build_index + 1])
+            transformers_index = path_parts.index("transformers")
+            transformers_root = Path(*path_parts[:transformers_index + 1])
         except ValueError:
-            # Fallback to parent directory if no 'build' in path
-            build_root = output_path.parent.parent
+            # Fallback to parent directory if no 'transformers' in path
+            transformers_root = output_path.parent.parent
         
-        # Create utils directory at build root
-        utils_dir = build_root / "utils"
+        # Create utils directory in the same directory as the generated files
+        # This puts it at transformers/pyspark/utils
+        utils_dir = output_path.parent / "utils"
         utils_dir.mkdir(parents=True, exist_ok=True)
         
         # Create __init__.py in utils directory

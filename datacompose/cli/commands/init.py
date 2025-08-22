@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
     "aliases": {"utils": "./src/utils"},
     "targets": {
         "pyspark": {
-            "output": "./build",
+            "output": "./transformers/pyspark",
         }
     },
 }
@@ -58,7 +58,7 @@ class InitCommand:
     def get_config_template(template_name: str) -> Dict[str, Any]:
         """Get configuration template by name."""
         if template_name == "minimal":
-            return {"version": "1.0", "default_target": "pyspark", "targets": {"pyspark": {"output": "./build"}}}
+            return {"version": "1.0", "default_target": "pyspark", "targets": {"pyspark": {"output": "./transformers/pyspark"}}}
         elif template_name == "advanced":
             config = DEFAULT_CONFIG.copy()
             config.update(
@@ -66,10 +66,10 @@ class InitCommand:
                     "style": "custom",
                     "aliases": {
                         "utils": "./src/utils",
-                        "build": "./build",
+                        "transformers": "./transformers",
                     },
                     "include": ["src/**/*"],
-                    "exclude": ["__pycache__", "build", "*.pyc", ".pytest_cache"],
+                    "exclude": ["__pycache__", "transformers", "*.pyc", ".pytest_cache"],
                     "testing": {"framework": "pytest", "test_dir": "./tests"},
                 }
             )
@@ -185,7 +185,7 @@ class InitCommand:
 
         # Select targets with multi-select
         available_targets = {
-            "pyspark": {"output": "./build/pyspark", "name": "PySpark (Apache Spark)"},
+            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark (Apache Spark)"},
         }
 
         selected_targets = InitCommand.prompt_for_targets(available_targets)

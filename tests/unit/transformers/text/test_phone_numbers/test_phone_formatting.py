@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
-    phones,
+    phone_numbers,
 )
 
 
@@ -54,7 +54,7 @@ class TestPhoneFormatting:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("formatted", phones.format_nanp(F.col("phone")))
+        result_df = df.withColumn("formatted", phone_numbers.format_nanp(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -74,7 +74,7 @@ class TestPhoneFormatting:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("formatted", phones.format_nanp_paren(F.col("phone")))
+        result_df = df.withColumn("formatted", phone_numbers.format_nanp_paren(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -93,7 +93,7 @@ class TestPhoneFormatting:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("formatted", phones.format_nanp_dot(F.col("phone")))
+        result_df = df.withColumn("formatted", phone_numbers.format_nanp_dot(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -112,7 +112,7 @@ class TestPhoneFormatting:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("formatted", phones.format_nanp_space(F.col("phone")))
+        result_df = df.withColumn("formatted", phone_numbers.format_nanp_space(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -133,7 +133,7 @@ class TestPhoneFormatting:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("formatted", phones.format_e164(F.col("phone")))
+        result_df = df.withColumn("formatted", phone_numbers.format_e164(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -154,7 +154,7 @@ class TestPhoneFormatting:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "formatted", phones.format_international(F.col("phone"))
+            "formatted", phone_numbers.format_international(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -183,7 +183,7 @@ class TestPhoneStandardization:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "standardized", phones.standardize_phone(F.col("phone"))
+            "standardized", phone_numbers.standardize_phone(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -204,7 +204,7 @@ class TestPhoneStandardization:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "standardized", phones.standardize_phone_e164(F.col("phone"))
+            "standardized", phone_numbers.standardize_phone_e164(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -225,7 +225,7 @@ class TestPhoneStandardization:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "standardized", phones.standardize_phone_digits(F.col("phone"))
+            "standardized", phone_numbers.standardize_phone_digits(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -246,7 +246,7 @@ class TestPhoneStandardization:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("cleaned", phones.clean_phone(F.col("phone")))
+        result_df = df.withColumn("cleaned", phone_numbers.clean_phone(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -265,7 +265,7 @@ class TestPhoneStandardization:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("cleaned", phones.clean_phone(F.col("phone")))
+        result_df = df.withColumn("cleaned", phone_numbers.clean_phone(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -292,7 +292,7 @@ class TestPhoneInformation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("type", phones.get_phone_type(F.col("phone")))
+        result_df = df.withColumn("type", phone_numbers.get_phone_type(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -317,7 +317,7 @@ class TestPhoneInformation:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "region", phones.get_region_from_area_code(F.col("phone"))
+            "region", phone_numbers.get_region_from_area_code(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -338,7 +338,7 @@ class TestPhoneInformation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("masked", phones.mask_phone(F.col("phone")))
+        result_df = df.withColumn("masked", phone_numbers.mask_phone(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -351,8 +351,8 @@ class TestPhoneInformation:
 class TestPhoneFiltering:
     """Test phone filtering functions."""
 
-    def test_filter_valid_phones(self, spark):
-        """Test filtering to keep only valid phones."""
+    def test_filter_valid_phone_numbers(self, spark):
+        """Test filtering to keep only valid phone_numbers."""
         test_data = [
             ("555-123-4567", "555-123-4567"),
             ("1-800-555-1234", "1-800-555-1234"),
@@ -364,7 +364,7 @@ class TestPhoneFiltering:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "filtered", phones.filter_valid_phones(F.col("phone"))
+            "filtered", phone_numbers.filter_valid_phone_numbers(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -373,8 +373,8 @@ class TestPhoneFiltering:
                 row["filtered"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
 
-    def test_filter_nanp_phones(self, spark):
-        """Test filtering to keep only NANP phones."""
+    def test_filter_nanp_phone_numbers(self, spark):
+        """Test filtering to keep only NANP phone_numbers."""
         test_data = [
             ("555-123-4567", "555-123-4567"),
             ("1-800-555-1234", "1-800-555-1234"),
@@ -385,7 +385,7 @@ class TestPhoneFiltering:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("filtered", phones.filter_nanp_phones(F.col("phone")))
+        result_df = df.withColumn("filtered", phone_numbers.filter_nanp_phone_numbers(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -393,8 +393,8 @@ class TestPhoneFiltering:
                 row["filtered"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
 
-    def test_filter_toll_free_phones(self, spark):
-        """Test filtering to keep only toll-free phones."""
+    def test_filter_toll_free_phone_numbers(self, spark):
+        """Test filtering to keep only toll-free phone_numbers."""
         test_data = [
             ("1-800-555-1234", "1-800-555-1234"),
             ("888-555-1234", "888-555-1234"),
@@ -406,7 +406,7 @@ class TestPhoneFiltering:
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
-            "filtered", phones.filter_toll_free_phones(F.col("phone"))
+            "filtered", phone_numbers.filter_toll_free_phone_numbers(F.col("phone"))
         )
 
         results = result_df.collect()
@@ -433,10 +433,10 @@ class TestPhoneEdgeCases:
 
         result_df = df.select(
             F.col("phone"),
-            phones.extract_digits(F.col("phone")).alias("digits"),
-            phones.extract_area_code(F.col("phone")).alias("area_code"),
-            phones.is_valid_phone(F.col("phone")).alias("is_valid"),
-            phones.format_nanp(F.col("phone")).alias("formatted"),
+            phone_numbers.extract_digits(F.col("phone")).alias("digits"),
+            phone_numbers.extract_area_code(F.col("phone")).alias("area_code"),
+            phone_numbers.is_valid_phone(F.col("phone")).alias("is_valid"),
+            phone_numbers.format_nanp(F.col("phone")).alias("formatted"),
         )
 
         results = result_df.collect()
@@ -458,7 +458,7 @@ class TestPhoneEdgeCases:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("converted", phones.standardize_phone(F.col("phone")))
+        result_df = df.withColumn("converted", phone_numbers.standardize_phone(F.col("phone")))
 
         results = result_df.collect()
         for row in results:
@@ -479,7 +479,7 @@ class TestPhoneEdgeCases:
 
         df = spark.createDataFrame(test_data, ["phone", "expected_valid"])
         result_df = df.withColumn(
-            "is_valid", phones.is_valid_international(F.col("phone"))
+            "is_valid", phone_numbers.is_valid_international(F.col("phone"))
         )
 
         results = result_df.collect()

@@ -1,3 +1,52 @@
+"""
+Email transformation primitives for PySpark.
+
+Preview Output:
++----------------------------------------+----------------+------------+-----------+--------+
+|email                                   |username        |domain      |is_valid   |cleaned |
++----------------------------------------+----------------+------------+-----------+--------+
+|john.doe@gmail.com                      |john.doe        |gmail.com   |true       |john.doe@gmail.com      |
+|JANE.SMITH@OUTLOOK.COM                  |jane.smith      |outlook.com |true       |jane.smith@outlook.com  |
+|info@company-name.org                   |info            |company-name.org|true   |info@company-name.org   |
+|invalid.email@                          |invalid.email   |            |false      |                        |
+|user+tag@domain.co.uk                   |user            |domain.co.uk|true       |user@domain.co.uk       |
++----------------------------------------+----------------+------------+-----------+--------+
+
+Usage Example:
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from transformers.pyspark.emails import emails
+
+# Initialize Spark
+spark = SparkSession.builder.appName("EmailCleaning").getOrCreate()
+
+# Create sample data
+data = [
+    ("john.doe@gmail.com",),
+    ("JANE.SMITH@OUTLOOK.COM",),
+    ("info@company-name.org",),
+    ("invalid.email@",),
+    ("user+tag@domain.co.uk",),
+]
+df = spark.createDataFrame(data, ["email"])
+
+# Extract and validate email components
+result_df = df \
+    .withColumn("username", emails.extract_username(F.col("email"))) \
+    .withColumn("domain", emails.extract_domain(F.col("email"))) \
+    .withColumn("is_valid", emails.validate_email(F.col("email"))) \
+    .withColumn("cleaned", emails.standardize_email(F.col("email")))
+
+# Show results
+result_df.show(truncate=False)
+
+# Filter to valid emails only
+valid_emails = result_df.filter(F.col("is_valid") == True)
+
+Installation:
+datacompose add emails --target pyspark
+"""
+
 import re
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -16,7 +65,7 @@ else:
 
 try:
     # Try local utils import first (for generated code)
-    from utils.primitives import PrimitiveRegistry
+    from utils.primitives import PrimitiveRegistry  # type: ignore
 except ImportError:
     # Fall back to installed datacompose package
     from datacompose.operators.primitives import PrimitiveRegistry

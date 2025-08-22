@@ -85,19 +85,19 @@ def validate_format(col):
 
     def test_get_output_filename(self, spark_generator):
         """Test output filename generation for PySpark primitives."""
-        # Test known transformer names
+        # Test transformer names - now uses transformer name directly
         filename = spark_generator._get_output_filename("emails")
-        assert filename == "email_primitives.py"
+        assert filename == "emails.py"
 
         filename = spark_generator._get_output_filename("addresses")
-        assert filename == "address_primitives.py"
+        assert filename == "addresses.py"
 
         filename = spark_generator._get_output_filename("phone_numbers")
-        assert filename == "phone_primitives.py"
+        assert filename == "phone_numbers.py"
 
-        # Test unknown transformer (should use fallback)
+        # Test unknown transformer
         filename = spark_generator._get_output_filename("unknown_transformer")
-        assert filename == "unknown_transformer_primitives.py"
+        assert filename == "unknown_transformer.py"
 
     def test_get_primitives_file_from_transformer_dir(
         self, spark_generator, mock_pyspark_primitives, transformer_dir
@@ -181,12 +181,12 @@ def validate_format(col):
         assert all(ext == ".py" for ext in extensions)
 
     def test_spark_udf_naming_convention(self, spark_generator):
-        """Test PySpark primitives naming follows convention."""
+        """Test PySpark file naming follows new convention."""
         test_cases = [
-            ("emails", "email_primitives.py"),
-            ("addresses", "address_primitives.py"),
-            ("phone_numbers", "phone_primitives.py"),
-            ("custom_transformer", "custom_transformer_primitives.py"),
+            ("emails", "emails.py"),
+            ("addresses", "addresses.py"),
+            ("phone_numbers", "phone_numbers.py"),
+            ("custom_transformer", "custom_transformer.py"),
         ]
 
         for input_name, expected_filename in test_cases:
@@ -237,7 +237,7 @@ def validate_format(col):
         # Test that filenames have .py extension (Python files)
         filename = spark_generator._get_output_filename("test_transformer")
         assert filename.endswith(".py")
-        assert "primitives" in filename
+        assert filename == "test_transformer.py"
 
         # Test that template name includes pyspark_primitives (Spark-specific)
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -258,8 +258,8 @@ def validate_format(col):
 
         # Test with empty transformer name
         filename = spark_generator._get_output_filename("")
-        assert filename == "_primitives.py"  # Edge case behavior
+        assert filename == ".py"  # Edge case behavior
 
         # Test with special characters in transformer name
         filename = spark_generator._get_output_filename("test-transformer_name")
-        assert filename == "test-transformer_name_primitives.py"
+        assert filename == "test-transformer_name.py"

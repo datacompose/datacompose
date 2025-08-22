@@ -38,13 +38,15 @@ class TestEndToEndWorkflow:
             with open(config_file) as f:
                 config = json.load(f)
                 assert "pyspark" in config["targets"]
-                assert config["targets"]["pyspark"]["output"] == "./build"
+                assert (
+                    config["targets"]["pyspark"]["output"] == "./transformers/pyspark"
+                )
 
             # Step 2: Add transformers for each domain
             transformers = [
-                ("emails", "email_primitives.py"),
-                ("addresses", "address_primitives.py"),
-                ("phone_numbers", "phone_primitives.py"),
+                ("emails", "emails.py"),
+                ("addresses", "addresses.py"),
+                ("phone_numbers", "phone_numbers.py"),
             ]
 
             for transformer_name, expected_file in transformers:
@@ -54,8 +56,8 @@ class TestEndToEndWorkflow:
                 assert result.exit_code == 0
                 assert "generated" in result.output.lower()
 
-                # Verify the generated file exists with correct name (no platform subdirectory)
-                output_dir = Path(f"build/{transformer_name}")
+                # Verify the generated file exists with correct name
+                output_dir = Path("transformers/pyspark")
                 assert output_dir.exists()
 
                 output_file = output_dir / expected_file
@@ -71,21 +73,23 @@ class TestEndToEndWorkflow:
                 elif "address" in transformer_name:
                     assert 'addresses = PrimitiveRegistry("addresses")' in content
                 elif "phone" in transformer_name:
-                    assert 'phones = PrimitiveRegistry("phones")' in content
+                    assert (
+                        'phone_numbers = PrimitiveRegistry("phone_numbers")' in content
+                    )
 
-            # Verify utils directory is at build root
-            utils_dir = Path("build/utils")
+            # Verify utils directory is in pyspark dir
+            utils_dir = Path("transformers/pyspark/utils")
             assert utils_dir.exists()
             assert (utils_dir / "primitives.py").exists()
             assert (utils_dir / "__init__.py").exists()
-            
-            # Verify no platform subdirectory exists
-            assert not Path("build/pyspark").exists()
-            
+
+            # Verify pyspark subdirectory exists
+            assert Path("transformers/pyspark").exists()
+
             # Step 3: Verify we can import and use the primitives
             # (This would work if PySpark was installed)
-            email_primitives = Path("build/emails/email_primitives.py")
-            content = email_primitives.read_text()
+            emails_file = Path("transformers/pyspark/emails.py")
+            content = emails_file.read_text()
 
             # Check for some expected primitive functions
             assert "@emails" in content or "@emails.register" in content
@@ -131,10 +135,8 @@ class TestEndToEndWorkflow:
             )
             assert result.exit_code == 0
 
-            # Verify files in custom location (no platform subdirectory)
-            output_file = Path(
-                f"{custom_output}/emails/email_primitives.py"
-            )
+            # Verify files in custom location
+            output_file = Path(f"{custom_output}/emails.py")
             assert output_file.exists()
 
     def test_workflow_without_init(self, runner):
