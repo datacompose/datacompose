@@ -255,8 +255,8 @@ def is_valid_email(col: Column, min_length: int = 6, max_length: int = 254) -> C
 
     Args:
         col: Column containing email address
-        min_length: Minimum length for valid email
-        max_length: Maximum length for valid email
+        min_length (Optional): Minimum length for valid email (default 6)
+        max_length (Optional): Maximum length for valid email (default 254)
 
     Returns:
         Column with boolean indicating validity
@@ -286,8 +286,8 @@ def is_valid_username(col: Column, min_length: int = 1, max_length: int = 64) ->
 
     Args:
         col: Column containing email address
-        min_length: Minimum length for valid username (default 1)
-        max_length: Maximum length for valid username (default 64 per RFC)
+        min_length (Optional): Minimum length for valid username (default 1)
+        max_length (Optional): Maximum length for valid username (default 64 per RFC)
 
     Returns:
         Column with boolean indicating username validity
@@ -351,7 +351,7 @@ def is_disposable_email(
 
     Args:
         col: Column containing email address
-        disposable_domains: List of disposable domains to check against
+        disposable_domains (Optional): List of disposable domains to check against
 
     Returns:
         Column with boolean indicating if email is disposable
@@ -389,7 +389,7 @@ def is_corporate_email(
 
     Args:
         col: Column containing email address
-        free_providers: List of free email provider domains to check against
+        free_providers (Optional): List of free email provider domains to check against
 
     Returns:
         Column with boolean indicating if email is corporate
@@ -535,8 +535,8 @@ def fix_common_typos(
 
     Args:
         col: Column containing email address
-        custom_mappings: Additional domain mappings to apply (extends DOMAIN_TYPO_MAPPINGS)
-        custom_tld_mappings: Additional TLD mappings to apply (extends TLD_TYPO_MAPPINGS)
+        custom_mappings (Optional): Additional domain mappings to apply (extends DOMAIN_TYPO_MAPPINGS)
+        custom_tld_mappings (Optional): Additional TLD mappings to apply (extends TLD_TYPO_MAPPINGS)
 
     Returns:
         Column with typos fixed
@@ -604,10 +604,10 @@ def standardize_email(
 
     Args:
         col: Column containing email address
-        lowercase: Convert to lowercase
-        remove_dots_gmail: Remove dots from Gmail addresses
-        remove_plus: Remove plus addressing
-        fix_typos: Fix common domain typos
+        lowercase (Optional): Convert to lowercase (default True)
+        remove_dots_gmail (Optional): Remove dots from Gmail addresses (default True)
+        remove_plus (Optional): Remove plus addressing (default False)
+        fix_typos (Optional): Fix common domain typos (default True)
 
     Returns:
         Column with standardized email
@@ -756,8 +756,8 @@ def mask_email(col: Column, mask_char: str = "*", keep_chars: int = 3) -> Column
 
     Args:
         col: Column containing email address
-        mask_char: Character to use for masking
-        keep_chars: Number of characters to keep at start
+        mask_char (Optional): Character to use for masking (default "*")
+        keep_chars (Optional): Number of characters to keep at start (default 3)
 
     Returns:
         Column with masked email

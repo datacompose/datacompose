@@ -350,8 +350,8 @@ def is_valid_international(
 
     Args:
         col: Column containing phone number
-        min_length: Minimum digits for international number
-        max_length: Maximum digits for international number
+        min_length (Optional): Minimum digits for international number (default 7)
+        max_length (Optional): Maximum digits for international number (default 15)
 
     Returns:
         Column with boolean indicating potential international validity

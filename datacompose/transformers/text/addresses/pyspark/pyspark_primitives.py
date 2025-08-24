@@ -544,7 +544,7 @@ def standardize_street_prefix(
 
     Args:
         col: Column containing street prefix
-        custom_mappings: Optional dict of custom prefix mappings (case insensitive)
+        custom_mappings (Optional): Dict of custom prefix mappings (case insensitive)
 
     Returns:
         Column with standardized prefix (always abbreviated per USPS standards)
@@ -614,7 +614,7 @@ def standardize_street_suffix(
 
     Args:
         col: Column containing street suffix
-        custom_mappings: Optional dict of custom suffix mappings (case insensitive)
+        custom_mappings (Optional): Dict of custom suffix mappings (case insensitive)
 
     Returns:
         Column with standardized suffix (always abbreviated per USPS standards)
@@ -896,7 +896,7 @@ def standardize_unit_type(
 
     Args:
         col: Column containing unit type
-        custom_mappings: Optional dict of custom unit type mappings
+        custom_mappings (Optional): Dict of custom unit type mappings
 
     Returns:
         Column with standardized unit type
@@ -1206,7 +1206,7 @@ def extract_city(col: Column, custom_cities: Optional[List] = None) -> Column:
 
     Args:
         col: Column containing address text
-        custom_cities: Optional list of custom city names to recognize (case-insensitive)
+        custom_cities (Optional): List of custom city names to recognize (case-insensitive)
 
     Returns:
         Column with extracted city name or empty string if not found
@@ -1371,7 +1371,7 @@ def extract_state(col: Column, custom_states: Optional[Dict] = None) -> Column:
 
     Args:
         col: Column containing address text with state information
-        custom_states: Optional dict mapping full state names to abbreviations
+        custom_states (Optional): Dict mapping full state names to abbreviations
                       e.g., {"ONTARIO": "ON", "QUEBEC": "QC"}
 
     Returns:
@@ -1445,9 +1445,9 @@ def validate_city(
 
     Args:
         col: Column containing city names to validate
-        known_cities: Optional list of valid city names to check against
-        min_length: Minimum valid city name length (default 2)
-        max_length: Maximum valid city name length (default 50)
+        known_cities (Optional): List of valid city names to check against
+        min_length (Optional): Minimum valid city name length (default 2)
+        max_length (Optional): Maximum valid city name length (default 50)
 
     Returns:
         Boolean column indicating if city name is valid
@@ -1523,7 +1523,7 @@ def standardize_city(col: Column, custom_mappings: Optional[Dict] = None) -> Col
 
     Args:
         col: Column containing city names to standardize
-        custom_mappings: Optional dict for city name corrections/standardization
+        custom_mappings (Optional): Dict for city name corrections/standardization
                         e.g., {"ST LOUIS": "St. Louis", "NEWYORK": "New York"}
 
     Returns:
@@ -1807,7 +1807,7 @@ def standardize_country(col: Column, custom_mappings: Optional[dict] = None) -> 
 
     Args:
         col: Column containing country name or abbreviation
-        custom_mappings: Optional dict of custom country mappings
+        custom_mappings (Optional): Dict of custom country mappings
 
     Returns:
         Column with standardized country name
