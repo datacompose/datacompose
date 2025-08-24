@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6.0] - 2025-08-24
+
+### Added
+- **Automatic Conditional Detection**: Smart detection of conditional operators based on naming patterns
+  - Functions starting with `is_`, `has_`, `needs_`, `should_`, `can_`, `contains_`, `matches_`, `equals_`, `starts_with_`, `ends_with_` are automatically detected as conditionals
+  - Eliminates need for explicit `is_conditional=True` in most cases
+  - Explicit override still available when needed via `is_conditional` parameter
+- **Phone Number Processing Pipeline**: Complete phone number validation and formatting example
+  - Letter-to-number conversion (1-800-FLOWERS)
+  - NANP validation and formatting
+  - Toll-free number detection
+  - E.164 and parentheses formatting
+
+### Changed
+- **Conditional Operator Registration**: `is_conditional` parameter now optional with smart defaults
+- **Test Organization**: Consolidated conditional tests into three focused files:
+  - `test_conditional_core.py` - Core functionality, logic, errors, parameters, and performance
+  - `test_conditional_real_world.py` - Real-world pipeline scenarios
+  - `test_conditional_auto_detection.py` - Auto-detection feature tests
+
+### Fixed
+- **Phone Number Validation**: Updated NANP validation to be more flexible for testing scenarios
+
+## [0.2.5.3] - 2025-08-23
+
+### Added
+- **Compose Decorator Enhancement**: Auto-detection of PrimitiveRegistry instances in function globals
+  - Compose decorator now automatically discovers all namespace instances without explicit passing
+  - Improved namespace resolution using function's global scope instead of module globals
+  - Better support for multiple namespaces in composed functions
+
+### Fixed
+- **Namespace Resolution**: Fixed global namespace lookups to use function's own globals
+  - PipelineCompiler now correctly resolves namespaces from the decorated function's scope
+  - Fallback compose mode uses function globals for namespace discovery
+  - Prevents namespace resolution errors when registries are defined in different modules
+
+### Changed
+- **Phone Number Tests**: Updated test imports and formatting for phone number primitives
+- **Test Organization**: Added comprehensive conditional composition tests
+
 ## [0.2.5.2] - 2025-08-22
 
 ### Fixed

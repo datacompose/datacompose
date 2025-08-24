@@ -16,12 +16,12 @@ class TestRealWorldScenarios:
         """Test data quality check -> clean or reject pipeline"""
         ns = PrimitiveRegistry("quality")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_valid_text(col):
             # Not null, not empty, reasonable length
             return col.isNotNull() & (f.length(col) > 0) & (f.length(col) <= 100)
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def needs_cleaning(col):
             # Has leading/trailing spaces or mixed case
             return (col != f.trim(col)) | (col != f.lower(col))
@@ -70,15 +70,15 @@ class TestRealWorldScenarios:
         """Test routing data to different transforms based on type"""
         ns = PrimitiveRegistry("router")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_numeric_id(col):
             return col.rlike("^[0-9]+$")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_alpha_id(col):
             return col.rlike("^[a-zA-Z]+$")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_mixed_id(col):
             return col.rlike("^[a-zA-Z0-9]+$")
 
@@ -130,11 +130,11 @@ class TestRealWorldScenarios:
         """Test validate -> process or quarantine pipeline"""
         ns = PrimitiveRegistry("validate")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_valid_email(col):
             return col.rlike(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_blacklisted(col):
             blacklist_domains = ["spam.com", "fake.org"]
             conditions = [col.endswith(domain) for domain in blacklist_domains]
@@ -181,3 +181,138 @@ class TestRealWorldScenarios:
         assert collected[2]["validated"] == "QUARANTINE:spammer@spam.com"
         assert collected[3]["validated"] == "APPROVED:user@example.com"
         assert collected[4]["validated"] == "QUARANTINE:fake@fake.org"
+
+    def test_phone_number_processing_pipeline(self, spark):
+        """Test phone number validation and formatting pipeline"""
+        ns = PrimitiveRegistry("phone")
+
+        @ns.register()
+        def is_valid_nanp(col):
+            # North American Numbering Plan validation
+            # Allow 555 for testing purposes (normally reserved for fictional numbers)
+            cleaned = f.regexp_replace(col, r"[^0-9]", "")
+            return cleaned.rlike(r"^[2-9]\d{9}$") | cleaned.rlike(
+                r"^1[2-9]\d{9}$"
+            )
+
+        @ns.register()
+        def is_toll_free(col):
+            cleaned = f.regexp_replace(col, r"[^0-9]", "")
+            return cleaned.rlike(r"^1?(800|888|877|866|855|844|833)\d{7}$")
+
+        @ns.register()
+        def has_letters(col):
+            return col.rlike(r"[A-Za-z]")
+
+        @ns.register()
+        def convert_letters_to_numbers(col):
+            # Convert phone letters to numbers (2=ABC, 3=DEF, etc.)
+            result = col
+            letter_map = {
+                "A": "2",
+                "B": "2",
+                "C": "2",
+                "D": "3",
+                "E": "3",
+                "F": "3",
+                "G": "4",
+                "H": "4",
+                "I": "4",
+                "J": "5",
+                "K": "5",
+                "L": "5",
+                "M": "6",
+                "N": "6",
+                "O": "6",
+                "P": "7",
+                "Q": "7",
+                "R": "7",
+                "S": "7",
+                "T": "8",
+                "U": "8",
+                "V": "8",
+                "W": "9",
+                "X": "9",
+                "Y": "9",
+                "Z": "9",
+            }
+            for letter, number in letter_map.items():
+                result = f.regexp_replace(result, letter, number)
+                result = f.regexp_replace(result, letter.lower(), number)
+            return result
+
+        @ns.register()
+        def format_nanp_paren(col):
+            # Format as (XXX) XXX-XXXX
+            cleaned = f.regexp_replace(col, r"[^0-9]", "")
+            # Remove leading 1 if present
+            cleaned = f.when(
+                cleaned.startswith("1") & (f.length(cleaned) == 11),
+                f.substring(cleaned, 2, 10),
+            ).otherwise(cleaned)
+            return f.concat(
+                f.lit("("),
+                f.substring(cleaned, 1, 3),
+                f.lit(") "),
+                f.substring(cleaned, 4, 3),
+                f.lit("-"),
+                f.substring(cleaned, 7, 4),
+            )
+
+        @ns.register()
+        def format_e164(col):
+            # Format as E.164: +1XXXXXXXXXX
+            cleaned = f.regexp_replace(col, r"[^0-9]", "")
+            # Add +1 if not present
+            return f.when(
+                cleaned.startswith("1"), f.concat(f.lit("+"), cleaned)
+            ).otherwise(f.concat(f.lit("+1"), cleaned))
+
+        @ns.register()
+        def mask_phone(col):
+            return f.lit("XXX-XXX-XXXX")
+
+        @ns.compose(ns=ns, debug=True)
+        def process_phone_number():
+            """Process phone numbers with conditional logic."""
+            if ns.has_letters():
+                ns.convert_letters_to_numbers()
+
+            if ns.is_toll_free():
+                # Toll-free numbers get E.164 format
+                ns.format_e164()
+            else:
+                if ns.is_valid_nanp():
+                    # Valid NANP number - format with parentheses
+                    ns.format_nanp_paren()
+                else:
+                    # Invalid - return masked
+                    ns.mask_phone()
+
+        # Test with sample data
+        data = [
+            ("(555) 123-4567",),
+            ("1-800-FLOWERS",),
+            ("invalid-phone",),
+            ("1-888-555-1234",),
+            ("212-555-1234",),
+            ("1800GOFEDEX",),
+        ]
+        df = spark.createDataFrame(data, ["phone"])
+
+        result = df.withColumn("formatted", process_phone_number(f.col("phone")))
+        collected = result.collect()
+        
+        # Verify each phone number is processed correctly
+        # The pipeline should:
+        # 1. Convert letters to numbers (1-800-FLOWERS -> digits)
+        # 2. Detect toll-free numbers and format as E.164
+        # 3. Format valid NANP numbers with parentheses
+        # 4. Mask invalid phone numbers
+        
+        assert collected[0]["formatted"] == "(555) 123-4567"  # Valid NANP (555 allowed for testing)
+        assert collected[1]["formatted"] == "+18003569377"  # 1-800-FLOWERS -> toll-free E.164
+        assert collected[2]["formatted"] == "XXX-XXX-XXXX"  # Invalid format -> masked
+        assert collected[3]["formatted"] == "+18885551234"  # Toll-free -> E.164
+        assert collected[4]["formatted"] == "(212) 555-1234"  # Valid NANP -> parentheses format
+        assert collected[5]["formatted"] == "+18004633339"  # 1800GOFEDEX -> toll-free E.164

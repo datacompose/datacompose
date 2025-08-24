@@ -25,7 +25,7 @@ class TestConfigLoader:
     def test_load_config_default_path(self):
         """Test loading config from default path."""
         config_data = {"version": "1.0", "default_target": "pyspark"}
-        
+
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data=json.dumps(config_data))):
                 result = ConfigLoader.load_config()
@@ -35,7 +35,7 @@ class TestConfigLoader:
         """Test loading config from custom path."""
         config_data = {"version": "1.0", "default_target": "postgres"}
         custom_path = Path("custom/config.json")
-        
+
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data=json.dumps(config_data))):
                 result = ConfigLoader.load_config(custom_path)
@@ -62,8 +62,8 @@ class TestConfigLoader:
             "default_target": "pyspark",
             "targets": {
                 "pyspark": {"output": "./transformers/pyspark"},
-                "postgres": {"output": "./transformers/postgres"}
-            }
+                "postgres": {"output": "./transformers/postgres"},
+            },
         }
         result = ConfigLoader.get_default_target(config)
         assert result == "pyspark"
@@ -72,9 +72,7 @@ class TestConfigLoader:
         """Test getting default target when only one target exists."""
         config = {
             "version": "1.0",
-            "targets": {
-                "postgres": {"output": "./transformers/postgres"}
-            }
+            "targets": {"postgres": {"output": "./transformers/postgres"}},
         }
         result = ConfigLoader.get_default_target(config)
         assert result == "postgres"
@@ -85,8 +83,8 @@ class TestConfigLoader:
             "version": "1.0",
             "targets": {
                 "pyspark": {"output": "./transformers/pyspark"},
-                "postgres": {"output": "./transformers/postgres"}
-            }
+                "postgres": {"output": "./transformers/postgres"},
+            },
         }
         result = ConfigLoader.get_default_target(config)
         assert result is None
@@ -94,7 +92,7 @@ class TestConfigLoader:
     def test_get_default_target_no_config(self):
         """Test getting default target when config is None."""
         result = ConfigLoader.get_default_target(None)
-        assert result is None
+        assert result == "pyspark"
 
     def test_get_default_target_no_targets(self):
         """Test getting default target when no targets defined."""
@@ -105,8 +103,10 @@ class TestConfigLoader:
     def test_get_default_target_loads_from_file(self):
         """Test that get_default_target loads config from file if not provided."""
         config_data = {"version": "1.0", "default_target": "snowflake"}
-        
-        with patch.object(ConfigLoader, 'load_config', return_value=config_data) as mock_load:
+
+        with patch.object(
+            ConfigLoader, "load_config", return_value=config_data
+        ) as mock_load:
             result = ConfigLoader.get_default_target()
             assert result == "snowflake"
             mock_load.assert_called_once()
@@ -117,8 +117,8 @@ class TestConfigLoader:
             "version": "1.0",
             "targets": {
                 "pyspark": {"output": "./transformers/pyspark"},
-                "postgres": {"output": "./build/postgres"}
-            }
+                "postgres": {"output": "./build/postgres"},
+            },
         }
         result = ConfigLoader.get_target_output(config, "pyspark")
         assert result == "./transformers/pyspark"
@@ -127,9 +127,7 @@ class TestConfigLoader:
         """Test getting output directory for non-existent target."""
         config = {
             "version": "1.0",
-            "targets": {
-                "pyspark": {"output": "./transformers/pyspark"}
-            }
+            "targets": {"pyspark": {"output": "./transformers/pyspark"}},
         }
         result = ConfigLoader.get_target_output(config, "postgres")
         assert result is None
@@ -147,12 +145,7 @@ class TestConfigLoader:
 
     def test_get_target_output_no_output_defined(self):
         """Test getting output when target exists but has no output defined."""
-        config = {
-            "version": "1.0",
-            "targets": {
-                "pyspark": {}
-            }
-        }
+        config = {"version": "1.0", "targets": {"pyspark": {}}}
         result = ConfigLoader.get_target_output(config, "pyspark")
         assert result is None
 
@@ -166,24 +159,25 @@ class TestConfigLoaderIntegration:
         config_data = {
             "version": "1.0",
             "default_target": "pyspark",
-            "targets": {
-                "pyspark": {"output": "./transformers/pyspark"}
-            }
+            "targets": {"pyspark": {"output": "./transformers/pyspark"}},
         }
-        
+
         config_file = tmp_path / "datacompose.json"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
-        
+
         # Test loading with explicit path
         loaded = ConfigLoader.load_config(config_file)
         assert loaded == config_data
-        
+
         # Test getting default target
         assert ConfigLoader.get_default_target(loaded) == "pyspark"
-        
+
         # Test getting target output
-        assert ConfigLoader.get_target_output(loaded, "pyspark") == "./transformers/pyspark"
+        assert (
+            ConfigLoader.get_target_output(loaded, "pyspark")
+            == "./transformers/pyspark"
+        )
 
     def test_config_with_multiple_targets(self, tmp_path):
         """Test config with multiple targets and explicit default."""
@@ -193,39 +187,46 @@ class TestConfigLoaderIntegration:
             "targets": {
                 "pyspark": {"output": "./transformers/pyspark"},
                 "postgres": {"output": "./transformers/postgres"},
-                "snowflake": {"output": "./transformers/snowflake"}
-            }
+                "snowflake": {"output": "./transformers/snowflake"},
+            },
         }
-        
+
         config_file = tmp_path / "datacompose.json"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
-        
+
         loaded = ConfigLoader.load_config(config_file)
-        
+
         # Should use explicit default even with multiple targets
         assert ConfigLoader.get_default_target(loaded) == "postgres"
-        
+
         # Should get correct output for each target
-        assert ConfigLoader.get_target_output(loaded, "pyspark") == "./transformers/pyspark"
-        assert ConfigLoader.get_target_output(loaded, "postgres") == "./transformers/postgres"
-        assert ConfigLoader.get_target_output(loaded, "snowflake") == "./transformers/snowflake"
+        assert (
+            ConfigLoader.get_target_output(loaded, "pyspark")
+            == "./transformers/pyspark"
+        )
+        assert (
+            ConfigLoader.get_target_output(loaded, "postgres")
+            == "./transformers/postgres"
+        )
+        assert (
+            ConfigLoader.get_target_output(loaded, "snowflake")
+            == "./transformers/snowflake"
+        )
 
     def test_config_auto_default_single_target(self, tmp_path):
         """Test automatic default selection with single target."""
         config_data = {
             "version": "1.0",
-            "targets": {
-                "databricks": {"output": "./build/databricks"}
-            }
+            "targets": {"databricks": {"output": "./build/databricks"}},
         }
-        
+
         config_file = tmp_path / "datacompose.json"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
-        
+
         loaded = ConfigLoader.load_config(config_file)
-        
+
         # Should automatically use single target as default
         assert ConfigLoader.get_default_target(loaded) == "databricks"
 
@@ -234,17 +235,15 @@ class TestConfigLoaderIntegration:
         config_data = {
             "version": "1.0",
             "default_target": "custom",
-            "targets": {
-                "pyspark": {"output": "./transformers/pyspark"}
-            }
+            "targets": {"pyspark": {"output": "./transformers/pyspark"}},
         }
-        
+
         config_file = tmp_path / "datacompose.json"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
-        
+
         loaded = ConfigLoader.load_config(config_file)
-        
+
         # Should use explicit default even if it doesn't exist in targets
         # (This tests that explicit default is returned as-is)
         assert ConfigLoader.get_default_target(loaded) == "custom"

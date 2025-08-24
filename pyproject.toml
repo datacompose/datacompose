@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datacompose"
-version = "0.2.5.2"
+version = "0.2.6.0"
 description = "Copy-pasteable data transformation primitives for PySpark. Inspired by shadcn-svelte."
 authors = [
     {name = "Datacompose Contributors"},

@@ -16,9 +16,13 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 logger = logging.getLogger(__name__)
 
 try:
-    from pyspark.sql import Column  # type: ignore
+    from pyspark.sql import Column
+    from pyspark.sql import functions as F
 except ImportError:
-    pass
+    logging.debug("PySpark not available")
+
+# Set up module logger
+logger = logging.getLogger(__name__)
 
 
 class SmartPrimitive:
@@ -120,11 +124,15 @@ class PrimitiveRegistry:
         self._primitives = {}
         self._conditionals = {}
 
-    def register(self, name: Optional[str] = None, is_conditional: bool = False):
+    def register(
+        self, name: Optional[str] = None, is_conditional: Optional[bool] = None
+    ):
         """Decorator to register a function as a SmartPrimitive in this namespace.
 
         Args:
             name: Optional name for the primitive (defaults to function name)
+            is_conditional: Optional flag to mark as conditional. If None, auto-detects
+                          based on function name patterns.
 
         Returns:
             Decorator function that wraps the target function as a SmartPrimitive
@@ -139,7 +147,29 @@ class PrimitiveRegistry:
         def decorator(func: Callable):
             primitive_name = name or func.__name__
 
-            if is_conditional:
+            # Auto-detect conditional if not explicitly specified
+            if is_conditional is None:
+                # Check common naming patterns for conditional functions
+                conditional_patterns = [
+                    "is_",
+                    "has_",
+                    "needs_",
+                    "should_",
+                    "can_",
+                    "contains_",
+                    "matches_",
+                    "equals_",
+                    "starts_with_",
+                    "ends_with_",
+                ]
+                is_conditional_auto = any(
+                    primitive_name.startswith(pattern)
+                    for pattern in conditional_patterns
+                )
+            else:
+                is_conditional_auto = is_conditional
+
+            if is_conditional_auto:
                 self._conditionals[primitive_name] = SmartPrimitive(
                     func, primitive_name
                 )
@@ -217,9 +247,17 @@ class PrimitiveRegistry:
                 pipeline.__doc__ = func.__doc__
                 return pipeline
 
+            # Auto-detect ALL namespace instances from func.__globals__
+            # This allows using multiple namespaces without explicitly passing them
+            for var_name, var_value in func.__globals__.items():
+                if isinstance(var_value, PrimitiveRegistry):
+                    # Found a namespace instance
+                    if var_name not in namespaces:
+                        namespaces[var_name] = var_value
+
             # Try to get the function as a string and parse it
             try:
-                compiler = PipelineCompiler(namespaces, debug)
+                compiler = PipelineCompiler(namespaces, debug, func.__globals__)
                 pipeline = compiler.compile(func)
 
                 if debug and pipeline.steps:
@@ -270,7 +308,11 @@ def _fallback_compose(func: Callable, namespaces: Dict, debug: bool) -> Callable
                         method_name = node.value.func.attr
                         namespace = (
                             namespaces.get(namespace_name) if namespace_name else None
-                        ) or (globals().get(namespace_name) if namespace_name else None)
+                        ) or (
+                            func.__globals__.get(namespace_name)
+                            if namespace_name
+                            else None
+                        )
                         if namespace and hasattr(namespace, method_name):
                             method = getattr(namespace, method_name)
 
@@ -310,16 +352,6 @@ def _fallback_compose(func: Callable, namespaces: Dict, debug: bool) -> Callable
         pipeline.__name__ = func.__name__
         pipeline.__doc__ = f"Failed to compile {func.__name__}"
         return pipeline
-
-
-try:
-    from pyspark.sql import Column
-    from pyspark.sql import functions as F
-except ImportError:
-    logging.debug("PySpark not available")
-
-# Set up module logger
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -452,9 +484,15 @@ class StablePipeline:
 
 
 class PipelineCompiler:
-    def __init__(self, namespaces: Dict[str, Any], debug: bool = False):
+    def __init__(
+        self,
+        namespaces: Dict[str, Any],
+        debug: bool = False,
+        func_globals: Optional[Dict] = None,
+    ):
         self.namespaces = namespaces
         self.debug = debug
+        self.func_globals = func_globals or {}
 
     def compile(self, func: Callable) -> StablePipeline:
         try:
@@ -530,7 +568,7 @@ class PipelineCompiler:
 
             namespace = (
                 self.namespaces.get(namespace_name) if namespace_name else None
-            ) or (globals().get(namespace_name) if namespace_name else None)
+            ) or (self.func_globals.get(namespace_name) if namespace_name else None)
             if namespace and hasattr(namespace, method_name):
                 method = getattr(namespace, method_name)
 
@@ -552,7 +590,7 @@ class PipelineCompiler:
 
             namespace = (
                 self.namespaces.get(namespace_name) if namespace_name else None
-            ) or (globals().get(namespace_name) if namespace_name else None)
+            ) or (self.func_globals.get(namespace_name) if namespace_name else None)
             if namespace and hasattr(namespace, method_name):
                 method = getattr(namespace, method_name)
 

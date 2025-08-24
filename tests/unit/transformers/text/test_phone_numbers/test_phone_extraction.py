@@ -63,48 +63,45 @@ class TestPhoneExtraction:
             ("Contact: (212) 555-1234 or email us", "2125551234"),
             ("My number is 1-800-555-1234", "18005551234"),
             ("Call 555.123.4567 for more info", "5551234567"),
-            
             # Multiple numbers (should get first one)
             ("Primary: 555-111-2222, Secondary: 555-333-4444", "5551112222"),
-            
             # Numbers with extensions in text
             ("Office: 555-123-4567 ext. 123", "5551234567"),
             ("Call 555-123-4567 x456 during business hours", "5551234567"),
-            
             # International formats
             ("UK office: +44 20 7946 0958", "442079460958"),
             ("Contact us at +1-555-123-4567", "15551234567"),
-            
             # Embedded in sentences
             ("You can reach me at555-123-4567anytime", "5551234567"),
             ("The number555.123.4567is valid", "5551234567"),
-            
             # With surrounding punctuation
             ("Call (555-123-4567) immediately!", "5551234567"),
             ("Number: 555-123-4567.", "5551234567"),
             ("Is 555-123-4567 your number?", "5551234567"),
-            
             # No phone number
             ("No contact information provided", ""),
             ("Email only: test@example.com", ""),
-            
             # Edge cases
             ("", ""),
             (None, ""),
         ]
 
         df = spark.createDataFrame(test_data, ["text", "expected"])
-        result_df = df.withColumn("phone_digits", phone_numbers.extract_digits(F.col("text")))
+        result_df = df.withColumn(
+            "phone_digits", phone_numbers.extract_digits(F.col("text"))
+        )
 
         results = result_df.collect()
         for row in results:
             # For texts with phone numbers, we should extract the digits
             if row["expected"]:
-                assert row["expected"] in row["phone_digits"], \
-                    f"Failed for '{row['text']}': expected '{row['expected']}' to be in '{row['phone_digits']}'"
+                assert (
+                    row["expected"] in row["phone_digits"]
+                ), f"Failed for '{row['text']}': expected '{row['expected']}' to be in '{row['phone_digits']}'"
             else:
-                assert row["phone_digits"] == row["expected"], \
-                    f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['phone_digits']}'"
+                assert (
+                    row["phone_digits"] == row["expected"]
+                ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['phone_digits']}'"
 
     def test_extract_first_valid_phone(self, spark):
         """Test extracting the first valid phone number from text."""
@@ -112,19 +109,14 @@ class TestPhoneExtraction:
             # Clear phone numbers in text
             ("Call me at 555-123-4567", "555-123-4567"),
             ("My office number is (212) 555-1234", "(212) 555-1234"),
-            
             # Multiple numbers - should get first
             ("Home: 555-111-2222, Work: 555-333-4444", "555-111-2222"),
-            
             # Phone with extension
             ("Office: 555-123-4567 ext. 123", "555-123-4567 ext. 123"),
-            
             # International
             ("UK: +1-555-123-4567", "+1-555-123-4567"),
-            
             # Embedded in text
             ("Please call555-123-4567now", "555-123-4567"),
-            
             # No valid phone
             ("Only email: test@example.com", ""),
             ("", ""),
@@ -132,28 +124,33 @@ class TestPhoneExtraction:
         ]
 
         df = spark.createDataFrame(test_data, ["text", "expected"])
-        
-        # Use our new extract_phone_from_text function
+
+        # Use our new extract_phone_numbers_from_text function
         result_df = df.withColumn(
-            "extracted_phone",
-            phone_numbers.extract_phone_from_text(F.col("text"))
+            "extracted_phone", phone_numbers.extract_phone_numbers_from_text(F.col("text"))
         )
 
         results = result_df.collect()
         for row in results:
             if row["expected"]:
                 # Check that we found a phone number
-                assert row["extracted_phone"] != "", \
-                    f"Failed to extract from '{row['text']}': expected '{row['expected']}', got '{row['extracted_phone']}'"
+                assert (
+                    row["extracted_phone"] != ""
+                ), f"Failed to extract from '{row['text']}': expected '{row['expected']}', got '{row['extracted_phone']}'"
                 # The extracted phone should contain the key digits
-                expected_digits = ''.join(c for c in row["expected"] if c.isdigit())
-                extracted_digits = ''.join(c for c in row["extracted_phone"] if c.isdigit())
+                expected_digits = "".join(c for c in row["expected"] if c.isdigit())
+                extracted_digits = "".join(
+                    c for c in row["extracted_phone"] if c.isdigit()
+                )
                 if expected_digits and extracted_digits:
-                    assert expected_digits in extracted_digits or extracted_digits in expected_digits, \
-                        f"Digits mismatch for '{row['text']}': expected digits '{expected_digits}', got '{extracted_digits}'"
+                    assert (
+                        expected_digits in extracted_digits
+                        or extracted_digits in expected_digits
+                    ), f"Digits mismatch for '{row['text']}': expected digits '{expected_digits}', got '{extracted_digits}'"
             else:
-                assert row["extracted_phone"] == "", \
-                    f"Should not extract from '{row['text']}': got '{row['extracted_phone']}'"
+                assert (
+                    row["extracted_phone"] == ""
+                ), f"Should not extract from '{row['text']}': got '{row['extracted_phone']}'"
 
     def test_extract_all_phone_numbers_from_text(self, spark):
         """Test extracting all phone numbers from text."""
@@ -164,10 +161,8 @@ class TestPhoneExtraction:
             ("My number is 555-123-4567", ["555-123-4567"]),
             ("Call (212) 555-1234 for info", ["(212) 555-1234"]),
             ("Contact: 800.555.1234", ["800.555.1234"]),
-            
             # Multiple phone_numbers - will only get first one due to current limitation
             ("Home: 555-111-2222, Work: 555-333-4444", ["555-111-2222"]),
-            
             # No phone_numbers
             ("No phone numbers here", []),
             ("", []),
@@ -175,28 +170,32 @@ class TestPhoneExtraction:
         ]
 
         df = spark.createDataFrame(test_data, ["text", "expected"])
-        
+
         # Use our extract_all_phone_numbers_from_text function
         result_df = df.withColumn(
             "extracted_phone_numbers",
-            phone_numbers.extract_all_phone_numbers_from_text(F.col("text"))
+            phone_numbers.extract_all_phone_numbers_from_text(F.col("text")),
         )
 
         results = result_df.collect()
         for row in results:
-            extracted = row["extracted_phone_numbers"] if row["extracted_phone_numbers"] else []
+            extracted = (
+                row["extracted_phone_numbers"] if row["extracted_phone_numbers"] else []
+            )
             expected = row["expected"] if row["expected"] else []
-            
+
             # Check count matches
-            assert len(extracted) == len(expected), \
-                f"Count mismatch for '{row['text']}': expected {len(expected)} phone_numbers, got {len(extracted)}"
-            
+            assert len(extracted) == len(
+                expected
+            ), f"Count mismatch for '{row['text']}': expected {len(expected)} phone_numbers, got {len(extracted)}"
+
             # Check each phone is found
             for i, exp_phone in enumerate(expected):
                 if i < len(extracted):
                     # Just check that we extracted a phone number
-                    assert extracted[i] != "", \
-                        f"Expected phone '{exp_phone}' but got empty string for text '{row['text']}'"
+                    assert (
+                        extracted[i] != ""
+                    ), f"Expected phone '{exp_phone}' but got empty string for text '{row['text']}'"
 
     def test_extract_digits(self, spark):
         """Test extraction of digits from phone numbers."""
@@ -210,7 +209,9 @@ class TestPhoneExtraction:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("digits", phone_numbers.extract_digits(F.col("phone")))
+        result_df = df.withColumn(
+            "digits", phone_numbers.extract_digits(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -230,7 +231,9 @@ class TestPhoneExtraction:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("extension", phone_numbers.extract_extension(F.col("phone")))
+        result_df = df.withColumn(
+            "extension", phone_numbers.extract_extension(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -276,7 +279,9 @@ class TestPhoneExtraction:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("area_code", phone_numbers.extract_area_code(F.col("phone")))
+        result_df = df.withColumn(
+            "area_code", phone_numbers.extract_area_code(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -297,7 +302,9 @@ class TestPhoneExtraction:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("exchange", phone_numbers.extract_exchange(F.col("phone")))
+        result_df = df.withColumn(
+            "exchange", phone_numbers.extract_exchange(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -374,7 +381,9 @@ class TestPhoneValidation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("is_valid", phone_numbers.is_valid_nanp(F.col("phone")))
+        result_df = df.withColumn(
+            "is_valid", phone_numbers.is_valid_nanp(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -421,7 +430,9 @@ class TestPhoneValidation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("is_valid", phone_numbers.is_valid_phone(F.col("phone")))
+        result_df = df.withColumn(
+            "is_valid", phone_numbers.is_valid_phone_numbers(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -446,7 +457,9 @@ class TestPhoneValidation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("is_toll_free", phone_numbers.is_toll_free(F.col("phone")))
+        result_df = df.withColumn(
+            "is_toll_free", phone_numbers.is_toll_free(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -467,7 +480,9 @@ class TestPhoneValidation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("is_premium", phone_numbers.is_premium_rate(F.col("phone")))
+        result_df = df.withColumn(
+            "is_premium", phone_numbers.is_premium_rate(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -487,7 +502,9 @@ class TestPhoneValidation:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("has_ext", phone_numbers.has_extension(F.col("phone")))
+        result_df = df.withColumn(
+            "has_ext", phone_numbers.has_extension(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:
@@ -534,7 +551,9 @@ class TestPhoneCleaning:
         ]
 
         df = spark.createDataFrame(test_data, ["phone", "expected"])
-        result_df = df.withColumn("no_ext", phone_numbers.remove_extension(F.col("phone")))
+        result_df = df.withColumn(
+            "no_ext", phone_numbers.remove_extension(F.col("phone"))
+        )
 
         results = result_df.collect()
         for row in results:

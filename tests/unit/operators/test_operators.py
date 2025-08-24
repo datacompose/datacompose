@@ -260,11 +260,11 @@ class TestTypeValidation:
             return f.lower(col)
 
         # Register conditionals (returns boolean)
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_empty(col):
             return col.isNull() | (col == "")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_long(col, min_length=10):
             return f.length(col) > min_length
 
@@ -332,12 +332,12 @@ class TestTypeValidation:
             return f.trim(f.lower(col))
 
         # Register conditionals for validation
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_valid_email(col):
             # Simple email check - contains @ and .
             return col.contains("@") & col.contains(".")
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_min_length(col, min_len=3):
             return f.length(col) >= min_len
 
@@ -626,7 +626,7 @@ class TestPipelineCompilation:
         def clean(col):
             return f.trim(f.lower(col))
 
-        @text.register(is_conditional=True)
+        @text.register()
         def is_long(col):
             return f.length(col) > 4
 
@@ -671,11 +671,11 @@ class TestPipelineCompilation:
         def clean(col):
             return f.trim(col)
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_empty(col):
             return col == ""
 
-        @ns.register(is_conditional=True)
+        @ns.register()
         def is_short(col):
             return f.length(col) < 5
 
@@ -793,7 +793,7 @@ class TestPipelineCompilation:
         def trim(col):
             return f.trim(col)
 
-        @email.register(is_conditional=True)
+        @email.register()
         def has_at_symbol(col):
             return col.contains("@")
 
@@ -835,7 +835,7 @@ class TestPipelineCompilation:
 
         proc = PrimitiveRegistry("proc")
 
-        @proc.register(is_conditional=True)
+        @proc.register()
         def is_numeric(col):
             # Simple check - if string starts with a digit
             return f.substring(col, 1, 1).rlike("[0-9]")

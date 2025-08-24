@@ -3,7 +3,7 @@ Phone number transformation primitives for PySpark.
 
 Preview Output:
 +------------------------+----------------+--------+---------+------------+-------+---------+------------+
-|phone                   |standardized    |is_valid|area_code|local_number|has_ext|extension|is_toll_free|
+|phone_numbers                   |standardized    |is_valid|area_code|local_number|has_ext|extension|is_toll_free|
 +------------------------+----------------+--------+---------+------------+-------+---------+------------+
 | (555) 123-4567         |(555) 123-4567  |true    |555      |1234567     |false  |null     |false       |
 |+1-800-555-1234         |+1 800-555-1234 |true    |800      |5551234     |false  |null     |true        |
@@ -29,23 +29,23 @@ data = [
     ("123-45-67",),
     ("1-800-FLOWERS",),
 ]
-df = spark.createDataFrame(data, ["phone"])
+df = spark.createDataFrame(data, ["phone_numbers"])
 
 # Apply transformations
 result_df = df.select(
-    F.col("phone"),
-    phone_numbers.standardize_phone(F.col("phone")).alias("standardized"),
-    phone_numbers.is_valid_phone(F.col("phone")).alias("is_valid"),
+    F.col("phone_numbers"),
+    phone_numbers.standardize_phone_numbers(F.col("phone_numbers")).alias("standardized"),
+    phone_numbers.is_valid_phone_numbers(F.col("phone_numbers")).alias("is_valid"),
     phone_numbers.extract_area_code(
-        phone_numbers.standardize_phone(F.col("phone"))
+        phone_numbers.standardize_phone_numbers(F.col("phone_numbers"))
     ).alias("area_code"),
     phone_numbers.extract_local_number(
-        phone_numbers.standardize_phone(F.col("phone"))
+        phone_numbers.standardize_phone_numbers(F.col("phone_numbers"))
     ).alias("local_number"),
-    phone_numbers.has_extension(F.col("phone")).alias("has_ext"),
-    phone_numbers.extract_extension(F.col("phone")).alias("extension"),
+    phone_numbers.has_extension(F.col("phone_numbers")).alias("has_ext"),
+    phone_numbers.extract_extension(F.col("phone_numbers")).alias("extension"),
     phone_numbers.is_toll_free(
-        phone_numbers.standardize_phone(F.col("phone"))
+        phone_numbers.standardize_phone_numbers(F.col("phone_numbers"))
     ).alias("is_toll_free")
 )
 
@@ -118,7 +118,7 @@ PHONE_KEYPAD_MAPPING = {
 
 
 @phone_numbers.register()
-def extract_phone_from_text(col: Column) -> Column:
+def extract_phone_numbers_from_text(col: Column) -> Column:
     """
     Extract first phone number from text using regex patterns.
 
@@ -126,21 +126,21 @@ def extract_phone_from_text(col: Column) -> Column:
         col: Column containing text with potential phone numbers
 
     Returns:
-        Column with extracted phone number or empty string
+        Column with extracted phone numbers or empty string
     """
-    # Comprehensive phone pattern that matches various formats
+    # Comprehensive phone_numbers pattern that matches various formats
     # Handles: +1-555-123-4567, (555) 123-4567, 555.123.4567, 555-123-4567, etc.
-    phone_pattern = (
+    phone_numbers_pattern = (
         r"(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}(\s*(ext|x)\.?\s*\d+)?"
     )
 
     return F.when(col.isNull(), F.lit("")).otherwise(
-        F.regexp_extract(col, phone_pattern, 0)
+        F.regexp_extract(col, phone_numbers_pattern, 0)
     )
 
 
 @phone_numbers.register()
-def extract_all_phones_from_text(col: Column) -> Column:
+def extract_all_phone_numbers_from_text(col: Column) -> Column:
     """
     Extract all phone numbers from text as an array.
 
@@ -150,13 +150,13 @@ def extract_all_phones_from_text(col: Column) -> Column:
     Returns:
         Column with array of phone numbers
     """
-    # For simplicity, we'll return an array with just the first phone found
+    # For simplicity, we'll return an array with just the first phone_numbers found
     # A proper implementation would require more complex regex or UDF
     # This is a limitation of Spark SQL's regex capabilities
-    first_phone = extract_phone_from_text(col)
+    first_phone_numbers = extract_phone_numbers_from_text(col)
 
     # Return array with single element or empty array
-    return F.when(first_phone != "", F.array(first_phone)).otherwise(F.array())
+    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(F.array())
 
 
 @phone_numbers.register()
@@ -366,7 +366,7 @@ def is_valid_international(
 
 
 @phone_numbers.register()
-def is_valid_phone(col: Column) -> Column:
+def is_valid_phone_numbers(col: Column) -> Column:
     """
     Check if phone number is valid (NANP or international).
 
@@ -403,7 +403,7 @@ def is_premium_rate(col: Column) -> Column:
     Check if phone number is premium rate (900).
 
     Args:
-        col: Column containing phone number
+        col: Column containing phophonene_numbers number
 
     Returns:
         Column with boolean indicating if premium rate
@@ -546,11 +546,11 @@ def format_nanp(col: Column) -> Column:
     """
     # Remove extension for validation but preserve it
     extension = extract_extension(col)
-    phone_no_ext = remove_extension(col)
+    phone_numbers_no_ext = remove_extension(col)
 
-    area_code = extract_area_code(phone_no_ext)
-    exchange = extract_exchange(phone_no_ext)
-    subscriber = extract_subscriber(phone_no_ext)
+    area_code = extract_area_code(phone_numbers_no_ext)
+    exchange = extract_exchange(phone_numbers_no_ext)
+    subscriber = extract_subscriber(phone_numbers_no_ext)
 
     base_format = F.concat(area_code, F.lit("-"), exchange, F.lit("-"), subscriber)
 
@@ -559,7 +559,7 @@ def format_nanp(col: Column) -> Column:
         (extension != ""), F.concat(base_format, F.lit(" ext. "), extension)
     ).otherwise(base_format)
 
-    return F.when(is_valid_nanp(phone_no_ext), formatted).otherwise(F.lit(""))
+    return F.when(is_valid_nanp(phone_numbers_no_ext), formatted).otherwise(F.lit(""))
 
 
 @phone_numbers.register()
@@ -575,11 +575,11 @@ def format_nanp_paren(col: Column) -> Column:
     """
     # Remove extension for validation but preserve it
     extension = extract_extension(col)
-    phone_no_ext = remove_extension(col)
+    phone_numbers_no_ext = remove_extension(col)
 
-    area_code = extract_area_code(phone_no_ext)
-    exchange = extract_exchange(phone_no_ext)
-    subscriber = extract_subscriber(phone_no_ext)
+    area_code = extract_area_code(phone_numbers_no_ext)
+    exchange = extract_exchange(phone_numbers_no_ext)
+    subscriber = extract_subscriber(phone_numbers_no_ext)
 
     base_format = F.concat(
         F.lit("("), area_code, F.lit(") "), exchange, F.lit("-"), subscriber
@@ -590,7 +590,7 @@ def format_nanp_paren(col: Column) -> Column:
         (extension != ""), F.concat(base_format, F.lit(" ext. "), extension)
     ).otherwise(base_format)
 
-    return F.when(is_valid_nanp(phone_no_ext), formatted).otherwise(F.lit(""))
+    return F.when(is_valid_nanp(phone_numbers_no_ext), formatted).otherwise(F.lit(""))
 
 
 @phone_numbers.register()
@@ -606,11 +606,11 @@ def format_nanp_dot(col: Column) -> Column:
     """
     # Remove extension for validation but preserve it
     extension = extract_extension(col)
-    phone_no_ext = remove_extension(col)
+    phone_numbers_no_ext = remove_extension(col)
 
-    area_code = extract_area_code(phone_no_ext)
-    exchange = extract_exchange(phone_no_ext)
-    subscriber = extract_subscriber(phone_no_ext)
+    area_code = extract_area_code(phone_numbers_no_ext)
+    exchange = extract_exchange(phone_numbers_no_ext)
+    subscriber = extract_subscriber(phone_numbers_no_ext)
 
     base_format = F.concat(area_code, F.lit("."), exchange, F.lit("."), subscriber)
 
@@ -619,7 +619,7 @@ def format_nanp_dot(col: Column) -> Column:
         (extension != ""), F.concat(base_format, F.lit(" ext. "), extension)
     ).otherwise(base_format)
 
-    return F.when(is_valid_nanp(phone_no_ext), formatted).otherwise(F.lit(""))
+    return F.when(is_valid_nanp(phone_numbers_no_ext), formatted).otherwise(F.lit(""))
 
 
 @phone_numbers.register()
@@ -635,11 +635,11 @@ def format_nanp_space(col: Column) -> Column:
     """
     # Remove extension for validation but preserve it
     extension = extract_extension(col)
-    phone_no_ext = remove_extension(col)
+    phone_numbers_no_ext = remove_extension(col)
 
-    area_code = extract_area_code(phone_no_ext)
-    exchange = extract_exchange(phone_no_ext)
-    subscriber = extract_subscriber(phone_no_ext)
+    area_code = extract_area_code(phone_numbers_no_ext)
+    exchange = extract_exchange(phone_numbers_no_ext)
+    subscriber = extract_subscriber(phone_numbers_no_ext)
 
     base_format = F.concat(area_code, F.lit(" "), exchange, F.lit(" "), subscriber)
 
@@ -648,7 +648,7 @@ def format_nanp_space(col: Column) -> Column:
         (extension != ""), F.concat(base_format, F.lit(" ext. "), extension)
     ).otherwise(base_format)
 
-    return F.when(is_valid_nanp(phone_no_ext), formatted).otherwise(F.lit(""))
+    return F.when(is_valid_nanp(phone_numbers_no_ext), formatted).otherwise(F.lit(""))
 
 
 @phone_numbers.register()
@@ -707,7 +707,7 @@ def format_e164(col: Column) -> Column:
 
     # Build E.164 format - only for valid phones
     return F.when(
-        is_valid_phone(col),
+        is_valid_phone_numbers(col),
         F.when(
             (F.length(digits) == 10) & is_nanp, F.concat(F.lit("+"), F.lit("1"), digits)
         )
@@ -729,7 +729,7 @@ def format_e164(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def standardize_phone(col: Column) -> Column:
+def standardize_phone_numbers(col: Column) -> Column:
     """
     Standardize phone number with cleaning and NANP formatting.
 
@@ -783,7 +783,7 @@ def standardize_phone(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def standardize_phone_e164(col: Column) -> Column:
+def standardize_phone_numbers_e164(col: Column) -> Column:
     """
     Standardize phone number with cleaning and E.164 formatting.
 
@@ -800,11 +800,11 @@ def standardize_phone_e164(col: Column) -> Column:
     result = format_e164(cleaned)
 
     # Only return valid phone numbers
-    return F.when(is_valid_phone(cleaned), result).otherwise(F.lit(""))
+    return F.when(is_valid_phone_numbers(cleaned), result).otherwise(F.lit(""))
 
 
 @phone_numbers.register()
-def standardize_phone_digits(col: Column) -> Column:
+def standardize_phone_numbers_digits(col: Column) -> Column:
     """
     Standardize phone number and return digits only.
 
@@ -821,11 +821,11 @@ def standardize_phone_digits(col: Column) -> Column:
     result = extract_digits(cleaned)
 
     # Only return valid phone numbers
-    return F.when(is_valid_phone(cleaned), result).otherwise(F.lit(""))
+    return F.when(is_valid_phone_numbers(cleaned), result).otherwise(F.lit(""))
 
 
 @phone_numbers.register()
-def clean_phone(col: Column) -> Column:
+def clean_phone_numbers(col: Column) -> Column:
     """
     Clean and validate phone number, returning null for invalid numbers.
 
@@ -873,12 +873,12 @@ def clean_phone(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def get_phone_type(col: Column) -> Column:
+def get_phone_numbers_type(col: Column) -> Column:
     """
     Get phone number type (toll-free, premium, standard, international).
 
     Args:
-        col: Column containing phone number
+        col: Column containing phone_numbers number
 
     Returns:
         Column with phone type
@@ -923,7 +923,7 @@ def get_region_from_area_code(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def mask_phone(col: Column) -> Column:
+def mask_phone_numbers(col: Column) -> Column:
     """
     Mask phone number for privacy keeping last 4 digits (e.g., ***-***-1234).
 
@@ -950,9 +950,9 @@ def mask_phone(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def filter_valid_phones(col: Column) -> Column:
+def filter_valid_phone_numbers_numbers(col: Column) -> Column:
     """
-    Return phone number only if valid, otherwise return null.
+    Return phone_numbers number only if valid, otherwise return null.
 
     Args:
         col: Column containing phone number
@@ -960,13 +960,13 @@ def filter_valid_phones(col: Column) -> Column:
     Returns:
         Column with valid phone or null
     """
-    return F.when(is_valid_phone(col), col).otherwise(F.lit(None))
+    return F.when(is_valid_phone_numbers(col), col).otherwise(F.lit(None))
 
 
 @phone_numbers.register()
-def filter_nanp_phones(col: Column) -> Column:
+def filter_nanp_phone_numbers_numbers(col: Column) -> Column:
     """
-    Return phone number only if valid NANP, otherwise return null.
+    Return phone_numbers number only if valid NANP, otherwise return null.
 
     Args:
         col: Column containing phone number
@@ -978,7 +978,7 @@ def filter_nanp_phones(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def filter_toll_free_phones(col: Column) -> Column:
+def filter_toll_free_phone_numbers_numbers(col: Column) -> Column:
     """
     Return phone number only if toll-free, otherwise return null.
 
