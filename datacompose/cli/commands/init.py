@@ -380,7 +380,7 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
     # Check if config already exists
     if config_path.exists() and not force:
         print(error(f"Configuration file already exists: {config_path}"))
-        print(dim("Use --force to overwrite"))
+        print(dim("Use datacompose init --force to overwrite"))
         return 1
 
     try:
