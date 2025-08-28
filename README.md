@@ -40,7 +40,7 @@ datacompose add emails
 
 ```python
 # Use them like any Python module - this is your code now
-from builders.transformers.addresses import addresses
+from transformers.pyspark.addresses import addresses
 
 df = (df
     .withColumn("street_number", addresses.extract_street_number(F.col("address")))
