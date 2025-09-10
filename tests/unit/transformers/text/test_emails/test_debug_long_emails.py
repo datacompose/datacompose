@@ -1,14 +1,12 @@
 """Debug tests for long email validation."""
 
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from datacompose.transformers.text.emails.pyspark.pyspark_primitives import emails
 
 
-def test_debug_long_emails():
+def test_debug_long_emails(spark):
     """Debug why long emails are being validated differently than expected."""
-    spark = SparkSession.builder.master("local").appName("test").getOrCreate()
 
     # Create a very long but valid email
     long_username = "a" * 64  # Max username length
@@ -38,9 +36,3 @@ def test_debug_long_emails():
         if row["email_length"] > 254:
             print("  -> Email exceeds max length of 254 chars")
         print()
-
-    spark.stop()
-
-
-if __name__ == "__main__":
-    test_debug_long_emails()

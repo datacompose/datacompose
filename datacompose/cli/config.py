@@ -48,7 +48,7 @@ class ConfigLoader:
             config = ConfigLoader.load_config()
             
         if not config:
-            return None
+            return "pyspark"
             
         # Check for explicit default_target setting
         if "default_target" in config:

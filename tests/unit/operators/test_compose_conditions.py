@@ -169,17 +169,6 @@ def complex_nested():
 class TestComposeConditions:
     """Test class for compose decorator with conditional logic."""
 
-    @pytest.fixture(scope="class")
-    def spark(self):
-        """Create a SparkSession for testing."""
-        spark = (
-            SparkSession.builder.appName("TestComposeConditions")
-            .master("local[*]")
-            .config("spark.sql.shuffle.partitions", "1")
-            .getOrCreate()
-        )
-        yield spark
-        spark.stop()
 
     def test_simple_if_then(self, spark):
         """Test simple if-then without else branch."""
@@ -359,17 +348,6 @@ class TestComposeConditions:
 class TestComposeEdgeCases:
     """Test edge cases for compose with conditionals."""
 
-    @pytest.fixture(scope="class")
-    def spark(self):
-        """Create a SparkSession for testing."""
-        spark = (
-            SparkSession.builder.appName("TestComposeEdgeCases")
-            .master("local[*]")
-            .config("spark.sql.shuffle.partitions", "1")
-            .getOrCreate()
-        )
-        yield spark
-        spark.stop()
 
     def test_empty_branches_should_compile(self):
         """Test that empty branches still compile but may not transform."""
@@ -431,18 +409,6 @@ class TestComposeEdgeCases:
 class TestMultipleNamespaces:
     """Test compose with multiple namespaces auto-detection."""
     
-    @pytest.fixture(scope="class")
-    def spark(self):
-        """Create a SparkSession for testing."""
-        spark = (
-            SparkSession.builder
-            .appName("TestMultipleNamespaces")
-            .master("local[*]")
-            .config("spark.sql.shuffle.partitions", "1")
-            .getOrCreate()
-        )
-        yield spark
-        spark.stop()
     
     def test_setup_namespaces(self):
         """Set up multiple namespaces for testing."""

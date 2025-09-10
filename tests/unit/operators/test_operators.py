@@ -33,22 +33,7 @@ def clean_email_declarative():
     email_ns.lower()  # type: ignore
 
 
-@pytest.fixture(scope="session")
-def sparksession():
-    import os
-
-    from pyspark.sql import SparkSession
-
-    # Use SPARK_MASTER env var if available (spark://spark-master:7077), otherwise local
-    master = os.environ.get("SPARK_MASTER", "spark://spark-master:7077")
-
-    spark = (
-        SparkSession.builder.appName("TestApp")
-        .master(master)
-        .config("spark.ui.enabled", "false")
-        .getOrCreate()
-    )
-    return spark
+# sparksession fixture removed - using root conftest.py
 
 
 @pytest.fixture

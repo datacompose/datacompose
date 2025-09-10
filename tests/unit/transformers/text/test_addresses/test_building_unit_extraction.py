@@ -3,52 +3,11 @@ Comprehensive tests for building/unit extraction functionality.
 """
 
 import pytest
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,
 )
-
-
-@pytest.fixture(scope="session")
-def spark():
-    """Create a Spark session for testing."""
-    import logging
-    import os
-    import warnings
-
-    # Suppress all warnings
-    warnings.filterwarnings("ignore")
-
-    # Suppress Spark logging
-    logging.getLogger("py4j").setLevel(logging.ERROR)
-    logging.getLogger("pyspark").setLevel(logging.ERROR)
-
-    # Set Java options to suppress Ivy messages
-    os.environ["SPARK_SUBMIT_OPTS"] = "-Divy.message.logger.level=ERROR"
-
-    master = os.environ.get("SPARK_MASTER", "local[*]")
-
-    spark = (
-        SparkSession.builder.appName("BuildingUnitExtractionTests")
-        .master(master)
-        .config("spark.ui.enabled", "false")
-        .config("spark.sql.shuffle.partitions", "2")
-        .config("spark.sql.adaptive.enabled", "false")
-        .config("spark.sql.adaptive.coalescePartitions.enabled", "false")
-        .config("spark.python.worker.reuse", "true")
-        .config("spark.driver.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR")
-        .config(
-            "spark.executor.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR"
-        )
-        .getOrCreate()
-    )
-
-    spark.sparkContext.setLogLevel("ERROR")
-
-    yield spark
-    spark.stop()
 
 
 @pytest.mark.unit

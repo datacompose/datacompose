@@ -2,10 +2,7 @@
 Test address cleaning functionality.
 """
 
-import os
-
 import pytest
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as f
 
 # Import test data from consolidated file
@@ -16,44 +13,6 @@ from tests.unit.transformers.text.test_addresses.test_data_addresses import (
     ADDRESS_TEST_DATA_COLUMNS,
     MESSY_ADDRESS_DATA,
 )
-
-
-@pytest.fixture(scope="session")
-def spark():
-    """Create a Spark session for testing."""
-    import logging
-    import warnings
-
-    # Suppress all warnings
-    warnings.filterwarnings("ignore")
-
-    # Suppress Spark logging
-    logging.getLogger("py4j").setLevel(logging.ERROR)
-    logging.getLogger("pyspark").setLevel(logging.ERROR)
-
-    # Set Java options to suppress Ivy messages
-    os.environ["SPARK_SUBMIT_OPTS"] = "-Divy.message.logger.level=ERROR"
-
-    master = os.environ.get("SPARK_MASTER", "local[*]")
-
-    spark = (
-        SparkSession.builder.appName("AddressCleaningTests")
-        .master(master)
-        .config("spark.ui.enabled", "false")
-        .config("spark.sql.adaptive.enabled", "false")
-        .config("spark.sql.adaptive.coalescePartitions.enabled", "false")
-        .config("spark.python.worker.reuse", "true")
-        .config("spark.driver.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR")
-        .config(
-            "spark.executor.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR"
-        )
-        .getOrCreate()
-    )
-
-    spark.sparkContext.setLogLevel("ERROR")
-
-    yield spark
-    spark.stop()
 
 
 @pytest.fixture
@@ -289,3 +248,23 @@ class TestAddressCleaning:
         assert results[4]["extracted_zip"] == "28001"  # Spanish but matches US format
         assert results[5]["extracted_zip"] == ""  # Too short
         assert results[6]["extracted_zip"] == "12345"  # Valid US zip
+
+    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
+    def test_hash_address_sha256_basic(self, spark, address_test_data):
+        """Test basic SHA256 hashing functionality."""
+        pass
+
+    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
+    def test_hash_address_sha256_with_salt(self, spark):
+        """Test SHA256 hashing with salt parameter."""
+        pass
+
+    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented") 
+    def test_hash_address_sha256_standardization(self, spark):
+        """Test that standardization produces consistent hashes."""
+        pass
+
+    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
+    def test_hash_address_sha256_consistency(self, spark):
+        """Test that the same input always produces the same hash."""
+        pass
