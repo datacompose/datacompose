@@ -84,7 +84,7 @@ class TestInitCommand:
             result = runner.invoke(cli, ["init", "--yes"])
             assert result.exit_code == 1
             assert "Configuration file already exists" in result.output
-            assert "Use --force to overwrite" in result.output
+            assert "Use datacompose init --force to overwrite" in result.output
 
     def test_init_existing_config_with_force(self, runner, temp_dir):
         """Test init command when config already exists with force flag."""

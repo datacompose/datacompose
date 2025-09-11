@@ -20,18 +20,7 @@ from datacompose.operators.primitives import (  # noqa: E402
 )
 
 
-# Fixtures
-@pytest.fixture(scope="module")
-def spark():
-    """Create a SparkSession for testing."""
-    return (
-        SparkSession.builder.appName("test_primitives_complete")
-        .master("local[*]")
-        .config("spark.sql.shuffle.partitions", "1")
-        .config("spark.ui.enabled", "false")
-        .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse")
-        .getOrCreate()
-    )
+# Fixtures removed - using root conftest.py spark fixture
 
 
 @pytest.fixture

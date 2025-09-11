@@ -4,26 +4,11 @@ This avoids the deep expression tree problem of nested when/otherwise statements
 """
 
 import pytest
-from pyspark.sql import SparkSession, functions as F
+from pyspark.sql import functions as F
 from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
     DOMAIN_TYPO_MAPPINGS,
     emails,
 )
-
-
-@pytest.fixture(scope="session")
-def spark():
-    """Create a Spark session for testing."""
-    spark = (
-        SparkSession.builder.appName("OptimizedEmailTests")
-        .master("local[*]")
-        .config("spark.ui.enabled", "false")
-        .config("spark.sql.shuffle.partitions", "2")
-        .getOrCreate()
-    )
-    spark.sparkContext.setLogLevel("ERROR")
-    yield spark
-    spark.stop()
 
 
 def fix_typos_optimized(spark, email_df, email_col="email"):

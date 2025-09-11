@@ -750,6 +750,23 @@ def get_email_provider(col: Column) -> Column:
 
 
 @emails.register()
+def hash_email_sha256(
+    col: Column, salt: str = "", standardize_first: bool = True
+) -> Column:
+    """Hash email with SHA256, with email-specific preprocessing."""
+    if standardize_first:
+        # Critical: hash the CANONICAL form for deduplication
+        email = get_canonical_email(col)
+    else:
+        email = col
+
+    # Only hash valid emails
+    return F.when(
+        is_valid_email(email), F.sha2(F.concat(email, F.lit(salt)), 256)
+    ).otherwise(F.lit(None))
+
+
+@emails.register()
 def mask_email(col: Column, mask_char: str = "*", keep_chars: int = 3) -> Column:
     """
     Mask email address for privacy (e.g., joh***@gm***.com).

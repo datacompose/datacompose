@@ -923,6 +923,21 @@ def get_region_from_area_code(col: Column) -> Column:
 
 
 @phone_numbers.register()
+def hash_phone_numbers_sha256(col:Column, salt:str="", standardize_first:bool=True) -> Column:
+    """Hash email with SHA256, with email-specific preprocessing."""
+    if standardize_first:
+        phone_number = standardize_phone_numbers_e164(col)
+
+    else:
+        phone_number = col
+
+    return F.when(
+        is_valid_phone_numbers(phone_number), 
+        F.sha2(F.concat(phone_number, F.lit(salt)), 256)
+    ).otherwise(F.lit(None))
+
+
+@phone_numbers.register()
 def mask_phone_numbers(col: Column) -> Column:
     """
     Mask phone number for privacy keeping last 4 digits (e.g., ***-***-1234).

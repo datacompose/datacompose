@@ -3,37 +3,11 @@ Tests for phone number formatting and standardization functions.
 """
 
 import pytest
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
     phone_numbers,
 )
-
-
-@pytest.fixture(scope="session")
-def spark():
-    """Create a Spark session for testing."""
-    import logging
-    import warnings
-
-    warnings.filterwarnings("ignore")
-    logging.getLogger("py4j").setLevel(logging.ERROR)
-    logging.getLogger("pyspark").setLevel(logging.ERROR)
-
-    spark = (
-        SparkSession.builder.appName("PhoneFormattingTests")
-        .master("local[*]")
-        .config("spark.ui.enabled", "false")
-        .config("spark.sql.shuffle.partitions", "2")
-        .config("spark.sql.adaptive.enabled", "false")
-        .getOrCreate()
-    )
-
-    spark.sparkContext.setLogLevel("ERROR")
-
-    yield spark
-    spark.stop()
 
 
 @pytest.mark.unit
