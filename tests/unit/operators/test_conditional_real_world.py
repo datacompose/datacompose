@@ -8,6 +8,28 @@ from pyspark.sql import functions as f
 from datacompose.operators.primitives import PrimitiveRegistry
 
 
+@pytest.fixture
+def diverse_test_data(spark):
+    """Create diverse test dataset for conditional testing"""
+    data = [
+        ("A", 10, "small", 1, "short"),           # category A - short text
+        ("A", 20, "medium", 2, "simple"),         # category A  
+        ("A", 30, "large", 3, "s_text"),          # category A
+        ("A", 40, "xlarge", 4, "special!@#text"), # category A
+        ("B", 50, "small", 5, None),              # category B - NULL text for null test
+        ("B", 60, "medium", 6, "medium_text"),    # category B - ends with 'text'
+        ("B", 70, "large", 7, "  SPACES  "),        # category B - needs cleaning (spaces)
+        ("C", 80, "small", 8, "UPPERCASE"),       # category C - all caps
+        ("C", 90, "medium", 9, "simple_text"),    # category C
+        ("D", 100, "large", 10, ""),              # empty text
+        ("E", 110, "medium", 11, "12345"),        # numeric text
+        ("F", 120, "small", 12, "mixed123ABC"),   # mixed text
+        ("G", 130, "large", 13, "ALPHA"),         # alpha text
+        (None, 140, "unknown", 14, None)          # NULL category for testing
+    ]
+    return spark.createDataFrame(data, ["category", "value", "size", "id", "text"])
+
+
 @pytest.mark.unit
 class TestRealWorldScenarios:
     """Test real-world use cases for conditional pipelines"""
