@@ -12,7 +12,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from datacompose.generators.pyspark.generator import (
-    SparkPandasUDFGenerator,  # noqa: E402
+    PySparkGenerator,  # noqa: E402
 )
 
 
@@ -43,8 +43,8 @@ class TestBaseGeneratorThroughRealGenerators:
 
     @pytest.fixture
     def spark_generator(self, temp_template_dir, output_dir):
-        """Fixture to provide SparkPandasUDFGenerator instance."""
-        return SparkPandasUDFGenerator(temp_template_dir, output_dir, verbose=False)
+        """Fixture to provide PySparkGenerator instance."""
+        return PySparkGenerator(temp_template_dir, output_dir, verbose=False)
 
     @pytest.fixture
     def mock_template_content(self, temp_template_dir):
@@ -85,7 +85,7 @@ def {{ udf_name }}(input_value):
 
     def test_generator_initialization(self, temp_template_dir, output_dir):
         """Test generator initialization with Spark generator."""
-        spark_gen = SparkPandasUDFGenerator(temp_template_dir, output_dir, verbose=True)
+        spark_gen = PySparkGenerator(temp_template_dir, output_dir, verbose=True)
 
         # Test Spark generator
         assert spark_gen.template_dir == temp_template_dir

@@ -7,7 +7,7 @@ from pathlib import Path
 from ..base import BaseGenerator
 
 
-class SparkPandasUDFGenerator(BaseGenerator):
+class PySparkGenerator(BaseGenerator):
     """Generator for Apache Spark pandas UDFs."""
 
     ENGINE_SUBDIRECTORY = "pyspark"

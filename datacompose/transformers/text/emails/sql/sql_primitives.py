@@ -74,8 +74,8 @@ class PrimitiveChooser:
         
         Discovers all public methods in the given primitive class, calls each
         method to get its SQL CREATE FUNCTION statement, then transpiles it
-        to the target dialect. Aggregates all functions into a single SQL file
-        string that can be executed to create all functions at once.
+        to the target dialect. Functions are organized by category for better
+        readability in the output SQL file.
         
         Args:
             cls: A primitive class containing SQL function definitions as methods
@@ -84,10 +84,12 @@ class PrimitiveChooser:
         
         Returns:
             str: A concatenated string of all transpiled SQL CREATE FUNCTION 
-                 statements, ready to be saved as a .sql file or executed directly.
+                 statements, organized by category and ready to be saved as a 
+                 .sql file or executed directly.
         
         Side Effects:
             Prints each function name and its transpiled SQL to stdout for debugging.
+            Prints warnings for any functions that fail to transpile.
         
         Example:
             >>> chooser = PrimitiveChooser('snowflake')
@@ -101,16 +103,53 @@ class PrimitiveChooser:
                        if callable(getattr(cls, func)) 
                        and not func.startswith("__")]
         
+        # Organize methods by category based on naming patterns
+        extraction_methods = [m for m in method_list if m.startswith('extract_')]
+        validation_methods = [m for m in method_list if m.startswith(('is_', 'has_', 'validate_'))]
+        cleaning_methods = [m for m in method_list if m.startswith(('remove_', 'lowercase_', 'fix_'))]
+        standardization_methods = [m for m in method_list if m.startswith(('standardize_', 'normalize_', 'get_canonical_'))]
+        formatting_methods = [m for m in method_list if m.startswith(('format_', 'mask_'))]
+        hashing_methods = [m for m in method_list if 'hash_' in m]
+        filtering_methods = [m for m in method_list if m.startswith('filter_')]
+        utility_methods = [m for m in method_list if m.startswith(('get_', 'convert_', 'add_'))]
+        
+        # Catch any methods that don't fit the categories
+        categorized = set(extraction_methods + validation_methods + cleaning_methods + 
+                         standardization_methods + formatting_methods + hashing_methods + 
+                         filtering_methods + utility_methods)
+        other_methods = [m for m in method_list if m not in categorized]
+        
         sql_file = ""
         
-        for method in method_list:
-            sql_string = getattr(obj, method)()
-            transpiled = self.transpile(sql_string)
-            print(f"Function: {method}")
-            print(transpiled)
-            print("-" * 50)
-            
-            sql_file += transpiled + "\n"
+        # Process methods by category with section headers
+        categories = [
+            ("EXTRACTION FUNCTIONS", extraction_methods),
+            ("VALIDATION FUNCTIONS", validation_methods),
+            ("CLEANING FUNCTIONS", cleaning_methods),
+            ("STANDARDIZATION FUNCTIONS", standardization_methods),
+            ("FORMATTING FUNCTIONS", formatting_methods),
+            ("HASHING FUNCTIONS", hashing_methods),
+            ("FILTERING FUNCTIONS", filtering_methods),
+            ("UTILITY FUNCTIONS", utility_methods),
+            ("OTHER FUNCTIONS", other_methods)
+        ]
+        
+        for category_name, methods in categories:
+            if methods:  # Only add section if there are methods
+                sql_file += f"\n-- ============================================\n"
+                sql_file += f"-- {category_name}\n"
+                sql_file += f"-- ============================================\n\n"
+                
+                for method in sorted(methods):  # Sort alphabetically within category
+                    try:
+                        sql_string = getattr(obj, method)()
+                        transpiled = self.transpile(sql_string)
+                        print(f"✓ Function: {method}")
+                        sql_file += transpiled + "\n\n"
+                    except Exception as e:
+                        print(f"✗ Function: {method} - Failed to process: {e}")
+                        sql_file += f"-- Failed to transpile function: {method}\n"
+                        sql_file += f"-- Error: {e}\n\n"
         
         return sql_file
     
@@ -130,6 +169,8 @@ class PrimitiveChooser:
         
         Returns:
             str: The transpiled SQL statement in the target dialect's syntax.
+                 If transpilation fails, returns a commented version of the
+                 original SQL with an error message.
         
         Note:
             The input SQL is always parsed as PostgreSQL since that's the source
@@ -142,8 +183,22 @@ class PrimitiveChooser:
             >>> mysql_sql = chooser.transpile(pg_sql)
             >>> # mysql_sql now contains MySQL-compatible function syntax
         """
-        ast = sqlglotrs.parse_one(sql_string, "postgres")
-        return ast.sql(dialect=self.dialect)
+        try:
+            ast = sqlglotrs.parse_one(sql_string, "postgres")
+            return ast.sql(dialect=self.dialect)
+        except AttributeError as e:
+            # Handle the case where sqlglotrs doesn't have parse_one
+            print(f"Warning: SQLGlot method not found: {e}")
+            print("Returning original PostgreSQL syntax")
+            return sql_string
+        except Exception as e:
+            # Handle any other transpilation errors
+            error_msg = f"Failed to transpile to {self.dialect}: {str(e)}"
+            print(f"Warning: {error_msg}")
+            
+            # Return the original SQL as a comment block for manual review
+            commented_sql = "-- " + "\n-- ".join(sql_string.split('\n'))
+            return f"-- TRANSPILATION FAILED\n-- Error: {error_msg}\n-- Original PostgreSQL function:\n{commented_sql}"
 
         
 

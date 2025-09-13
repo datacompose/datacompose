@@ -1,4 +1,4 @@
-"""Test the SparkPandasUDFGenerator class."""
+"""Test the PySparkGenerator class."""
 
 import shutil
 import sys
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from datacompose.generators.pyspark.generator import SparkPandasUDFGenerator
+from datacompose.generators.pyspark.generator import PySparkGenerator
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent.parent
@@ -15,8 +15,8 @@ sys.path.insert(0, str(project_root))
 
 
 @pytest.mark.unit
-class TestSparkPandasUDFGenerator:
-    """Test suite for SparkPandasUDFGenerator functionality."""
+class TestPySparkGenerator:
+    """Test suite for PySparkGenerator functionality."""
 
     @pytest.fixture
     def temp_dir(self):
@@ -48,8 +48,8 @@ class TestSparkPandasUDFGenerator:
 
     @pytest.fixture
     def spark_generator(self, template_dir, output_dir):
-        """Fixture to provide SparkPandasUDFGenerator instance."""
-        return SparkPandasUDFGenerator(template_dir, output_dir, verbose=False)
+        """Fixture to provide PySparkGenerator instance."""
+        return PySparkGenerator(template_dir, output_dir, verbose=False)
 
     @pytest.fixture
     def mock_pyspark_primitives(self, transformer_dir):
@@ -75,8 +75,8 @@ def validate_format(col):
         return primitives_file
 
     def test_generator_initialization(self, template_dir, output_dir):
-        """Test SparkPandasUDFGenerator initialization."""
-        generator = SparkPandasUDFGenerator(template_dir, output_dir, verbose=True)
+        """Test PySparkGenerator initialization."""
+        generator = PySparkGenerator(template_dir, output_dir, verbose=True)
 
         assert generator.template_dir == template_dir
         assert generator.output_dir == output_dir
@@ -194,7 +194,7 @@ def validate_format(col):
             assert actual_filename == expected_filename
 
     def test_inheritance_from_base_generator(self, spark_generator):
-        """Test that SparkPandasUDFGenerator properly inherits from BaseGenerator."""
+        """Test that PySparkGenerator properly inherits from BaseGenerator."""
         # Check that base methods are available
         assert hasattr(spark_generator, "generate")
         assert hasattr(spark_generator, "_calculate_hash")
@@ -212,10 +212,10 @@ def validate_format(col):
 
     def test_verbose_mode_configuration(self, template_dir, output_dir):
         """Test verbose mode configuration."""
-        verbose_generator = SparkPandasUDFGenerator(
+        verbose_generator = PySparkGenerator(
             template_dir, output_dir, verbose=True
         )
-        quiet_generator = SparkPandasUDFGenerator(
+        quiet_generator = PySparkGenerator(
             template_dir, output_dir, verbose=False
         )
 
