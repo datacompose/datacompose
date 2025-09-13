@@ -1956,8 +1956,6 @@ def remove_po_box(col: Column) -> Column:
     return F.trim(result)
 
 
-
-
 @addresses.register()
 def standardize_po_box(col: Column) -> Column:
     """Standardize PO Box format to consistent representation.

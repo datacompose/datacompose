@@ -37,9 +37,9 @@ class TestApartmentExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["apt_number"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            assert row["apt_number"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            )
 
     def test_extract_unit_type(self, spark):
         """Test extraction of unit type."""
@@ -66,7 +66,9 @@ class TestApartmentExtraction:
             assert (
                 row["unit_type"].lower() == row["expected"].lower()
                 or row["unit_type"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['unit_type']}'"
+            ), (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['unit_type']}'"
+            )
 
     def test_extract_secondary_address(self, spark):
         """Test extraction of complete secondary address."""
@@ -89,13 +91,13 @@ class TestApartmentExtraction:
         for row in results:
             # The extracted format might have slight case differences
             if row["expected_extract"]:
-                assert (
-                    row["secondary"].lower() == row["expected_extract"].lower()
-                ), f"Failed for '{row['address']}': expected '{row['expected_extract']}', got '{row['secondary']}'"
+                assert row["secondary"].lower() == row["expected_extract"].lower(), (
+                    f"Failed for '{row['address']}': expected '{row['expected_extract']}', got '{row['secondary']}'"
+                )
             else:
-                assert (
-                    row["secondary"] == ""
-                ), f"Failed for '{row['address']}': expected empty, got '{row['secondary']}'"
+                assert row["secondary"] == "", (
+                    f"Failed for '{row['address']}': expected empty, got '{row['secondary']}'"
+                )
 
     def test_has_apartment(self, spark):
         """Test detection of apartment/unit presence."""
@@ -114,9 +116,9 @@ class TestApartmentExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["has_apt"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_apt']}"
+            assert row["has_apt"] == row["expected"], (
+                f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_apt']}"
+            )
 
     def test_remove_secondary_address(self, spark):
         """Test removal of secondary address components."""
@@ -137,9 +139,9 @@ class TestApartmentExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["cleaned"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            assert row["cleaned"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            )
 
 
 @pytest.mark.unit
@@ -167,9 +169,9 @@ class TestFloorExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["floor"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
+            assert row["floor"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
+            )
 
     def test_floor_variations(self, spark):
         """Test various floor format variations."""
@@ -187,9 +189,9 @@ class TestFloorExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["floor"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
+            assert row["floor"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
+            )
 
 
 @pytest.mark.unit
@@ -219,9 +221,9 @@ class TestBuildingExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["building"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['building']}'"
+            assert row["building"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['building']}'"
+            )
 
 
 @pytest.mark.unit
@@ -258,9 +260,9 @@ class TestUnitStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_standardize_with_custom_mappings(self, spark):
         """Test standardization with custom mappings."""
@@ -316,9 +318,9 @@ class TestUnitStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for type='{row['type']}', number='{row['number']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for type='{row['type']}', number='{row['number']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
 
 @pytest.mark.unit
@@ -381,24 +383,24 @@ class TestComplexAddresses:
 
             result = result_df.first()
 
-            assert (
-                result["apt_number"] == expected["apt_number"]
-            ), f"Apt number mismatch for '{address}'"
+            assert result["apt_number"] == expected["apt_number"], (
+                f"Apt number mismatch for '{address}'"
+            )
             # Unit type might have case differences
             if expected["unit_type"]:
-                assert (
-                    result["unit_type"].lower() == expected["unit_type"].lower()
-                ), f"Unit type mismatch for '{address}'"
-            assert (
-                result["floor"] == expected["floor"]
-            ), f"Floor mismatch for '{address}'"
-            assert (
-                result["building"] == expected["building"]
-            ), f"Building mismatch for '{address}'"
+                assert result["unit_type"].lower() == expected["unit_type"].lower(), (
+                    f"Unit type mismatch for '{address}'"
+                )
+            assert result["floor"] == expected["floor"], (
+                f"Floor mismatch for '{address}'"
+            )
+            assert result["building"] == expected["building"], (
+                f"Building mismatch for '{address}'"
+            )
             if expected["secondary"]:
-                assert (
-                    result["secondary"].lower() == expected["secondary"].lower()
-                ), f"Secondary address mismatch for '{address}'"
+                assert result["secondary"].lower() == expected["secondary"].lower(), (
+                    f"Secondary address mismatch for '{address}'"
+                )
 
     def test_edge_cases(self, spark):
         """Test edge cases for building/unit extraction."""
@@ -424,9 +426,9 @@ class TestComplexAddresses:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["apt_number"].upper() == row["expected"].upper()
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            assert row["apt_number"].upper() == row["expected"].upper(), (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            )
 
     def test_null_and_empty_handling(self, spark):
         """Test handling of null and empty values."""
@@ -493,9 +495,9 @@ class TestAdditionalEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["apt_number"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            assert row["apt_number"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            )
 
     def test_international_formats(self, spark):
         """Test international address formats."""
@@ -550,9 +552,9 @@ class TestAdditionalEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["apt_number"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            assert row["apt_number"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
+            )
 
     def test_special_characters(self, spark):
         """Test addresses with special characters."""
@@ -605,9 +607,9 @@ class TestAdditionalEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["floor"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
+            assert row["floor"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
+            )
 
     def test_building_edge_cases(self, spark):
         """Test edge cases for building extraction."""
@@ -636,9 +638,9 @@ class TestAdditionalEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["building"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['building']}'"
+            assert row["building"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['building']}'"
+            )
 
     def test_malformed_addresses(self, spark):
         """Test handling of malformed addresses."""
@@ -716,15 +718,15 @@ class TestAdditionalEdgeCases:
 
             result = result_df.first()
 
-            assert (
-                result["apt_number"] == expected["apt_number"]
-            ), f"Apt mismatch for '{address}'"
-            assert (
-                result["floor"] == expected["floor"]
-            ), f"Floor mismatch for '{address}'"
-            assert (
-                result["building"] == expected["building"]
-            ), f"Building mismatch for '{address}'"
+            assert result["apt_number"] == expected["apt_number"], (
+                f"Apt mismatch for '{address}'"
+            )
+            assert result["floor"] == expected["floor"], (
+                f"Floor mismatch for '{address}'"
+            )
+            assert result["building"] == expected["building"], (
+                f"Building mismatch for '{address}'"
+            )
 
     def test_duplicate_indicators(self, spark):
         """Test addresses with duplicate unit indicators."""

@@ -23,9 +23,7 @@ class TestGeneratedImports:
         """Test that generated code can import PrimitiveRegistry from local utils."""
         with runner.isolated_filesystem():
             # Generate emails primitives
-            result = runner.invoke(
-                cli, ["add", "emails", "--target", "pyspark"]
-            )
+            result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
             assert result.exit_code == 0
 
             # Add the pyspark directory to path
@@ -96,9 +94,7 @@ class TestGeneratedImports:
         """Test that utils directory is created correctly."""
         with runner.isolated_filesystem():
             # Generate a transformer
-            result = runner.invoke(
-                cli, ["add", "emails", "--target", "pyspark"]
-            )
+            result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
             assert result.exit_code == 0
 
             # Check directory structure
@@ -116,9 +112,7 @@ class TestGeneratedImports:
         """Test that generated code has fallback import for primitives."""
         with runner.isolated_filesystem():
             # Generate emails primitives
-            result = runner.invoke(
-                cli, ["add", "emails", "--target", "pyspark"]
-            )
+            result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
             assert result.exit_code == 0
 
             # Check the generated file contains the fallback import
@@ -127,17 +121,17 @@ class TestGeneratedImports:
 
             content = generated_file.read_text()
             # Should have both local and package imports
-            assert "from utils.primitives import PrimitiveRegistry" in content or \
-                   "from .utils.primitives import PrimitiveRegistry" in content
+            assert (
+                "from utils.primitives import PrimitiveRegistry" in content
+                or "from .utils.primitives import PrimitiveRegistry" in content
+            )
 
     def test_no_platform_subdirectory(self, runner):
         """Test that transformers are directly in the pyspark directory."""
         with runner.isolated_filesystem():
             # Generate transformers
             for transformer in ["emails", "addresses", "phone_numbers"]:
-                result = runner.invoke(
-                    cli, ["add", transformer, "--target", "pyspark"]
-                )
+                result = runner.invoke(cli, ["add", transformer, "--target", "pyspark"])
                 assert result.exit_code == 0
 
             # Check that files are directly in transformers/pyspark/

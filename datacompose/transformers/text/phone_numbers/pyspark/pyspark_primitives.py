@@ -156,7 +156,9 @@ def extract_all_phone_numbers_from_text(col: Column) -> Column:
     first_phone_numbers = extract_phone_numbers_from_text(col)
 
     # Return array with single element or empty array
-    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(F.array())
+    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(
+        F.array()
+    )
 
 
 @phone_numbers.register()
@@ -923,7 +925,9 @@ def get_region_from_area_code(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def hash_phone_numbers_sha256(col:Column, salt:str="", standardize_first:bool=True) -> Column:
+def hash_phone_numbers_sha256(
+    col: Column, salt: str = "", standardize_first: bool = True
+) -> Column:
     """Hash email with SHA256, with email-specific preprocessing."""
     if standardize_first:
         phone_number = standardize_phone_numbers_e164(col)
@@ -932,8 +936,8 @@ def hash_phone_numbers_sha256(col:Column, salt:str="", standardize_first:bool=Tr
         phone_number = col
 
     return F.when(
-        is_valid_phone_numbers(phone_number), 
-        F.sha2(F.concat(phone_number, F.lit(salt)), 256)
+        is_valid_phone_numbers(phone_number),
+        F.sha2(F.concat(phone_number, F.lit(salt)), 256),
     ).otherwise(F.lit(None))
 
 

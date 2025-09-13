@@ -34,9 +34,9 @@ class TestPhoneFormatting:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
     def test_format_nanp_paren(self, spark):
         """Test NANP formatting with parentheses."""
@@ -56,9 +56,9 @@ class TestPhoneFormatting:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
     def test_format_nanp_dot(self, spark):
         """Test NANP formatting with dots."""
@@ -77,9 +77,9 @@ class TestPhoneFormatting:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
     def test_format_nanp_space(self, spark):
         """Test NANP formatting with spaces."""
@@ -98,9 +98,9 @@ class TestPhoneFormatting:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
     def test_format_e164(self, spark):
         """Test E.164 formatting."""
@@ -121,9 +121,9 @@ class TestPhoneFormatting:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
     def test_format_international(self, spark):
         """Test international formatting."""
@@ -143,9 +143,9 @@ class TestPhoneFormatting:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["formatted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            assert row["formatted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['formatted']}'"
+            )
 
 
 @pytest.mark.unit
@@ -172,9 +172,9 @@ class TestPhoneStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_standardize_phone_e164(self, spark):
         """Test phone standardization with E.164 format."""
@@ -193,9 +193,9 @@ class TestPhoneStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_standardize_phone_digits(self, spark):
         """Test phone standardization with digits only format."""
@@ -215,9 +215,9 @@ class TestPhoneStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_clean_phone(self, spark):
         """Test phone cleaning with error handling."""
@@ -237,9 +237,9 @@ class TestPhoneStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["cleaned"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            assert row["cleaned"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            )
 
     def test_clean_phone_invalid_handling(self, spark):
         """Test phone cleaning with invalid number handling."""
@@ -258,9 +258,9 @@ class TestPhoneStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["cleaned"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            assert row["cleaned"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            )
 
 
 @pytest.mark.unit
@@ -287,9 +287,9 @@ class TestPhoneInformation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["type"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['type']}'"
+            assert row["type"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['type']}'"
+            )
 
     def test_get_region_from_area_code(self, spark):
         """Test region extraction from area code."""
@@ -313,9 +313,9 @@ class TestPhoneInformation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["region"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['region']}'"
+            assert row["region"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['region']}'"
+            )
 
     def test_mask_phone(self, spark):
         """Test phone number masking for privacy."""
@@ -335,9 +335,9 @@ class TestPhoneInformation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["masked"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['masked']}'"
+            assert row["masked"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['masked']}'"
+            )
 
 
 @pytest.mark.unit
@@ -362,9 +362,9 @@ class TestPhoneFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["filtered"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
+            assert row["filtered"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
+            )
 
     def test_filter_nanp_phone_numbers(self, spark):
         """Test filtering to keep only NANP phone_numbers."""
@@ -384,9 +384,9 @@ class TestPhoneFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["filtered"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
+            assert row["filtered"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
+            )
 
     def test_filter_toll_free_phone_numbers(self, spark):
         """Test filtering to keep only toll-free phone_numbers."""
@@ -407,9 +407,9 @@ class TestPhoneFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["filtered"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
+            assert row["filtered"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['filtered']}"
+            )
 
 
 @pytest.mark.unit
@@ -460,9 +460,9 @@ class TestPhoneEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["converted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['converted']}'"
+            assert row["converted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['converted']}'"
+            )
 
     def test_international_numbers(self, spark):
         """Test handling of various international formats."""
@@ -482,6 +482,6 @@ class TestPhoneEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected_valid"]
-            ), f"Failed for '{row['phone']}': expected {row['expected_valid']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected_valid"], (
+                f"Failed for '{row['phone']}': expected {row['expected_valid']}, got {row['is_valid']}"
+            )

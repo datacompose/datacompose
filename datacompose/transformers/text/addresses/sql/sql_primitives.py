@@ -1,15 +1,15 @@
 """
-SQL Primitives for Addresses 
+SQL Primitives for Addresses
 """
+
 from typing import Dict, List, Optional
 import sqlglotrs
 
 
 class Addresses:
-    
     def __init__(self, dialect: str):
         self.dialect = dialect
-        
+
     def extract_street_number(self, col) -> str:
         """Extract street/house number from address."""
         pass
@@ -30,11 +30,15 @@ class Addresses:
         """Extract complete street address (number + prefix + name + suffix)."""
         pass
 
-    def standardize_street_prefix(self, col, custom_mappings: Optional[Dict[str, str]] = None) -> str:
+    def standardize_street_prefix(
+        self, col, custom_mappings: Optional[Dict[str, str]] = None
+    ) -> str:
         """Standardize street directional prefixes to abbreviated form."""
         pass
 
-    def standardize_street_suffix(self, col, custom_mappings: Optional[Dict[str, str]] = None) -> str:
+    def standardize_street_suffix(
+        self, col, custom_mappings: Optional[Dict[str, str]] = None
+    ) -> str:
         """Standardize street type/suffix to USPS abbreviated form."""
         pass
 
@@ -54,7 +58,9 @@ class Addresses:
         """Extract the type of unit (Apt, Suite, Unit, etc.) from address."""
         pass
 
-    def standardize_unit_type(self, col, custom_mappings: Optional[Dict[str, str]] = None) -> str:
+    def standardize_unit_type(
+        self, col, custom_mappings: Optional[Dict[str, str]] = None
+    ) -> str:
         """Standardize unit type to common abbreviations."""
         pass
 
@@ -102,7 +108,13 @@ class Addresses:
         """Extract and standardize state to 2-letter abbreviation."""
         pass
 
-    def validate_city(self, col, known_cities: Optional[List] = None, min_length: int = 2, max_length: int = 50) -> str:
+    def validate_city(
+        self,
+        col,
+        known_cities: Optional[List] = None,
+        min_length: int = 2,
+        max_length: int = 50,
+    ) -> str:
         """Validate if a city name appears valid."""
         pass
 

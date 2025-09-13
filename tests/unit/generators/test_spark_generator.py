@@ -212,12 +212,8 @@ def validate_format(col):
 
     def test_verbose_mode_configuration(self, template_dir, output_dir):
         """Test verbose mode configuration."""
-        verbose_generator = PySparkGenerator(
-            template_dir, output_dir, verbose=True
-        )
-        quiet_generator = PySparkGenerator(
-            template_dir, output_dir, verbose=False
-        )
+        verbose_generator = PySparkGenerator(template_dir, output_dir, verbose=True)
+        quiet_generator = PySparkGenerator(template_dir, output_dir, verbose=False)
 
         assert verbose_generator.verbose is True
         assert quiet_generator.verbose is False

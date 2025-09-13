@@ -55,14 +55,12 @@ class TestPrimitiveIO:
 
     @pytest.fixture(scope="class")
     def simple_pyspark_column(self):
-
         def lowercase_func(col):
             return f.lower(col)
 
         return lowercase_func
 
     def test_smart_primitive(self, simple_pyspark_column, sparksession):
-
         # Ensure SparkSession is active for f.col() to work
 
         primitive = SmartPrimitive(simple_pyspark_column)
@@ -79,7 +77,6 @@ class TestPrimitiveIO:
         assert result is not None
 
     def test_namespace(self, sparksession):
-
         def trim_impl(col, regex=r"\s+"):
             return f.regexp_replace(col, regex, "")
 
@@ -96,7 +93,6 @@ class TestPrimitiveIO:
         assert str(result).startswith("Column<'regexp_replace")
 
     def test_namespace_registration(self, sparksession):
-
         ns = PrimitiveRegistry("test")
 
         @ns.register()
@@ -107,7 +103,6 @@ class TestPrimitiveIO:
         assert isinstance(ns.test_func, SmartPrimitive)
 
     def test_with_spark(self, sample_spark_df, sparksession):
-
         string = PrimitiveRegistry("string")
 
         @string.register()
@@ -123,7 +118,6 @@ class TestPrimitiveIO:
 
 @pytest.mark.unit
 class TestCompositionFramework:
-
     def test_manual_composition(self, sample_spark_df, sparksession):
         """Test that manual composition works first"""
 
@@ -148,7 +142,6 @@ class TestCompositionFramework:
         assert collected[1]["clean_email"] == "jane.smith@company.com"
 
     def test_compose(self, sample_spark_df, sparksession):
-
         email = PrimitiveRegistry("email")
 
         @email.register()
@@ -180,7 +173,8 @@ class TestCompositionFramework:
         # print(f"Step types: {[type(s) for s in emails.steps]}")
 
         result = sample_spark_df.withColumn(
-            "clean_email", emails(f.col("email"))  # type: ignore
+            "clean_email",
+            emails(f.col("email")),  # type: ignore
         )
 
         # Verify the transformation worked
@@ -192,7 +186,8 @@ class TestCompositionFramework:
         """Test compose decorator with declarative syntax using module-level function"""
         # Use the module-level composed function
         result = sample_spark_df.withColumn(
-            "clean_email", clean_email_declarative(f.col("email"))  # type: ignore
+            "clean_email",
+            clean_email_declarative(f.col("email")),  # type: ignore
         )
 
         # Verify the transformation worked
@@ -426,7 +421,8 @@ class TestTypeValidation:
             text.validate_length(min_len=3, max_len=50)
 
         result = sample_spark_df.withColumn(
-            "validated", validated_pipeline(f.col("text_col"))  # type: ignore
+            "validated",
+            validated_pipeline(f.col("text_col")),  # type: ignore
         )
 
         # Check results
@@ -516,7 +512,8 @@ class TestTypeValidation:
             transform.substring(start=1, length=3)
 
         result = sample_spark_df.withColumn(
-            "transformed", param_pipeline(f.col("text_col"))  # type: ignore
+            "transformed",
+            param_pipeline(f.col("text_col")),  # type: ignore
         )
 
         collected = result.collect()
@@ -553,46 +550,48 @@ class TestTypeValidation:
 
     def test_compose_namespace_requirement(self, sparksession):
         """Test that compose requires namespace to be passed for method resolution"""
-        
+
         ns = PrimitiveRegistry("test_ns")
-        
+
         @ns.register()
         def transform1(col):
             return f.upper(col)
-            
+
         @ns.register()
         def transform2(col):
             return f.trim(col)
-        
+
         # Test with namespace passed - should work
         @ns.compose(ns=ns, debug=False)
         def pipeline_with_ns():
             ns.transform1()
             ns.transform2()
-        
+
         # Test without namespace - will use fallback
         @ns.compose(debug=False)
         def pipeline_without_ns():
             ns.transform1()
             ns.transform2()
-        
+
         # Both should be callable
         assert callable(pipeline_with_ns)
         assert callable(pipeline_without_ns)
-        
+
         # Test with actual data
         data = [("  hello  ",), ("  world  ",)]
         df = sparksession.createDataFrame(data, ["text"])
-        
+
         # Pipeline with namespace should work correctly
         result_with_ns = df.withColumn("processed", pipeline_with_ns(f.col("text")))
         collected_with_ns = result_with_ns.collect()
         assert collected_with_ns[0]["processed"] == "HELLO"
         assert collected_with_ns[1]["processed"] == "WORLD"
-        
+
         # Pipeline without namespace might not work as expected (fallback behavior)
         # This tests that the fallback doesn't break, even if it doesn't apply transforms
-        result_without_ns = df.withColumn("processed", pipeline_without_ns(f.col("text")))
+        result_without_ns = df.withColumn(
+            "processed", pipeline_without_ns(f.col("text"))
+        )
         collected_without_ns = result_without_ns.collect()
         # The fallback might return the original column or empty pipeline
         assert collected_without_ns is not None
@@ -633,7 +632,8 @@ class TestPipelineCompilation:
 
         # Test the pipeline
         result = sample_spark_df.withColumn(
-            "processed", smart_clean(f.col("text_col"))  # type: ignore
+            "processed",
+            smart_clean(f.col("text_col")),  # type: ignore
         )
 
         collected = result.collect()
@@ -801,7 +801,8 @@ class TestPipelineCompilation:
                 email.add_invalid_prefix()
 
         result = sample_spark_df.withColumn(
-            "processed", process_email(f.col("email"))  # type: ignore
+            "processed",
+            process_email(f.col("email")),  # type: ignore
         )
 
         collected = result.collect()

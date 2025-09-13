@@ -19,7 +19,7 @@ from transformers.sql.phone_numbers import phone_numbers
 
 # Create SQL expression
 sql = '''
-SELECT 
+SELECT
     phone_numbers,
     phone_numbers.standardize_phone_numbers(phone_numbers) as standardized,
     phone_numbers.is_valid_phone_numbers(phone_numbers) as is_valid,
@@ -34,15 +34,15 @@ parsed = sqlglot.parse_one(sql)
 Installation:
 datacompose add phone_numbers
 """
+
 from typing import Dict, Optional
 import sqlglotrs
 
 
 class PhoneNumbers:
-    
     def __init__(self, dialect: str):
         self.dialect = dialect
-        
+
     def extract_phone_numbers_from_text(self, col) -> str:
         """Extract first phone number from text using regex patterns."""
         pass
@@ -83,7 +83,9 @@ class PhoneNumbers:
         """Check if phone number is valid NANP format (North American Numbering Plan)."""
         pass
 
-    def is_valid_international(self, col, min_length: int = 7, max_length: int = 15) -> str:
+    def is_valid_international(
+        self, col, min_length: int = 7, max_length: int = 15
+    ) -> str:
         """Check if phone number could be valid international format."""
         pass
 
@@ -171,7 +173,9 @@ class PhoneNumbers:
         """Get geographic region from area code (simplified - would need lookup table)."""
         pass
 
-    def hash_phone_numbers_sha256(self, col, salt: str = "", standardize_first: bool = True) -> str:
+    def hash_phone_numbers_sha256(
+        self, col, salt: str = "", standardize_first: bool = True
+    ) -> str:
         """Hash phone number with SHA256, with phone-specific preprocessing."""
         pass
 

@@ -15,32 +15,32 @@ class TestFullWorkflow:
         """Test full workflow: init -> add -> import -> transform for emails."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            
+
             # Step 1: Initialize datacompose project
             result = subprocess.run(
                 ["datacompose", "init", "--yes", "--skip-completion"],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
             assert result.returncode == 0, f"Init failed: {result.stderr}"
             assert (tmpdir / "datacompose.json").exists()
-            
+
             # Step 2: Add email transformer
             result = subprocess.run(
                 ["datacompose", "add", "emails", "-t", "pyspark"],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
             assert result.returncode == 0, f"Add failed: {result.stderr}"
-            
+
             # Verify generated files - new structure
             email_file = tmpdir / "transformers" / "pyspark" / "emails.py"
             utils_file = tmpdir / "transformers" / "pyspark" / "utils" / "primitives.py"
             assert email_file.exists(), f"Email file not generated at {email_file}"
             assert utils_file.exists(), f"Utils not generated at {utils_file}"
-            
+
             # Step 3: Create and run transformation script
             test_script = tmpdir / "test_emails.py"
             test_script.write_text("""
@@ -82,15 +82,15 @@ assert result[2]["is_valid"] == False
 print("SUCCESS: Email transformations work!")
 spark.stop()
 """)
-            
+
             # Run the transformation test
             result = subprocess.run(
                 [sys.executable, str(test_script)],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
-            
+
             assert result.returncode == 0, f"Transformation failed: {result.stderr}"
             assert "SUCCESS" in result.stdout
 
@@ -98,22 +98,23 @@ spark.stop()
         """Test full workflow for phone numbers."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            
+
             # Initialize
             subprocess.run(
                 ["datacompose", "init", "--yes", "--skip-completion"],
-                cwd=tmpdir, capture_output=True
+                cwd=tmpdir,
+                capture_output=True,
             )
-            
+
             # Add phone transformer
             result = subprocess.run(
                 ["datacompose", "add", "phone_numbers", "-t", "pyspark"],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
             assert result.returncode == 0
-            
+
             # Create test script
             test_script = tmpdir / "test_phones.py"
             test_script.write_text("""
@@ -147,14 +148,14 @@ assert result[2]["extension"] == "999"
 print("SUCCESS: Phone transformations work!")
 spark.stop()
 """)
-            
+
             result = subprocess.run(
                 [sys.executable, str(test_script)],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
-            
+
             assert result.returncode == 0, f"Phone test failed: {result.stderr}"
             assert "SUCCESS" in result.stdout
 
@@ -162,22 +163,23 @@ spark.stop()
         """Test full workflow for addresses."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            
+
             # Initialize
             subprocess.run(
                 ["datacompose", "init", "--yes", "--skip-completion"],
-                cwd=tmpdir, capture_output=True
+                cwd=tmpdir,
+                capture_output=True,
             )
-            
+
             # Add address transformer
             result = subprocess.run(
                 ["datacompose", "add", "addresses", "-t", "pyspark"],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
             assert result.returncode == 0
-            
+
             # Create test script
             test_script = tmpdir / "test_addresses.py"
             test_script.write_text("""
@@ -211,14 +213,14 @@ assert result[0]["street"] == "Main"
 print("SUCCESS: Address transformations work!")
 spark.stop()
 """)
-            
+
             result = subprocess.run(
                 [sys.executable, str(test_script)],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
-            
+
             assert result.returncode == 0, f"Address test failed: {result.stderr}"
             assert "SUCCESS" in result.stdout
 
@@ -226,28 +228,31 @@ spark.stop()
         """Test multiple transformers in the same project."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            
+
             # Initialize project
             subprocess.run(
                 ["datacompose", "init", "--yes", "--skip-completion"],
-                cwd=tmpdir, capture_output=True
+                cwd=tmpdir,
+                capture_output=True,
             )
-            
+
             # Add multiple transformers
             for transformer in ["emails", "phone_numbers", "addresses"]:
                 result = subprocess.run(
                     ["datacompose", "add", transformer, "-t", "pyspark"],
                     capture_output=True,
                     text=True,
-                    cwd=tmpdir
+                    cwd=tmpdir,
                 )
-                assert result.returncode == 0, f"Failed to add {transformer}: {result.stderr}"
-            
+                assert result.returncode == 0, (
+                    f"Failed to add {transformer}: {result.stderr}"
+                )
+
             # Verify all files were generated
             assert (tmpdir / "transformers" / "pyspark" / "emails.py").exists()
             assert (tmpdir / "transformers" / "pyspark" / "phone_numbers.py").exists()
             assert (tmpdir / "transformers" / "pyspark" / "addresses.py").exists()
-            
+
             # Create combined test script
             test_script = tmpdir / "test_combined.py"
             test_script.write_text("""
@@ -286,13 +291,13 @@ assert result[0]["street_num"] == "123"
 print("SUCCESS: All transformers work together!")
 spark.stop()
 """)
-            
+
             result = subprocess.run(
                 [sys.executable, str(test_script)],
                 capture_output=True,
                 text=True,
-                cwd=tmpdir
+                cwd=tmpdir,
             )
-            
+
             assert result.returncode == 0, f"Combined test failed: {result.stderr}"
             assert "SUCCESS" in result.stdout

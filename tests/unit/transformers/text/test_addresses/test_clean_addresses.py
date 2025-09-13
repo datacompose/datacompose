@@ -259,7 +259,7 @@ class TestAddressCleaning:
         """Test SHA256 hashing with salt parameter."""
         pass
 
-    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented") 
+    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
     def test_hash_address_sha256_standardization(self, spark):
         """Test that standardization produces consistent hashes."""
         pass

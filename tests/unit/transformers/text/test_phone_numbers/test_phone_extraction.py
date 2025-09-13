@@ -54,13 +54,13 @@ class TestPhoneExtraction:
         for row in results:
             # For texts with phone numbers, we should extract the digits
             if row["expected"]:
-                assert (
-                    row["expected"] in row["phone_digits"]
-                ), f"Failed for '{row['text']}': expected '{row['expected']}' to be in '{row['phone_digits']}'"
+                assert row["expected"] in row["phone_digits"], (
+                    f"Failed for '{row['text']}': expected '{row['expected']}' to be in '{row['phone_digits']}'"
+                )
             else:
-                assert (
-                    row["phone_digits"] == row["expected"]
-                ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['phone_digits']}'"
+                assert row["phone_digits"] == row["expected"], (
+                    f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['phone_digits']}'"
+                )
 
     def test_extract_first_valid_phone(self, spark):
         """Test extracting the first valid phone number from text."""
@@ -86,16 +86,17 @@ class TestPhoneExtraction:
 
         # Use our new extract_phone_numbers_from_text function
         result_df = df.withColumn(
-            "extracted_phone", phone_numbers.extract_phone_numbers_from_text(F.col("text"))
+            "extracted_phone",
+            phone_numbers.extract_phone_numbers_from_text(F.col("text")),
         )
 
         results = result_df.collect()
         for row in results:
             if row["expected"]:
                 # Check that we found a phone number
-                assert (
-                    row["extracted_phone"] != ""
-                ), f"Failed to extract from '{row['text']}': expected '{row['expected']}', got '{row['extracted_phone']}'"
+                assert row["extracted_phone"] != "", (
+                    f"Failed to extract from '{row['text']}': expected '{row['expected']}', got '{row['extracted_phone']}'"
+                )
                 # The extracted phone should contain the key digits
                 expected_digits = "".join(c for c in row["expected"] if c.isdigit())
                 extracted_digits = "".join(
@@ -105,11 +106,13 @@ class TestPhoneExtraction:
                     assert (
                         expected_digits in extracted_digits
                         or extracted_digits in expected_digits
-                    ), f"Digits mismatch for '{row['text']}': expected digits '{expected_digits}', got '{extracted_digits}'"
+                    ), (
+                        f"Digits mismatch for '{row['text']}': expected digits '{expected_digits}', got '{extracted_digits}'"
+                    )
             else:
-                assert (
-                    row["extracted_phone"] == ""
-                ), f"Should not extract from '{row['text']}': got '{row['extracted_phone']}'"
+                assert row["extracted_phone"] == "", (
+                    f"Should not extract from '{row['text']}': got '{row['extracted_phone']}'"
+                )
 
     def test_extract_all_phone_numbers_from_text(self, spark):
         """Test extracting all phone numbers from text."""
@@ -144,17 +147,17 @@ class TestPhoneExtraction:
             expected = row["expected"] if row["expected"] else []
 
             # Check count matches
-            assert len(extracted) == len(
-                expected
-            ), f"Count mismatch for '{row['text']}': expected {len(expected)} phone_numbers, got {len(extracted)}"
+            assert len(extracted) == len(expected), (
+                f"Count mismatch for '{row['text']}': expected {len(expected)} phone_numbers, got {len(extracted)}"
+            )
 
             # Check each phone is found
             for i, exp_phone in enumerate(expected):
                 if i < len(extracted):
                     # Just check that we extracted a phone number
-                    assert (
-                        extracted[i] != ""
-                    ), f"Expected phone '{exp_phone}' but got empty string for text '{row['text']}'"
+                    assert extracted[i] != "", (
+                        f"Expected phone '{exp_phone}' but got empty string for text '{row['text']}'"
+                    )
 
     def test_extract_digits(self, spark):
         """Test extraction of digits from phone numbers."""
@@ -174,9 +177,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["digits"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['digits']}'"
+            assert row["digits"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['digits']}'"
+            )
 
     def test_extract_extension(self, spark):
         """Test extraction of extension from phone numbers."""
@@ -196,9 +199,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["extension"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['extension']}'"
+            assert row["extension"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['extension']}'"
+            )
 
     def test_extract_country_code(self, spark):
         """Test extraction of country code."""
@@ -220,9 +223,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["country_code"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['country_code']}'"
+            assert row["country_code"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['country_code']}'"
+            )
 
     def test_extract_area_code(self, spark):
         """Test extraction of area code from NANP numbers."""
@@ -244,9 +247,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["area_code"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['area_code']}'"
+            assert row["area_code"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['area_code']}'"
+            )
 
     def test_extract_exchange(self, spark):
         """Test extraction of exchange from NANP numbers."""
@@ -267,9 +270,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["exchange"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['exchange']}'"
+            assert row["exchange"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['exchange']}'"
+            )
 
     def test_extract_subscriber(self, spark):
         """Test extraction of subscriber number from NANP numbers."""
@@ -290,9 +293,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["subscriber"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['subscriber']}'"
+            assert row["subscriber"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['subscriber']}'"
+            )
 
     def test_extract_local_number(self, spark):
         """Test extraction of local number (7 digits) from NANP numbers."""
@@ -314,9 +317,9 @@ class TestPhoneExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["local_number"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['local_number']}'"
+            assert row["local_number"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['local_number']}'"
+            )
 
 
 @pytest.mark.unit
@@ -346,9 +349,9 @@ class TestPhoneValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_is_valid_international(self, spark):
         """Test international phone validation."""
@@ -371,9 +374,9 @@ class TestPhoneValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_is_valid_phone(self, spark):
         """Test general phone validation (NANP or international)."""
@@ -395,9 +398,9 @@ class TestPhoneValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_is_toll_free(self, spark):
         """Test toll-free number detection."""
@@ -422,9 +425,9 @@ class TestPhoneValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_toll_free"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_toll_free']}"
+            assert row["is_toll_free"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_toll_free']}"
+            )
 
     def test_is_premium_rate(self, spark):
         """Test premium rate number detection."""
@@ -445,9 +448,9 @@ class TestPhoneValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_premium"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_premium']}"
+            assert row["is_premium"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_premium']}"
+            )
 
     def test_has_extension(self, spark):
         """Test extension detection."""
@@ -467,9 +470,9 @@ class TestPhoneValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["has_ext"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['has_ext']}"
+            assert row["has_ext"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected {row['expected']}, got {row['has_ext']}"
+            )
 
 
 @pytest.mark.unit
@@ -494,9 +497,9 @@ class TestPhoneCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["converted"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['converted']}'"
+            assert row["converted"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['converted']}'"
+            )
 
     def test_remove_extension(self, spark):
         """Test removal of extension."""
@@ -516,9 +519,9 @@ class TestPhoneCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["no_ext"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['no_ext']}'"
+            assert row["no_ext"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['no_ext']}'"
+            )
 
     def test_normalize_separators(self, spark):
         """Test normalization of separators."""
@@ -540,9 +543,9 @@ class TestPhoneCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["normalized"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['normalized']}'"
+            assert row["normalized"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['normalized']}'"
+            )
 
     def test_normalize_separators_edge_cases(self, spark):
         """Test normalization edge cases."""
@@ -561,9 +564,9 @@ class TestPhoneCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["normalized"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['normalized']}'"
+            assert row["normalized"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['normalized']}'"
+            )
 
     def test_add_country_code(self, spark):
         """Test adding country code to NANP numbers."""
@@ -584,9 +587,9 @@ class TestPhoneCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["with_country"] == row["expected"]
-            ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['with_country']}'"
+            assert row["with_country"] == row["expected"], (
+                f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['with_country']}'"
+            )
 
     def test_hash_phone_numbers_sha256_basic(self, spark):
         """Test basic SHA256 hashing functionality for phone numbers."""
@@ -604,13 +607,15 @@ class TestPhoneCleaning:
             ("invalid_phone",),  # Invalid format
             (None,),  # Null input
         ]
-        
+
         df = spark.createDataFrame(test_data, ["phone"])
 
         # Test hashing without standardization to avoid memory issues
         result_df = df.select(
-            "phone", 
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("hashed_phone")
+            "phone",
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "hashed_phone"
+            ),
         )
 
         results = result_df.collect()
@@ -637,14 +642,18 @@ class TestPhoneCleaning:
             ("5551234567",),
             ("15551235555",),
         ]
-        
+
         df = spark.createDataFrame(test_data, ["phone"])
 
         # Test with different salts
         result_df = df.select(
             "phone",
-            hash_phone_numbers_sha256(F.col("phone"), salt="", standardize_first=False).alias("no_salt"),
-            hash_phone_numbers_sha256(F.col("phone"), salt="phone_salt", standardize_first=False).alias("with_salt")
+            hash_phone_numbers_sha256(
+                F.col("phone"), salt="", standardize_first=False
+            ).alias("no_salt"),
+            hash_phone_numbers_sha256(
+                F.col("phone"), salt="phone_salt", standardize_first=False
+            ).alias("with_salt"),
         )
 
         results = result_df.collect()
@@ -670,22 +679,28 @@ class TestPhoneCleaning:
             ("(555) 123-4567",),  # With parentheses
             ("+1 555 123 4567",),  # International format
         ]
-        
+
         df = spark.createDataFrame(test_data, ["phone"])
 
         # Test without standardization to avoid memory issues
         result_df = df.select(
             "phone",
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("standardized_hash"),
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("raw_hash")
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "standardized_hash"
+            ),
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "raw_hash"
+            ),
         )
 
         results = result_df.collect()
 
         # Without standardization, variations should be different
-        standardized_hashes = [r["standardized_hash"] for r in results if r["standardized_hash"]]
+        standardized_hashes = [
+            r["standardized_hash"] for r in results if r["standardized_hash"]
+        ]
         raw_hashes = [r["raw_hash"] for r in results if r["raw_hash"]]
-        
+
         # Both columns should be identical since both use standardize_first=False
         assert standardized_hashes == raw_hashes
         # Without standardization, they should be different
@@ -698,14 +713,18 @@ class TestPhoneCleaning:
         )
 
         test_phone = "555-123-4567"
-        
+
         # Create multiple rows with the same phone
         test_data = [(test_phone,)] * 3
         df = spark.createDataFrame(test_data, ["phone"])
 
         result_df = df.select(
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("hash1"),
-            hash_phone_numbers_sha256(F.col("phone"), salt="salt1", standardize_first=False).alias("hash2")
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "hash1"
+            ),
+            hash_phone_numbers_sha256(
+                F.col("phone"), salt="salt1", standardize_first=False
+            ).alias("hash2"),
         )
 
         results = result_df.collect()
@@ -713,7 +732,7 @@ class TestPhoneCleaning:
         # All hashes should be identical for the same input
         hashes1 = [r["hash1"] for r in results]
         hashes2 = [r["hash2"] for r in results]
-        
+
         assert len(set(hashes1)) == 1  # All identical
         assert len(set(hashes2)) == 1  # All identical
         assert hashes1[0] != hashes2[0]  # But different salts produce different hashes

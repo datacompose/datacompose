@@ -35,9 +35,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["street_number"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_number']}'"
+            assert row["street_number"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_number']}'"
+            )
 
     def test_extract_street_prefix(self, spark):
         """Test extraction of directional prefixes."""
@@ -60,9 +60,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["street_prefix"].lower() == row["expected"].lower()
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_prefix']}'"
+            assert row["street_prefix"].lower() == row["expected"].lower(), (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_prefix']}'"
+            )
 
     def test_extract_street_name(self, spark):
         """Test extraction of street names."""
@@ -85,9 +85,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["street_name"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_name']}'"
+            assert row["street_name"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_name']}'"
+            )
 
     def test_extract_street_suffix(self, spark):
         """Test extraction of street suffixes."""
@@ -111,9 +111,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["street_suffix"].lower() == row["expected"].lower()
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_suffix']}'"
+            assert row["street_suffix"].lower() == row["expected"].lower(), (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_suffix']}'"
+            )
 
     def test_extract_full_street(self, spark):
         """Test extraction of complete street address."""
@@ -137,9 +137,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["full_street"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['full_street']}'"
+            assert row["full_street"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['full_street']}'"
+            )
 
     def test_standardize_street_prefix(self, spark):
         """Test standardization of street prefixes."""
@@ -169,9 +169,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_standardize_street_suffix(self, spark):
         """Test standardization of street suffixes."""
@@ -203,9 +203,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_complex_street_addresses(self, spark):
         """Test extraction from complex street addresses."""
@@ -251,18 +251,18 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["number"] == row["expected_number"]
-            ), f"Number failed for '{row['address']}'"
-            assert (
-                row["prefix"].lower() == row["expected_prefix"].lower()
-            ), f"Prefix failed for '{row['address']}'"
-            assert (
-                row["name"] == row["expected_name"]
-            ), f"Name failed for '{row['address']}'"
-            assert (
-                row["suffix"].lower() == row["expected_suffix"].lower()
-            ), f"Suffix failed for '{row['address']}'"
+            assert row["number"] == row["expected_number"], (
+                f"Number failed for '{row['address']}'"
+            )
+            assert row["prefix"].lower() == row["expected_prefix"].lower(), (
+                f"Prefix failed for '{row['address']}'"
+            )
+            assert row["name"] == row["expected_name"], (
+                f"Name failed for '{row['address']}'"
+            )
+            assert row["suffix"].lower() == row["expected_suffix"].lower(), (
+                f"Suffix failed for '{row['address']}'"
+            )
 
     def test_international_street_formats(self, spark):
         """Test with international street address formats."""
@@ -306,18 +306,18 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["number"] == row["expected_number"]
-            ), f"Number failed for '{row['address']}'"
-            assert (
-                row["prefix"].lower() == row["expected_prefix"].lower()
-            ), f"Prefix failed for '{row['address']}'"
-            assert (
-                row["name"] == row["expected_name"]
-            ), f"Name failed for '{row['address']}'"
-            assert (
-                row["suffix"].lower() == row["expected_suffix"].lower()
-            ), f"Suffix failed for '{row['address']}'"
+            assert row["number"] == row["expected_number"], (
+                f"Number failed for '{row['address']}'"
+            )
+            assert row["prefix"].lower() == row["expected_prefix"].lower(), (
+                f"Prefix failed for '{row['address']}'"
+            )
+            assert row["name"] == row["expected_name"], (
+                f"Name failed for '{row['address']}'"
+            )
+            assert row["suffix"].lower() == row["expected_suffix"].lower(), (
+                f"Suffix failed for '{row['address']}'"
+            )
 
     def test_edge_cases_and_nulls(self, spark):
         """Test edge cases and null handling."""
@@ -378,9 +378,9 @@ class TestStreetExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_combined_extraction_and_standardization(self, spark):
         """Test extracting and then standardizing street components."""
@@ -431,9 +431,9 @@ class TestStreetExtraction:
             # Note: This is a simplified test - actual reconstruction might need more logic
             parts = row["reconstructed"].split()
             expected_parts = test_data[results.index(row)][1].split()
-            assert len(parts) == len(
-                expected_parts
-            ), f"Part count mismatch for '{row['address']}'"
+            assert len(parts) == len(expected_parts), (
+                f"Part count mismatch for '{row['address']}'"
+            )
 
     def test_pre_configured_extractors(self, spark):
         """Test using pre-configured street extractors."""
@@ -910,9 +910,9 @@ class TestStreetExtractionEdgeCases:
         results = result_df.collect()
         for row in results:
             # Some complex cases might not match exactly, but should extract something reasonable
-            assert (
-                row["extracted"] is not None and row["extracted"] != ""
-            ), f"Failed to extract street from: '{row['address']}'"
+            assert row["extracted"] is not None and row["extracted"] != "", (
+                f"Failed to extract street from: '{row['address']}'"
+            )
 
             # For standard cases, should match expected
             if (
@@ -976,22 +976,22 @@ class TestStreetExtractionEdgeCases:
             result = result_df.first()
 
             # Verify each component
-            assert (
-                result["number"] == expected["number"]
-            ), f"Number mismatch for '{address}': got '{result['number']}'"
-            assert (
-                result["prefix"].lower() == expected["prefix"].lower()
-            ), f"Prefix mismatch for '{address}': got '{result['prefix']}'"
+            assert result["number"] == expected["number"], (
+                f"Number mismatch for '{address}': got '{result['number']}'"
+            )
+            assert result["prefix"].lower() == expected["prefix"].lower(), (
+                f"Prefix mismatch for '{address}': got '{result['prefix']}'"
+            )
             # Name extraction can be tricky with complex names
             if (
                 expected["name"] and len(expected["name"]) < 20
             ):  # Simple names should match
-                assert (
-                    result["name"] == expected["name"]
-                ), f"Name mismatch for '{address}': got '{result['name']}'"
-            assert (
-                result["suffix"].lower() == expected["suffix"].lower()
-            ), f"Suffix mismatch for '{address}': got '{result['suffix']}'"
-            assert (
-                result["full"] == expected["full"]
-            ), f"Full street mismatch for '{address}': got '{result['full']}'"
+                assert result["name"] == expected["name"], (
+                    f"Name mismatch for '{address}': got '{result['name']}'"
+                )
+            assert result["suffix"].lower() == expected["suffix"].lower(), (
+                f"Suffix mismatch for '{address}': got '{result['suffix']}'"
+            )
+            assert result["full"] == expected["full"], (
+                f"Full street mismatch for '{address}': got '{result['full']}'"
+            )

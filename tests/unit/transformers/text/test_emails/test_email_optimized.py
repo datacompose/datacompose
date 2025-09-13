@@ -72,9 +72,9 @@ class TestOptimizedEmailFunctions:
         for i, (original, expected) in enumerate(test_data):
             result = results[i]
             assert result["original_email"] == original
-            assert (
-                result["fixed_email"] == expected
-            ), f"Failed for '{original}': expected '{expected}', got '{result['fixed_email']}'"
+            assert result["fixed_email"] == expected, (
+                f"Failed for '{original}': expected '{expected}', got '{result['fixed_email']}'"
+            )
 
     def test_standardize_email_simplified(self, spark):
         """Test simplified email standardization without deep nesting."""
@@ -95,9 +95,9 @@ class TestOptimizedEmailFunctions:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["result"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['result']}'"
+            assert row["result"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['result']}'"
+            )
 
     def test_gmail_normalization_simplified(self, spark):
         """Test Gmail normalization using individual operations."""
@@ -133,9 +133,9 @@ class TestOptimizedEmailFunctions:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["result"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['result']}'"
+            assert row["result"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['result']}'"
+            )
 
 
 @pytest.mark.unit

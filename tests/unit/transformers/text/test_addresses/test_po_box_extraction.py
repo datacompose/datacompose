@@ -44,9 +44,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["po_box"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['po_box']}'"
+            assert row["po_box"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['po_box']}'"
+            )
 
     def test_has_po_box(self, spark):
         """Test detection of PO Box in address."""
@@ -66,9 +66,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["has_box"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_box']}"
+            assert row["has_box"] == row["expected"], (
+                f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_box']}"
+            )
 
     def test_is_po_box_only(self, spark):
         """Test detection of PO Box-only addresses."""
@@ -95,9 +95,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["po_only"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['po_only']}"
+            assert row["po_only"] == row["expected"], (
+                f"Failed for '{row['address']}': expected {row['expected']}, got {row['po_only']}"
+            )
 
     def test_remove_po_box(self, spark):
         """Test removal of PO Box from address."""
@@ -126,9 +126,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["without_box"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['without_box']}'"
+            assert row["without_box"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['without_box']}'"
+            )
 
     def test_standardize_po_box(self, spark):
         """Test standardization of PO Box format."""
@@ -157,9 +157,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_extract_private_mailbox(self, spark):
         """Test extraction of private mailbox (PMB) numbers."""
@@ -188,9 +188,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["pmb"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['pmb']}'"
+            assert row["pmb"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['pmb']}'"
+            )
 
     def test_po_box_edge_cases(self, spark):
         """Test edge cases for PO Box extraction."""
@@ -220,9 +220,9 @@ class TestPOBoxExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["po_box"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['po_box']}'"
+            assert row["po_box"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['po_box']}'"
+            )
 
     def test_combined_po_box_operations(self, spark):
         """Test combining multiple PO Box operations."""

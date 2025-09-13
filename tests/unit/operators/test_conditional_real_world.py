@@ -12,20 +12,20 @@ from datacompose.operators.primitives import PrimitiveRegistry
 def diverse_test_data(spark):
     """Create diverse test dataset for conditional testing"""
     data = [
-        ("A", 10, "small", 1, "short"),           # category A - short text
-        ("A", 20, "medium", 2, "simple"),         # category A  
-        ("A", 30, "large", 3, "s_text"),          # category A
-        ("A", 40, "xlarge", 4, "special!@#text"), # category A
-        ("B", 50, "small", 5, None),              # category B - NULL text for null test
-        ("B", 60, "medium", 6, "medium_text"),    # category B - ends with 'text'
-        ("B", 70, "large", 7, "  SPACES  "),        # category B - needs cleaning (spaces)
-        ("C", 80, "small", 8, "UPPERCASE"),       # category C - all caps
-        ("C", 90, "medium", 9, "simple_text"),    # category C
-        ("D", 100, "large", 10, ""),              # empty text
-        ("E", 110, "medium", 11, "12345"),        # numeric text
-        ("F", 120, "small", 12, "mixed123ABC"),   # mixed text
-        ("G", 130, "large", 13, "ALPHA"),         # alpha text
-        (None, 140, "unknown", 14, None)          # NULL category for testing
+        ("A", 10, "small", 1, "short"),  # category A - short text
+        ("A", 20, "medium", 2, "simple"),  # category A
+        ("A", 30, "large", 3, "s_text"),  # category A
+        ("A", 40, "xlarge", 4, "special!@#text"),  # category A
+        ("B", 50, "small", 5, None),  # category B - NULL text for null test
+        ("B", 60, "medium", 6, "medium_text"),  # category B - ends with 'text'
+        ("B", 70, "large", 7, "  SPACES  "),  # category B - needs cleaning (spaces)
+        ("C", 80, "small", 8, "UPPERCASE"),  # category C - all caps
+        ("C", 90, "medium", 9, "simple_text"),  # category C
+        ("D", 100, "large", 10, ""),  # empty text
+        ("E", 110, "medium", 11, "12345"),  # numeric text
+        ("F", 120, "small", 12, "mixed123ABC"),  # mixed text
+        ("G", 130, "large", 13, "ALPHA"),  # alpha text
+        (None, 140, "unknown", 14, None),  # NULL category for testing
     ]
     return spark.createDataFrame(data, ["category", "value", "size", "id", "text"])
 
@@ -213,9 +213,7 @@ class TestRealWorldScenarios:
             # North American Numbering Plan validation
             # Allow 555 for testing purposes (normally reserved for fictional numbers)
             cleaned = f.regexp_replace(col, r"[^0-9]", "")
-            return cleaned.rlike(r"^[2-9]\d{9}$") | cleaned.rlike(
-                r"^1[2-9]\d{9}$"
-            )
+            return cleaned.rlike(r"^[2-9]\d{9}$") | cleaned.rlike(r"^1[2-9]\d{9}$")
 
         @ns.register()
         def is_toll_free(col):
@@ -324,17 +322,25 @@ class TestRealWorldScenarios:
 
         result = df.withColumn("formatted", process_phone_number(f.col("phone")))
         collected = result.collect()
-        
+
         # Verify each phone number is processed correctly
         # The pipeline should:
         # 1. Convert letters to numbers (1-800-FLOWERS -> digits)
         # 2. Detect toll-free numbers and format as E.164
         # 3. Format valid NANP numbers with parentheses
         # 4. Mask invalid phone numbers
-        
-        assert collected[0]["formatted"] == "(555) 123-4567"  # Valid NANP (555 allowed for testing)
-        assert collected[1]["formatted"] == "+18003569377"  # 1-800-FLOWERS -> toll-free E.164
+
+        assert (
+            collected[0]["formatted"] == "(555) 123-4567"
+        )  # Valid NANP (555 allowed for testing)
+        assert (
+            collected[1]["formatted"] == "+18003569377"
+        )  # 1-800-FLOWERS -> toll-free E.164
         assert collected[2]["formatted"] == "XXX-XXX-XXXX"  # Invalid format -> masked
         assert collected[3]["formatted"] == "+18885551234"  # Toll-free -> E.164
-        assert collected[4]["formatted"] == "(212) 555-1234"  # Valid NANP -> parentheses format
-        assert collected[5]["formatted"] == "+18004633339"  # 1800GOFEDEX -> toll-free E.164
+        assert (
+            collected[4]["formatted"] == "(212) 555-1234"
+        )  # Valid NANP -> parentheses format
+        assert (
+            collected[5]["formatted"] == "+18004633339"
+        )  # 1800GOFEDEX -> toll-free E.164

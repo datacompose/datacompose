@@ -36,7 +36,9 @@ def spark():
         .config("spark.python.worker.reuse", "true")
         .config("spark.sql.warehouse.dir", "/tmp/spark-warehouse")
         .config("spark.driver.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR")
-        .config("spark.executor.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR")
+        .config(
+            "spark.executor.extraJavaOptions", "-Dlog4j.logger.org.apache.ivy=ERROR"
+        )
         .getOrCreate()
     )
 

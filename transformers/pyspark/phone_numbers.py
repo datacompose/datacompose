@@ -156,7 +156,9 @@ def extract_all_phone_numbers_from_text(col: Column) -> Column:
     first_phone_numbers = extract_phone_numbers_from_text(col)
 
     # Return array with single element or empty array
-    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(F.array())
+    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(
+        F.array()
+    )
 
 
 @phone_numbers.register()

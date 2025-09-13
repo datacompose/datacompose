@@ -30,7 +30,10 @@ DEFAULT_CONFIG = {
 
 @click.command()
 @click.option(
-    "--force", "-f", is_flag=True, help="Overwrite existing datacompose.json if it exists"
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Overwrite existing datacompose.json if it exists",
 )
 @click.option(
     "--output",
@@ -58,7 +61,11 @@ class InitCommand:
     def get_config_template(template_name: str) -> Dict[str, Any]:
         """Get configuration template by name."""
         if template_name == "minimal":
-            return {"version": "1.0", "default_target": "pyspark", "targets": {"pyspark": {"output": "./transformers/pyspark"}}}
+            return {
+                "version": "1.0",
+                "default_target": "pyspark",
+                "targets": {"pyspark": {"output": "./transformers/pyspark"}},
+            }
         elif template_name == "advanced":
             config = DEFAULT_CONFIG.copy()
             config.update(
@@ -69,7 +76,12 @@ class InitCommand:
                         "transformers": "./transformers",
                     },
                     "include": ["src/**/*"],
-                    "exclude": ["__pycache__", "transformers", "*.pyc", ".pytest_cache"],
+                    "exclude": [
+                        "__pycache__",
+                        "transformers",
+                        "*.pyc",
+                        ".pytest_cache",
+                    ],
                     "testing": {"framework": "pytest", "test_dir": "./tests"},
                 }
             )
@@ -185,7 +197,10 @@ class InitCommand:
 
         # Select targets with multi-select
         available_targets = {
-            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark (Apache Spark)"},
+            "pyspark": {
+                "output": "./transformers/pyspark",
+                "name": "PySpark (Apache Spark)",
+            },
         }
 
         selected_targets = InitCommand.prompt_for_targets(available_targets)
@@ -200,7 +215,7 @@ class InitCommand:
 
         # Update targets with user selections
         config["targets"] = selected_targets
-        
+
         # Set default target to the first selected target (or only target if single)
         target_keys = list(selected_targets.keys())
         if len(target_keys) == 1:
@@ -208,18 +223,26 @@ class InitCommand:
         elif len(target_keys) > 1:
             # Ask user to select default target
             print(highlight("\nSelect Default Target"))
-            print(dim("Which platform should be used by default when running 'datacompose add'?\n"))
+            print(
+                dim(
+                    "Which platform should be used by default when running 'datacompose add'?\n"
+                )
+            )
             for i, key in enumerate(target_keys, 1):
                 print(f"  {i}. {key}")
             print()
-            
+
             while True:
-                choice = input(f"Select default target (1-{len(target_keys)}): ").strip()
+                choice = input(
+                    f"Select default target (1-{len(target_keys)}): "
+                ).strip()
                 try:
                     choice_idx = int(choice) - 1
                     if 0 <= choice_idx < len(target_keys):
                         config["default_target"] = target_keys[choice_idx]
-                        print(dim(f"Default target set to: {target_keys[choice_idx]}\n"))
+                        print(
+                            dim(f"Default target set to: {target_keys[choice_idx]}\n")
+                        )
                         break
                     else:
                         print(error("Invalid selection. Please try again."))
@@ -297,7 +320,9 @@ class InitCommand:
                 return True
 
             # Create backup
-            backup_file = config_file.with_suffix(config_file.suffix + ".datacompose-backup")
+            backup_file = config_file.with_suffix(
+                config_file.suffix + ".datacompose-backup"
+            )
             try:
                 with open(backup_file, "w") as f:
                     f.write(content)
@@ -337,7 +362,9 @@ class InitCommand:
         try:
             print()  # Add some spacing
             response = (
-                input(highlight("Set up tab completion for datacompose commands? (Y/n): "))
+                input(
+                    highlight("Set up tab completion for datacompose commands? (Y/n): ")
+                )
                 .strip()
                 .lower()
             )
@@ -428,13 +455,9 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
                 print(
                     "2. Source your shell config or restart terminal for tab completion"
                 )
-                print(
-                    "3. Add your first transformer: datacompose add emails"
-                )
+                print("3. Add your first transformer: datacompose add emails")
             else:
-                print(
-                    "2. Add your first transformer: datacompose add emails"
-                )
+                print("2. Add your first transformer: datacompose add emails")
                 if not skip_completion:
                     print(
                         "4. Set up tab completion: echo 'eval \"$(register-python-argcomplete datacompose)\"' >> ~/.bashrc"
@@ -443,22 +466,14 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
             print(success("✓ Directory structure created"))
             if completion_setup:
                 print(success("✓ Tab completion configured"))
-                print(
-                    highlight(
-                        "\nRun 'datacompose add emails' to get started"
-                    )
-                )
+                print(highlight("\nRun 'datacompose add emails' to get started"))
                 print(
                     dim(
                         "Restart your terminal or run 'source ~/.bashrc' to enable tab completion"
                     )
                 )
             else:
-                print(
-                    highlight(
-                        "\nRun 'datacompose add emails' to get started"
-                    )
-                )
+                print(highlight("\nRun 'datacompose add emails' to get started"))
                 if not skip_completion and not yes:
                     print(
                         dim(

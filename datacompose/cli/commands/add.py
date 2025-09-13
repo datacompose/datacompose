@@ -113,18 +113,14 @@ def add(ctx, transformer, target, type, output, verbose):
     if target is None:
         # If no config file exists or is malformed, fail early
         if config is None:
-            print(
-                error(
-                    "Error: No target specified and no config file found"
-                )
-            )
+            print(error("Error: No target specified and no config file found"))
             print(
                 info(
                     "Please specify a target with --target or run 'datacompose init' to set up defaults"
                 )
             )
             ctx.exit(1)
-            
+
         # Try to get default target from config
         target = ConfigLoader.get_default_target(config)
         if target is None:

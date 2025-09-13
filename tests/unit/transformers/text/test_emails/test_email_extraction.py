@@ -29,9 +29,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["email"] == row["expected"]
-            ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['email']}'"
+            assert row["email"] == row["expected"], (
+                f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['email']}'"
+            )
 
     def test_extract_all_emails(self, spark):
         """Test extraction of all emails from text."""
@@ -60,9 +60,9 @@ class TestEmailExtraction:
             else:
                 row_emails = row["emails"]
 
-            assert (
-                row_emails == row["expected"]
-            ), f"Failed for '{row['text']}': expected {row['expected']}, got {row_emails}"
+            assert row_emails == row["expected"], (
+                f"Failed for '{row['text']}': expected {row['expected']}, got {row_emails}"
+            )
 
     def test_extract_username(self, spark):
         """Test extraction of username from email."""
@@ -81,9 +81,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["username"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['username']}'"
+            assert row["username"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['username']}'"
+            )
 
     def test_extract_domain(self, spark):
         """Test extraction of domain from email."""
@@ -102,9 +102,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["domain"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain']}'"
+            assert row["domain"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain']}'"
+            )
 
     def test_extract_domain_name(self, spark):
         """Test extraction of domain name without TLD."""
@@ -125,9 +125,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["domain_name"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_name']}'"
+            assert row["domain_name"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_name']}'"
+            )
 
     def test_extract_tld(self, spark):
         """Test extraction of top-level domain."""
@@ -147,9 +147,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["tld"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['tld']}'"
+            assert row["tld"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['tld']}'"
+            )
 
 
 @pytest.mark.unit
@@ -179,9 +179,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_is_valid_username(self, spark):
         """Test username validation."""
@@ -204,9 +204,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["valid_username"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
+            assert row["valid_username"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
+            )
 
     def test_is_valid_domain(self, spark):
         """Test domain validation."""
@@ -230,9 +230,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["valid_domain"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
+            assert row["valid_domain"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
+            )
 
     def test_has_plus_addressing(self, spark):
         """Test detection of plus addressing."""
@@ -254,9 +254,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["has_plus"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['has_plus']}"
+            assert row["has_plus"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['has_plus']}"
+            )
 
     def test_is_disposable_email(self, spark):
         """Test detection of disposable email addresses."""
@@ -277,9 +277,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_disposable"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_disposable']}"
+            assert row["is_disposable"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_disposable']}"
+            )
 
     def test_is_corporate_email(self, spark):
         """Test detection of corporate email addresses."""
@@ -302,9 +302,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_corporate"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_corporate']}"
+            assert row["is_corporate"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_corporate']}"
+            )
 
 
 @pytest.mark.unit
@@ -327,9 +327,9 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["cleaned"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            assert row["cleaned"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['cleaned']}'"
+            )
 
     def test_lowercase_email(self, spark):
         """Test email lowercasing."""
@@ -347,9 +347,9 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["lowercased"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['lowercased']}'"
+            assert row["lowercased"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['lowercased']}'"
+            )
 
     def test_lowercase_domain(self, spark):
         """Test lowercasing only domain part."""
@@ -369,9 +369,9 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["domain_lower"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_lower']}'"
+            assert row["domain_lower"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_lower']}'"
+            )
 
     def test_remove_plus_addressing(self, spark):
         """Test removal of plus addressing."""
@@ -391,9 +391,9 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["no_plus"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_plus']}'"
+            assert row["no_plus"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_plus']}'"
+            )
 
     def test_remove_dots_from_gmail(self, spark):
         """Test removal of dots from Gmail addresses."""
@@ -414,9 +414,9 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["no_dots"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_dots']}'"
+            assert row["no_dots"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_dots']}'"
+            )
 
     def test_fix_common_typos(self, spark):
         """Test fixing common email domain typos."""
@@ -446,9 +446,9 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["fixed"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['fixed']}'"
+            assert row["fixed"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['fixed']}'"
+            )
 
     @pytest.mark.skip(
         reason="SmartPrimitive doesn't handle multiple parameters correctly"
@@ -505,9 +505,9 @@ class TestEmailStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
     def test_normalize_gmail(self, spark):
@@ -526,9 +526,9 @@ class TestEmailStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["normalized"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['normalized']}'"
+            assert row["normalized"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['normalized']}'"
+            )
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
     def test_get_canonical_email(self, spark):
@@ -549,9 +549,9 @@ class TestEmailStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["canonical"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['canonical']}'"
+            assert row["canonical"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['canonical']}'"
+            )
 
 
 @pytest.mark.unit
@@ -579,9 +579,9 @@ class TestEmailInformation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["name"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['name']}'"
+            assert row["name"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['name']}'"
+            )
 
     def test_get_email_provider(self, spark):
         """Test getting email provider name."""
@@ -606,9 +606,9 @@ class TestEmailInformation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["provider"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['provider']}'"
+            assert row["provider"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['provider']}'"
+            )
 
     def test_mask_email(self, spark):
         """Test email masking for privacy."""
@@ -627,9 +627,9 @@ class TestEmailInformation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["masked"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['masked']}'"
+            assert row["masked"] == row["expected"], (
+                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['masked']}'"
+            )
 
 
 @pytest.mark.unit
@@ -655,9 +655,9 @@ class TestEmailFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["filtered"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
+            assert row["filtered"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
+            )
 
     def test_filter_corporate_emails(self, spark):
         """Test filtering to keep only corporate emails."""
@@ -677,9 +677,9 @@ class TestEmailFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["filtered"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
+            assert row["filtered"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
+            )
 
     def test_filter_non_disposable_emails(self, spark):
         """Test filtering to exclude disposable emails."""
@@ -699,9 +699,9 @@ class TestEmailFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["filtered"] == row["expected"]
-            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
+            assert row["filtered"] == row["expected"], (
+                f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
+            )
 
 
 @pytest.mark.unit
@@ -757,9 +757,9 @@ class TestEmailEdgeCases:
         results = result_df.collect()
         for row in results:
             # Should at least extract something
-            assert (
-                row["domain"] != ""
-            ), f"Failed to extract domain from '{row['email']}'"
+            assert row["domain"] != "", (
+                f"Failed to extract domain from '{row['email']}'"
+            )
 
     def test_very_long_emails(self, spark):
         """Test handling of very long email addresses."""
@@ -779,9 +779,9 @@ class TestEmailEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected_valid"]
-            ), f"Failed for long email: expected {row['expected_valid']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected_valid"], (
+                f"Failed for long email: expected {row['expected_valid']}, got {row['is_valid']}"
+            )
 
     def test_special_characters(self, spark):
         """Test handling of special characters in emails."""
@@ -802,9 +802,9 @@ class TestEmailEdgeCases:
         results = result_df.collect()
         # Just verify extraction works without errors
         for row in results:
-            assert (
-                row["username"] != "" or row["domain"] != ""
-            ), f"Failed to extract from '{row['email']}'"
+            assert row["username"] != "" or row["domain"] != "", (
+                f"Failed to extract from '{row['email']}'"
+            )
 
     def test_hash_email_sha256_basic(self, spark):
         """Test basic SHA256 hashing functionality for emails."""
@@ -826,7 +826,10 @@ class TestEmailEdgeCases:
 
         # Test hashing without standardization to avoid memory issues
         result_df = df.select(
-            "email", hash_email_sha256(F.col("email"), standardize_first=False).alias("hashed_email")
+            "email",
+            hash_email_sha256(F.col("email"), standardize_first=False).alias(
+                "hashed_email"
+            ),
         )
 
         results = result_df.collect()
@@ -857,8 +860,12 @@ class TestEmailEdgeCases:
         # Test with different salts
         result_df = df.select(
             "email",
-            hash_email_sha256(F.col("email"), salt="", standardize_first=False).alias("no_salt"),
-            hash_email_sha256(F.col("email"), salt="email_salt", standardize_first=False).alias("with_salt"),
+            hash_email_sha256(F.col("email"), salt="", standardize_first=False).alias(
+                "no_salt"
+            ),
+            hash_email_sha256(
+                F.col("email"), salt="email_salt", standardize_first=False
+            ).alias("with_salt"),
         )
 
         results = result_df.collect()
@@ -904,7 +911,9 @@ class TestEmailEdgeCases:
         raw_hashes = [r["raw_hash"] for r in results if r["raw_hash"]]
 
         # Both should be different without canonicalization
-        assert len(set(canonical_hashes)) > 1  # Should be different without canonicalization
+        assert (
+            len(set(canonical_hashes)) > 1
+        )  # Should be different without canonicalization
         assert len(set(raw_hashes)) > 1  # Should be different without canonicalization
         assert canonical_hashes == raw_hashes  # Both columns should be identical
 
@@ -922,7 +931,9 @@ class TestEmailEdgeCases:
 
         result_df = df.select(
             hash_email_sha256(F.col("email"), standardize_first=False).alias("hash1"),
-            hash_email_sha256(F.col("email"), salt="salt1", standardize_first=False).alias("hash2"),
+            hash_email_sha256(
+                F.col("email"), salt="salt1", standardize_first=False
+            ).alias("hash2"),
         )
 
         results = result_df.collect()

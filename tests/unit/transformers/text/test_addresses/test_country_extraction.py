@@ -40,9 +40,9 @@ class TestCountryExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["country"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['country']}'"
+            assert row["country"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['country']}'"
+            )
 
     def test_has_country(self, spark):
         """Test detection of country in address."""
@@ -63,9 +63,9 @@ class TestCountryExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["has_country"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_country']}"
+            assert row["has_country"] == row["expected"], (
+                f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_country']}"
+            )
 
     def test_remove_country(self, spark):
         """Test removal of country from address."""
@@ -86,9 +86,9 @@ class TestCountryExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["without_country"] == row["expected"]
-            ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['without_country']}'"
+            assert row["without_country"] == row["expected"], (
+                f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['without_country']}'"
+            )
 
     def test_standardize_country(self, spark):
         """Test standardization of country names."""
@@ -131,9 +131,9 @@ class TestCountryExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_country_edge_cases(self, spark):
         """Test edge cases for country extraction."""
@@ -171,9 +171,9 @@ class TestCountryExtraction:
         for row in results:
             # Some edge cases might not work perfectly
             if row["expected"]:
-                assert (
-                    row["country"] == row["expected"]
-                ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['country']}'"
+                assert row["country"] == row["expected"], (
+                    f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['country']}'"
+                )
 
     def test_custom_country_mappings(self, spark):
         """Test custom country mappings."""

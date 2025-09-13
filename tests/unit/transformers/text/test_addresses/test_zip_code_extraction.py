@@ -142,9 +142,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for input '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for input '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_invalid_zip_codes(self, invalid_zip_codes_df):
         """Test handling of invalid ZIP code formats."""
@@ -159,9 +159,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for input '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for input '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_zip_codes_in_text(self, zip_codes_in_text_df):
         """Test extraction of ZIP codes from text strings."""
@@ -176,9 +176,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for text '{row['text']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for text '{row['text']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_special_cases(self, special_cases_df):
         """Test special ZIP code cases and formats."""
@@ -193,9 +193,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for input '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for input '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_international_postal_codes(self, international_postal_codes_df):
         """Test that international postal codes are handled correctly."""
@@ -210,9 +210,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_boundary_zip_codes(self, boundary_zip_codes_df):
         """Test ZIP codes at the boundaries of valid ranges."""
@@ -227,9 +227,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_unicode_and_special_chars(self, unicode_special_chars_df):
         """Test ZIP code extraction with Unicode and special characters."""
@@ -244,9 +244,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_null_handling(self, null_handling_df):
         """Test proper handling of null values."""
@@ -367,9 +367,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_zip_with_different_separators(self, spark):
         """Test ZIP codes with various separator characters."""
@@ -393,9 +393,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_extreme_edge_cases(self, spark):
         """Test extreme edge cases that might break the regex."""
@@ -442,9 +442,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for edge case: expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for edge case: expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_malformed_input_handling(self, spark):
         """Test handling of malformed and malicious inputs."""
@@ -485,9 +485,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Failed for malformed input: expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Failed for malformed input: expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
     def test_consistency_across_runs(self, spark):
         """Test that results are consistent across multiple runs."""
@@ -513,7 +513,7 @@ class TestZipCodeExtraction:
         # All runs should produce identical results
         first_result = results[0]
         for i, result in enumerate(results[1:], 1):
-            assert result == first_result, f"Run {i+1} produced different results"
+            assert result == first_result, f"Run {i + 1} produced different results"
 
     def test_regex_performance_patterns(self, spark):
         """Test patterns that could cause regex performance issues."""
@@ -598,9 +598,9 @@ class TestZipCodeExtraction:
         results = result_df.collect()
 
         for row in results:
-            assert (
-                row["extracted"] == row["expected"]
-            ), f"Boundary detection failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            assert row["extracted"] == row["expected"], (
+                f"Boundary detection failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
+            )
 
 
 @pytest.mark.unit
@@ -629,9 +629,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_validate_zip_code_invalid_formats(self, spark):
         """Test validation of invalid ZIP code formats."""
@@ -662,9 +662,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_is_valid_zip_code_alias(self, spark):
         """Test that is_valid_zip_code is an alias for validate_zip_code."""
@@ -689,9 +689,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["validate"] == row["is_valid"]
-            ), f"Alias mismatch for '{row['zip']}': validate={row['validate']}, is_valid={row['is_valid']}"
+            assert row["validate"] == row["is_valid"], (
+                f"Alias mismatch for '{row['zip']}': validate={row['validate']}, is_valid={row['is_valid']}"
+            )
 
     def test_standardize_zip_code(self, spark):
         """Test ZIP code standardization."""
@@ -719,9 +719,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Standardization failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Standardization failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_get_zip_code_type(self, spark):
         """Test ZIP code type detection."""
@@ -750,9 +750,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["type"] == row["expected"]
-            ), f"Type detection failed for '{row['zip']}': expected '{row['expected']}', got '{row['type']}'"
+            assert row["type"] == row["expected"], (
+                f"Type detection failed for '{row['zip']}': expected '{row['expected']}', got '{row['type']}'"
+            )
 
     def test_split_zip_code(self, spark):
         """Test ZIP code splitting into base and extension."""
@@ -791,12 +791,12 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["actual_base"] == row["expected_base"]
-            ), f"Base extraction failed for '{row['zip']}': expected '{row['expected_base']}', got '{row['actual_base']}'"
-            assert (
-                row["actual_ext"] == row["expected_ext"]
-            ), f"Extension extraction failed for '{row['zip']}': expected '{row['expected_ext']}', got '{row['actual_ext']}'"
+            assert row["actual_base"] == row["expected_base"], (
+                f"Base extraction failed for '{row['zip']}': expected '{row['expected_base']}', got '{row['actual_base']}'"
+            )
+            assert row["actual_ext"] == row["expected_ext"], (
+                f"Extension extraction failed for '{row['zip']}': expected '{row['expected_ext']}', got '{row['actual_ext']}'"
+            )
 
     def test_combined_workflow(self, spark):
         """Test a combined workflow using multiple functions."""
@@ -884,9 +884,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected"]
-            ), f"Edge case validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected"], (
+                f"Edge case validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
+            )
 
     def test_null_safety_all_functions(self, spark):
         """Test that all functions handle nulls safely."""
@@ -947,9 +947,9 @@ class TestZipCodeValidation:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["extracted"] == row["expected_zip"]
-            ), f"Extraction failed for '{row['text']}'"
-            assert (
-                row["is_valid"] == row["expected_valid"]
-            ), f"Validation failed for extracted ZIP from '{row['text']}'"
+            assert row["extracted"] == row["expected_zip"], (
+                f"Extraction failed for '{row['text']}'"
+            )
+            assert row["is_valid"] == row["expected_valid"], (
+                f"Validation failed for extracted ZIP from '{row['text']}'"
+            )

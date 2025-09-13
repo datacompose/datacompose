@@ -342,8 +342,7 @@ class CompiledStep:
 
         if self.step_type not in valid_types:
             raise ValueError(
-                f"Invalid step_type '{self.step_type}'. "
-                f"Must be one of {valid_types}"
+                f"Invalid step_type '{self.step_type}'. Must be one of {valid_types}"
             )
 
         if self.step_type == "transform":
@@ -579,7 +578,9 @@ class PipelineCompiler:
         if isinstance(node, ast.Constant):
             return node.value
         # Python 3.7 compatibility - handle legacy literal nodes
-        elif hasattr(ast, "Num") and isinstance(node, (ast.Num, ast.Str, ast.Bytes, ast.NameConstant)):  # type: ignore
+        elif hasattr(ast, "Num") and isinstance(
+            node, (ast.Num, ast.Str, ast.Bytes, ast.NameConstant)
+        ):  # type: ignore
             return node.value  # type: ignore
         else:
             try:

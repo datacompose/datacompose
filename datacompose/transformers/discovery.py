@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 
-
 class TransformerDiscovery:
     """Discovers available transformers and generators."""
 
@@ -36,7 +35,6 @@ class TransformerDiscovery:
                 and not domain_dir.name.startswith((".", "__"))
                 and domain_dir.name not in ("discovery.py")
             ):
-
                 # Look for transformer directories within domain
                 for transformer_dir in domain_dir.iterdir():
                     if transformer_dir.is_dir() and not transformer_dir.name.startswith(
@@ -74,9 +72,7 @@ class TransformerDiscovery:
 
                         try:
                             # Import the generator module
-                            module_path = (
-                                f"datacompose.generators.{platform_name}.{generator_name}"
-                            )
+                            module_path = f"datacompose.generators.{platform_name}.{generator_name}"
                             module = importlib.import_module(module_path)
 
                             # Find generator classes or factory functions
@@ -108,10 +104,7 @@ class TransformerDiscovery:
 
         if transformer in transformers:
             # Return basic info about the transformer
-            return {
-                "name": transformer,
-                "path": str(transformers[transformer])
-            }
+            return {"name": transformer, "path": str(transformers[transformer])}
 
         return None
 

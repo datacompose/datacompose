@@ -39,9 +39,9 @@ class TestCityStateExtraction:
         results = result_df.collect()
         for row in results:
             # City extraction may preserve original case
-            assert (
-                row["extracted_city"].lower() == row["expected_city"].lower()
-            ), f"City extraction failed for '{row['address']}': expected '{row['expected_city']}', got '{row['extracted_city']}'"
+            assert row["extracted_city"].lower() == row["expected_city"].lower(), (
+                f"City extraction failed for '{row['address']}': expected '{row['expected_city']}', got '{row['extracted_city']}'"
+            )
 
     def test_extract_state(self, spark):
         """Test state extraction and standardization."""
@@ -60,9 +60,9 @@ class TestCityStateExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["extracted_state"] == row["expected_state"]
-            ), f"State extraction failed for '{row['address']}': expected '{row['expected_state']}', got '{row['extracted_state']}'"
+            assert row["extracted_state"] == row["expected_state"], (
+                f"State extraction failed for '{row['address']}': expected '{row['expected_state']}', got '{row['extracted_state']}'"
+            )
 
     def test_validate_state(self, spark):
         """Test state validation."""
@@ -81,9 +81,9 @@ class TestCityStateExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["is_valid"] == row["expected_valid"]
-            ), f"State validation failed for '{row['state']}': expected {row['expected_valid']}, got {row['is_valid']}"
+            assert row["is_valid"] == row["expected_valid"], (
+                f"State validation failed for '{row['state']}': expected {row['expected_valid']}, got {row['is_valid']}"
+            )
 
     def test_standardize_state(self, spark):
         """Test state standardization."""
@@ -109,9 +109,9 @@ class TestCityStateExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["standardized"] == row["expected"]
-            ), f"Standardization failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            assert row["standardized"] == row["expected"], (
+                f"Standardization failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
+            )
 
     def test_get_state_name(self, spark):
         """Test converting state abbreviation to full name."""
@@ -136,9 +136,9 @@ class TestCityStateExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["full_name"] == row["expected"]
-            ), f"State name lookup failed for '{row['abbrev']}': expected '{row['expected']}', got '{row['full_name']}'"
+            assert row["full_name"] == row["expected"], (
+                f"State name lookup failed for '{row['abbrev']}': expected '{row['expected']}', got '{row['full_name']}'"
+            )
 
     def test_city_extraction_edge_cases(self, spark):
         """Test city extraction with edge cases."""
@@ -166,9 +166,9 @@ class TestCityStateExtraction:
         results = result_df.collect()
         for row in results:
             if row["expected"]:  # Only check non-empty expectations
-                assert (
-                    row["city"].lower() == row["expected"].lower()
-                ), f"Edge case failed for '{row['address']}': expected '{row['expected']}', got '{row['city']}'"
+                assert row["city"].lower() == row["expected"].lower(), (
+                    f"Edge case failed for '{row['address']}': expected '{row['expected']}', got '{row['city']}'"
+                )
 
     def test_combined_city_state_extraction(self, spark):
         """Test extracting both city and state together."""
@@ -194,12 +194,12 @@ class TestCityStateExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["city"].lower() == row["expected_city"].lower()
-            ), f"City extraction failed for '{row['address']}'"
-            assert (
-                row["state"] == row["expected_state"]
-            ), f"State extraction failed for '{row['address']}'"
+            assert row["city"].lower() == row["expected_city"].lower(), (
+                f"City extraction failed for '{row['address']}'"
+            )
+            assert row["state"] == row["expected_state"], (
+                f"State extraction failed for '{row['address']}'"
+            )
 
     def test_null_safety(self, spark):
         """Test that all functions handle nulls safely."""
@@ -257,12 +257,12 @@ class TestCityStateExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert (
-                row["city"].lower() == row["expected_city"].lower()
-            ), f"Case-insensitive city extraction failed for '{row['address']}'"
-            assert (
-                row["state"] == row["expected_state"]
-            ), f"Case-insensitive state extraction failed for '{row['address']}'"
+            assert row["city"].lower() == row["expected_city"].lower(), (
+                f"Case-insensitive city extraction failed for '{row['address']}'"
+            )
+            assert row["state"] == row["expected_state"], (
+                f"Case-insensitive state extraction failed for '{row['address']}'"
+            )
 
     def test_territories_support(self, spark):
         """Test support for US territories."""
@@ -290,15 +290,15 @@ class TestCityStateExtraction:
 
             result = result_df.first()
 
-            assert (
-                result["state"] == expected_abbrev
-            ), f"Territory extraction failed for '{address}'"
-            assert result[
-                "is_valid"
-            ], f"Territory validation failed for '{expected_abbrev}'"
-            assert (
-                result["full_name"] == expected_name
-            ), f"Territory name lookup failed for '{expected_abbrev}'"
+            assert result["state"] == expected_abbrev, (
+                f"Territory extraction failed for '{address}'"
+            )
+            assert result["is_valid"], (
+                f"Territory validation failed for '{expected_abbrev}'"
+            )
+            assert result["full_name"] == expected_name, (
+                f"Territory name lookup failed for '{expected_abbrev}'"
+            )
 
 
 @pytest.mark.unit

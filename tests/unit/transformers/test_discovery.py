@@ -30,7 +30,9 @@ class TestTransformerDiscovery:
     def test_resolve_transformer_with_dot_notation(self, discovery):
         """Test resolving transformer with dot notation (e.g., 'text.emails')."""
         # This should work with the old format
-        transformer_name, transformer_path = discovery.resolve_transformer("text.emails")
+        transformer_name, transformer_path = discovery.resolve_transformer(
+            "text.emails"
+        )
         # May return None if transformer doesn't exist, but should not raise error
         assert transformer_name is None
         assert transformer_path is None
@@ -91,11 +93,15 @@ class TestTransformerDiscovery:
     def test_resolve_transformer_case_sensitivity(self, discovery):
         """Test that transformer resolution is case sensitive."""
         # Should not match different case
-        transformer_name, transformer_path = discovery.resolve_transformer("Clean_Emails")
+        transformer_name, transformer_path = discovery.resolve_transformer(
+            "Clean_Emails"
+        )
         assert transformer_name is None
         assert transformer_path is None
 
-        transformer_name, transformer_path = discovery.resolve_transformer("CLEAN_EMAILS")
+        transformer_name, transformer_path = discovery.resolve_transformer(
+            "CLEAN_EMAILS"
+        )
         assert transformer_name is None
         assert transformer_path is None
 
@@ -106,7 +112,9 @@ class TestTransformerDiscovery:
         assert transformer_name is None
         assert transformer_path is None
 
-        transformer_name, transformer_path = discovery.resolve_transformer("clean emails")
+        transformer_name, transformer_path = discovery.resolve_transformer(
+            "clean emails"
+        )
         assert transformer_name is None
         assert transformer_path is None
 
@@ -168,4 +176,3 @@ class TestTransformerDiscovery:
 
         # List should contain the same generator names as discovered with actual implementations
         assert set(listed) == set(expected)
-

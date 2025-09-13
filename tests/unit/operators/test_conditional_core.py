@@ -39,16 +39,16 @@ from datacompose.operators.primitives import PrimitiveRegistry
 def diverse_test_data(spark):
     """Create diverse test dataset for conditional testing"""
     data = [
-        ("A", 10, "small", 1, "short"),           # category A - short text
-        ("A", 20, "medium", 2, "simple"),         # category A  
-        ("A", 30, "large", 3, "s_text"),          # category A
-        ("A", 40, "xlarge", 4, "special!@#text"), # category A
-        ("B", 50, "small", 5, None),              # category B - NULL text for null test
-        ("B", 60, "medium", 6, "medium_text"),    # category B - ends with 'text'
-        ("B", 70, "large", 7, "complex_text"),    # category B
-        ("C", 80, "small", 8, "UPPERCASE"),       # category C - all caps
-        ("C", 90, "medium", 9, "simple_text"),    # category C
-        (None, 100, "unknown", 10, None)          # NULL category for testing
+        ("A", 10, "small", 1, "short"),  # category A - short text
+        ("A", 20, "medium", 2, "simple"),  # category A
+        ("A", 30, "large", 3, "s_text"),  # category A
+        ("A", 40, "xlarge", 4, "special!@#text"),  # category A
+        ("B", 50, "small", 5, None),  # category B - NULL text for null test
+        ("B", 60, "medium", 6, "medium_text"),  # category B - ends with 'text'
+        ("B", 70, "large", 7, "complex_text"),  # category B
+        ("C", 80, "small", 8, "UPPERCASE"),  # category C - all caps
+        ("C", 90, "medium", 9, "simple_text"),  # category C
+        (None, 100, "unknown", 10, None),  # NULL category for testing
     ]
     return spark.createDataFrame(data, ["category", "value", "size", "id", "text"])
 
@@ -56,6 +56,7 @@ def diverse_test_data(spark):
 # ============================================================================
 # TestConditionalLogic: Complex logic structures and nested conditionals
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConditionalLogic:
@@ -497,6 +498,7 @@ class TestConditionalLogic:
 # TestConditionalErrors: Error handling and edge cases
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestConditionalErrors:
     """Test error handling and edge cases in conditional compilation"""
@@ -560,6 +562,7 @@ class TestConditionalErrors:
 # ============================================================================
 # TestConditionalParameters: Parameterized conditionals and closures
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConditionalParameters:
@@ -651,6 +654,7 @@ class TestConditionalParameters:
 # ============================================================================
 # TestConditionalPerformance: Performance aspects and branch optimization
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestConditionalPerformance:

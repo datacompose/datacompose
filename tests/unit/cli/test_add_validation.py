@@ -24,9 +24,7 @@ class TestAddCommandValidation:
 
     def test_invalid_platform_shows_helpful_error(self, runner):
         """Test that invalid platform shows helpful error message."""
-        result = runner.invoke(
-            cli, ["add", "emails", "--target", "invalid_platform"]
-        )
+        result = runner.invoke(cli, ["add", "emails", "--target", "invalid_platform"])
 
         assert result.exit_code == 1
         assert "Platform 'invalid_platform' not found" in result.output
@@ -51,12 +49,12 @@ class TestAddCommandValidation:
     def test_valid_platform_and_type_works(self, runner):
         """Test that valid platform and type combination works."""
         # Skip this test since we only have pyspark without typed variants
-        result = runner.invoke(
-            cli, ["add", "emails", "--target", "pyspark"]
-        )
+        result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
 
-        # Should succeed (exit code 0) or show "already exists" message  
-        assert result.exit_code == 0 or result.exit_code == 1  # May fail if transformer doesn't exist
+        # Should succeed (exit code 0) or show "already exists" message
+        assert (
+            result.exit_code == 0 or result.exit_code == 1
+        )  # May fail if transformer doesn't exist
         # The important thing is it doesn't crash on validation
 
     def test_valid_platform_without_type_works(self, runner):
@@ -66,13 +64,16 @@ class TestAddCommandValidation:
         # Check what the actual error is
         if result.exit_code != 0:
             print(f"Error output: {result.output}")
-        
+
         # The command may fail if the transformer doesn't exist, but validation should pass
         # We're testing that the platform validation works, not the full add command
         assert "Platform 'pyspark' not found" not in result.output
         # If it fails, it should be because of transformer not found, not platform validation
         if result.exit_code != 0:
-            assert "Transformer not found" in result.output or "not found" in result.output.lower()
+            assert (
+                "Transformer not found" in result.output
+                or "not found" in result.output.lower()
+            )
 
     def test_multiple_validation_errors_show_platform_first(self, runner):
         """Test that platform validation happens before type validation."""
