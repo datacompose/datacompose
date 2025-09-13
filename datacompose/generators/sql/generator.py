@@ -2,71 +2,80 @@
 SQL function generator for multiple database dialects.
 """
 
-import sqlglotrs
 from pathlib import Path
-from typing import Optional
+
+import sqlglotrs
 
 from ..base import BaseGenerator
 
 
 class SQLGenerator(BaseGenerator):
-    """SQL function generator and transpiler for different SQL dialects.
+    """Abstract base class for SQL function generators.
 
-    This generator creates SQL functions that can be deployed to various
-    database systems. It uses SQLGlot for dialect transpilation, allowing
-    functions written in PostgreSQL syntax to be converted to other SQL dialects.
+    This base class provides common functionality for generating SQL functions
+    that can be deployed to various database systems. Subclasses implement
+    dialect-specific behavior by setting the dialect property.
 
-    Supported dialects include:
-        - postgres (PostgreSQL)
-        - mysql (MySQL) 
-        - snowflake (Snowflake)
-        - bigquery (BigQuery)
-        - sqlite (SQLite)
-        - and more via SQLGlot
+    Each subclass should:
+    - Set the dialect class attribute (e.g., dialect = "postgres")
+    - Override any dialect-specific methods if needed
     """
 
     ENGINE_SUBDIRECTORY = "sql"
     PRIMITIVES_FILENAME = "sql_primitives.py"
 
-    def __init__(self, template_dir: Path, output_dir: Path, verbose: bool = False, dialect: str = "postgres"):
-        """Initialize the SQL generator with a specific dialect.
+    # Subclasses must define their dialect
+    dialect: str | None = None
+
+    def __init__(self, template_dir: Path, output_dir: Path, verbose: bool = False):
+        """Initialize the SQL generator.
 
         Args:
             template_dir: Directory containing templates (not used for SQL)
             output_dir: Directory to write generated SQL files
             verbose: Enable verbose output
-            dialect: Target SQL dialect for transpilation
         """
         super().__init__(template_dir, output_dir, verbose)
-        self.dialect = dialect
+        if self.dialect is None:
+            raise NotImplementedError(
+                "Subclasses must define the dialect class attribute"
+            )
 
     def _get_primitives_file(self, transformer_dir: Path | None = None) -> str:
         """Get the SQL functions content for this transformer.
-        
+
         This method imports the SQL primitives module, instantiates the
-        transformer class, and generates all SQL functions transpiled 
+        transformer class, and generates all SQL functions transpiled
         to the target dialect.
         """
         if not transformer_dir:
             raise ValueError("transformer_dir is required for SQL generation")
-        
+
         # Import the SQL primitives module
-        primitives_path = transformer_dir / self.ENGINE_SUBDIRECTORY / self.PRIMITIVES_FILENAME
+        primitives_path = (
+            transformer_dir / self.ENGINE_SUBDIRECTORY / self.PRIMITIVES_FILENAME
+        )
         if not primitives_path.exists():
             raise FileNotFoundError(
                 f"No {self.PRIMITIVES_FILENAME} found in {transformer_dir / self.ENGINE_SUBDIRECTORY}"
             )
-        
+
         # Import the module dynamically
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("sql_primitives", primitives_path)
+        if not spec:
+            raise ValueError(f"No spec found in {primitives_path}")
+
         module = importlib.util.module_from_spec(spec)
+        if spec.loader is None:
+            raise ImportError(f"Cannot load module from {primitives_path}")
         spec.loader.exec_module(module)
-        
+
         # Find the transformer class (e.g., Emails, PhoneNumbers, Addresses)
         transformer_name = transformer_dir.name.replace("_", "").title()
         transformer_class = None
-        
+
         # Try exact match first
         if hasattr(module, transformer_name):
             transformer_class = getattr(module, transformer_name)
@@ -74,15 +83,17 @@ class SQLGenerator(BaseGenerator):
             # Try case-insensitive match
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (isinstance(attr, type) and 
-                    attr_name.lower() == transformer_name.lower() and
-                    not attr_name.startswith('_')):
+                if (
+                    isinstance(attr, type)
+                    and attr_name.lower() == transformer_name.lower()
+                    and not attr_name.startswith("_")
+                ):
                     transformer_class = attr
                     break
-        
+
         if not transformer_class:
             raise ValueError(f"No transformer class found in {primitives_path}")
-        
+
         # Generate SQL functions using the class methods
         return self._generate_sql_functions(transformer_class)
 
@@ -226,29 +237,3 @@ class SQLGenerator(BaseGenerator):
             # Return the original SQL as a comment block for manual review
             commented_sql = "-- " + "\n-- ".join(sql_string.split("\n"))
             return f"-- TRANSPILATION FAILED\n-- Error: {error_msg}\n-- Original PostgreSQL function:\n{commented_sql}"
-
-
-# Factory functions for different SQL dialects
-def PostgreSQLGenerator(template_dir: Path, output_dir: Path, verbose: bool = False):
-    """Create a PostgreSQL generator."""
-    return SQLGenerator(template_dir, output_dir, verbose, dialect="postgres")
-
-
-def MySQLGenerator(template_dir: Path, output_dir: Path, verbose: bool = False):
-    """Create a MySQL generator."""
-    return SQLGenerator(template_dir, output_dir, verbose, dialect="mysql")
-
-
-def SnowflakeGenerator(template_dir: Path, output_dir: Path, verbose: bool = False):
-    """Create a Snowflake generator."""
-    return SQLGenerator(template_dir, output_dir, verbose, dialect="snowflake")
-
-
-def BigQueryGenerator(template_dir: Path, output_dir: Path, verbose: bool = False):
-    """Create a BigQuery generator."""
-    return SQLGenerator(template_dir, output_dir, verbose, dialect="bigquery")
-
-
-def SQLiteGenerator(template_dir: Path, output_dir: Path, verbose: bool = False):
-    """Create a SQLite generator."""
-    return SQLGenerator(template_dir, output_dir, verbose, dialect="sqlite")
