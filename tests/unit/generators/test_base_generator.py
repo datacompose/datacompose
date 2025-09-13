@@ -164,7 +164,7 @@ def {{ udf_name }}(input_value):
         output_path = temp_dir / "transformers" / "spark" / "email_cleaner" / "file.py"
         output_path.parent.mkdir(parents=True)
 
-        spark_generator._ensure_init_files(output_path)
+        spark_generator.ensure_init_files(output_path)
 
         # Check that __init__.py files are created in transformers hierarchy
         assert (temp_dir / "transformers" / "__init__.py").exists()

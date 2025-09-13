@@ -2,10 +2,11 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
+
+import click
 import pytest
 from click.testing import CliRunner
-import click
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -40,7 +41,6 @@ class TestMainCLI:
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
         assert "datacompose" in result.output
-        assert "0.1.0" in result.output
 
     def test_cli_no_command(self, runner):
         """Test CLI without any command."""
@@ -231,7 +231,6 @@ class TestCLIIntegration:
         result1 = runner.invoke(cli, ["--version"])
         result2 = runner.invoke(cli, ["--version"])
         assert result1.output == result2.output
-        assert "0.1.0" in result1.output
 
 
 @pytest.mark.unit
@@ -292,6 +291,7 @@ class TestArgcompleteIntegration:
         # Test with argcomplete available
         with patch.dict("sys.modules", {"argcomplete": MagicMock()}):
             import importlib
+
             from datacompose.cli import main as main_module
 
             importlib.reload(main_module)

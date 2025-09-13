@@ -60,9 +60,10 @@ class BaseGenerator(ABC):
                 "function_name": f"{transformer['name']}_udf",
             }
 
-        # Copy utils/primitives.py to the output directory
-        self._copy_utils_files(output_path)
         self._write_output(output_path, file_content)
+        
+        # Allow subclasses to perform post-generation tasks
+        self.post_generate_hook(output_path)
 
         return {
             "skipped": False,
@@ -94,79 +95,19 @@ class BaseGenerator(ABC):
         """Write generated content to output file."""
         # Create output directory if it doesn't exist
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        self._ensure_init_files(output_path)
 
         with open(output_path, "w") as f:
             f.write(content)
 
         if self.verbose:
             print(f"Wrote output to: {output_path}")
-
-    def _ensure_init_files(self, output_path: Path):
-        """Ensure __init__.py files exist to make directories importable."""
-        # Get all directories from transformers down to the target directory
-        path_parts = output_path.parts
-
-        # Find the transformers directory index
-        try:
-            transformers_index = path_parts.index("transformers")
-        except ValueError:
-            # No transformers directory found, just create init for immediate parent
-            init_file = output_path.parent / "__init__.py"
-            if not init_file.exists():
-                init_file.touch()
-                if self.verbose:
-                    print(f"Created {init_file}")
-            return
-
-        # Create __init__.py files for transformers and all subdirectories leading to output
-        for i in range(
-            transformers_index, len(path_parts) - 1
-        ):  # -1 to exclude the file itself
-            dir_path = Path(*path_parts[: i + 1])
-            init_file = dir_path / "__init__.py"
-            if not init_file.exists():
-                init_file.touch()
-                if self.verbose:
-                    print(f"Created {init_file}")
-
-    def _copy_utils_files(self, output_path: Path):
-        """Copy utility files like primitives.py to the transformers directory."""
-        # Find the transformers directory root
-        path_parts = output_path.parts
-        try:
-            transformers_index = path_parts.index("transformers")
-            transformers_root = Path(*path_parts[: transformers_index + 1])
-        except ValueError:
-            # Fallback to parent directory if no 'transformers' in path
-            transformers_root = output_path.parent.parent
-
-        # Create utils directory in the same directory as the generated files
-        # This puts it at transformers/pyspark/utils
-        utils_dir = output_path.parent / "utils"
-        utils_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create __init__.py in utils directory
-        init_file = utils_dir / "__init__.py"
-        if not init_file.exists():
-            init_file.touch()
-            if self.verbose:
-                print(f"Created {init_file}")
-
-        # Copy primitives.py from datacompose.operators
-        primitives_source = Path(__file__).parent.parent / "operators" / "primitives.py"
-        primitives_dest = utils_dir / "primitives.py"
-
-        if primitives_source.exists() and not primitives_dest.exists():
-            import shutil
-
-            shutil.copy2(primitives_source, primitives_dest)
-            if self.verbose:
-                print(f"Copied primitives.py to {primitives_dest}")
-
-    @classmethod
-    @abstractmethod
-    def _get_primitives_location(cls, transformer_dir: Path | None) -> Path | None:
+    
+    def post_generate_hook(self, output_path: Path):
+        """Hook for subclasses to perform post-generation tasks.
+        
+        Override this method to perform generator-specific tasks after
+        the main file has been written.
+        """
         pass
 
     @abstractmethod
