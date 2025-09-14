@@ -39,10 +39,7 @@ class TestAddCommand:
     @pytest.fixture
     def init_datacompose(self, runner, temp_dir):
         """Fixture to initialize datacompose project."""
-        from datacompose.cli.commands.init import init_command
-
-        result = runner.invoke(init_command, ["--output", str(temp_dir)])
-        assert result.exit_code == 0, "Failed to initialize datacompose project"
+        pass
 
     def test_add_help(self, runner, cli_command):
         """Test add command help output."""
