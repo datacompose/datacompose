@@ -67,6 +67,7 @@ dev = [
     "black>=23.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
+    "psycopg2-binary>=2.9.9",
 ]
 docs = [
     "mkdocs>=1.5.3",
@@ -89,5 +90,9 @@ addopts = ["-v", "--tb=short"]
 markers = [
     "spark: tests requiring Spark cluster",
     "unit: unit tests that don't require external services",
-    "integration: integration tests that may require external services"
+    "integration: integration tests that may require external services",
+    "requires_postgres: tests requiring PostgreSQL database",
+    "requires_mysql: tests requiring MySQL database",
+    "requires_snowflake: tests requiring Snowflake",
+    "requires_sqlite: tests requiring SQLite database"
 ]
