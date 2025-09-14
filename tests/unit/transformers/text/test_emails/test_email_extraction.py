@@ -195,26 +195,6 @@ def extract_name_test_data():
 
 
 @pytest.fixture
-def email_provider_test_data():
-    """Shared test data for email provider detection."""
-    return [
-        ("user@gmail.com", "Gmail"),
-        ("admin@googlemail.com", "Gmail"),
-        ("test@yahoo.com", "Yahoo"),
-        ("user@ymail.com", "Yahoo"),
-        ("admin@hotmail.com", "Hotmail"),
-        ("test@outlook.com", "Outlook"),
-        ("user@live.com", "Outlook"),
-        ("john@aol.com", "AOL"),
-        ("user@icloud.com", "iCloud"),
-        ("admin@protonmail.com", "ProtonMail"),
-        ("test@company.com", "Other"),
-        ("", "Other"),
-        (None, "Other"),
-    ]
-
-
-@pytest.fixture
 def mask_email_test_data():
     """Shared test data for email masking."""
     return [
@@ -340,9 +320,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert row["email"] == row["expected"], (
-                f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['email']}'"
-            )
+            assert (
+                row["email"] == row["expected"]
+            ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['email']}'"
 
     def test_extract_all_emails(self, spark):
         """Test extraction of all emails from text."""
@@ -371,44 +351,50 @@ class TestEmailExtraction:
             else:
                 row_emails = row["emails"]
 
-            assert row_emails == row["expected"], (
-                f"Failed for '{row['text']}': expected {row['expected']}, got {row_emails}"
-            )
+            assert (
+                row_emails == row["expected"]
+            ), f"Failed for '{row['text']}': expected {row['expected']}, got {row_emails}"
 
     def test_extract_username(self, spark, extract_username_test_data_spark):
         """Test extraction of username from email."""
-        df = spark.createDataFrame(extract_username_test_data_spark, ["email", "expected"])
+        df = spark.createDataFrame(
+            extract_username_test_data_spark, ["email", "expected"]
+        )
         result_df = df.withColumn("username", emails.extract_username(F.col("email")))
 
         results = result_df.collect()
         for row in results:
-            assert row["username"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['username']}'"
-            )
+            assert (
+                row["username"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['username']}'"
 
     def test_extract_domain(self, spark, extract_domain_test_data_spark):
         """Test extraction of domain from email."""
-        df = spark.createDataFrame(extract_domain_test_data_spark, ["email", "expected"])
+        df = spark.createDataFrame(
+            extract_domain_test_data_spark, ["email", "expected"]
+        )
         result_df = df.withColumn("domain", emails.extract_domain(F.col("email")))
 
         results = result_df.collect()
         for row in results:
-            assert row["domain"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain']}'"
-            )
+            assert (
+                row["domain"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain']}'"
 
     def test_extract_domain_name(self, spark, extract_domain_name_test_data_spark):
         """Test extraction of domain name without TLD."""
-        df = spark.createDataFrame(extract_domain_name_test_data_spark, ["email", "expected"])
+        df = spark.createDataFrame(
+            extract_domain_name_test_data_spark, ["email", "expected"]
+        )
         result_df = df.withColumn(
             "domain_name", emails.extract_domain_name(F.col("email"))
         )
 
         results = result_df.collect()
         for row in results:
-            assert row["domain_name"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_name']}'"
-            )
+            assert (
+                row["domain_name"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_name']}'"
 
     def test_extract_tld(self, spark, extract_tld_test_data_spark):
         """Test extraction of top-level domain."""
@@ -417,9 +403,9 @@ class TestEmailExtraction:
 
         results = result_df.collect()
         for row in results:
-            assert row["tld"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['tld']}'"
-            )
+            assert (
+                row["tld"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['tld']}'"
 
 
 @pytest.mark.unit
@@ -427,87 +413,79 @@ class TestEmailExtraction:
 class TestSQLEmailExtraction:
     """Test SQL email extraction functions using PostgreSQL."""
 
-    def test_extract_email(self, db_cursor, load_sql_functions, extract_email_test_data):
+    def test_extract_email(
+        self, db_cursor, load_sql_functions, extract_email_test_data
+    ):
         """Test extraction of first email from text."""
         for input_text, expected in extract_email_test_data:
-            db_cursor.execute(
-                "SELECT extract_email(%s) as result",
-                (input_text,)
-            )
-            result = db_cursor.fetchone()['result']
+            db_cursor.execute("SELECT extract_email(%s) as result", (input_text,))
+            result = db_cursor.fetchone()["result"]
 
-            assert result == expected, (
-                f"Failed for '{input_text}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{input_text}': expected '{expected}', got '{result}'"
 
-    def test_extract_all_emails(self, db_cursor, load_sql_functions, extract_all_emails_test_data):
+    def test_extract_all_emails(
+        self, db_cursor, load_sql_functions, extract_all_emails_test_data
+    ):
         """Test extraction of all emails from text."""
         for input_text, expected in extract_all_emails_test_data:
-            db_cursor.execute(
-                "SELECT extract_all_emails(%s) as result",
-                (input_text,)
-            )
-            result = db_cursor.fetchone()['result']
+            db_cursor.execute("SELECT extract_all_emails(%s) as result", (input_text,))
+            result = db_cursor.fetchone()["result"]
 
             # Handle NULL/empty array differences
             if result is None:
                 result = []
 
-            assert result == expected, (
-                f"Failed for '{input_text}': expected {expected}, got {result}"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{input_text}': expected {expected}, got {result}"
 
-    def test_extract_username(self, db_cursor, load_sql_functions, extract_username_test_data):
+    def test_extract_username(
+        self, db_cursor, load_sql_functions, extract_username_test_data
+    ):
         """Test extraction of username from email."""
         for email, expected in extract_username_test_data:
-            db_cursor.execute(
-                "SELECT extract_username(%s) as result",
-                (email,)
-            )
-            result = db_cursor.fetchone()['result']
+            db_cursor.execute("SELECT extract_username(%s) as result", (email,))
+            result = db_cursor.fetchone()["result"]
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
-    def test_extract_domain(self, db_cursor, load_sql_functions, extract_domain_test_data):
+    def test_extract_domain(
+        self, db_cursor, load_sql_functions, extract_domain_test_data
+    ):
         """Test extraction of domain from email."""
         for email, expected in extract_domain_test_data:
-            db_cursor.execute(
-                "SELECT extract_domain(%s) as result",
-                (email,)
-            )
-            result = db_cursor.fetchone()['result']
+            db_cursor.execute("SELECT extract_domain(%s) as result", (email,))
+            result = db_cursor.fetchone()["result"]
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
-    def test_extract_domain_name(self, db_cursor, load_sql_functions, extract_domain_name_test_data):
+    def test_extract_domain_name(
+        self, db_cursor, load_sql_functions, extract_domain_name_test_data
+    ):
         """Test extraction of domain name without TLD."""
         for email, expected in extract_domain_name_test_data:
-            db_cursor.execute(
-                "SELECT extract_domain_name(%s) as result",
-                (email,)
-            )
-            result = db_cursor.fetchone()['result']
+            db_cursor.execute("SELECT extract_domain_name(%s) as result", (email,))
+            result = db_cursor.fetchone()["result"]
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_extract_tld(self, db_cursor, load_sql_functions, extract_tld_test_data):
         """Test extraction of top-level domain."""
         for email, expected in extract_tld_test_data:
-            db_cursor.execute(
-                "SELECT extract_tld(%s) as result",
-                (email,)
-            )
-            result = db_cursor.fetchone()['result']
+            db_cursor.execute("SELECT extract_tld(%s) as result", (email,))
+            result = db_cursor.fetchone()["result"]
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
 
 @pytest.mark.unit
@@ -521,19 +499,21 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["is_valid"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
-            )
+            assert (
+                row["is_valid"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
 
     @pytest.mark.requires_postgres
-    def test_is_valid_email_sql(self, db_cursor, load_sql_functions, email_validation_test_data):
+    def test_is_valid_email_sql(
+        self, db_cursor, load_sql_functions, email_validation_test_data
+    ):
         """Test email format validation with SQL."""
         for email, expected in email_validation_test_data:
             db_cursor.execute("SELECT is_valid_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
     def test_is_valid_username_spark(self, spark):
         """Test username validation with Spark."""
@@ -556,9 +536,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["valid_username"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
-            )
+            assert (
+                row["valid_username"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
 
     @pytest.mark.requires_postgres
     def test_is_valid_username_sql(self, db_cursor, load_sql_functions):
@@ -577,10 +557,10 @@ class TestEmailValidation:
 
         for email, expected in test_data:
             db_cursor.execute("SELECT is_valid_username(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
     def test_is_valid_domain_spark(self, spark):
         """Test domain validation with Spark."""
@@ -604,9 +584,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["valid_domain"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
-            )
+            assert (
+                row["valid_domain"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
 
     @pytest.mark.requires_postgres
     def test_is_valid_domain_sql(self, db_cursor, load_sql_functions):
@@ -626,10 +606,10 @@ class TestEmailValidation:
 
         for email, expected in test_data:
             db_cursor.execute("SELECT is_valid_domain(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
     def test_is_valid_email(self, spark, email_validation_test_data):
         """Test email format validation."""
@@ -654,9 +634,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["is_valid"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
-            )
+            assert (
+                row["is_valid"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
 
     def test_is_valid_username(self, spark):
         """Test username validation."""
@@ -679,9 +659,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["valid_username"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
-            )
+            assert (
+                row["valid_username"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
 
     def test_is_valid_domain(self, spark):
         """Test domain validation."""
@@ -705,9 +685,9 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["valid_domain"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
-            )
+            assert (
+                row["valid_domain"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
 
     def test_has_plus_addressing_spark(self, spark, plus_addressing_test_data):
         """Test detection of plus addressing with Spark."""
@@ -718,19 +698,21 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["has_plus"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['has_plus']}"
-            )
+            assert (
+                row["has_plus"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['has_plus']}"
 
     @pytest.mark.requires_postgres
-    def test_has_plus_addressing_sql(self, db_cursor, load_sql_functions, plus_addressing_test_data):
+    def test_has_plus_addressing_sql(
+        self, db_cursor, load_sql_functions, plus_addressing_test_data
+    ):
         """Test detection of plus addressing with SQL."""
         for email, expected in plus_addressing_test_data:
             db_cursor.execute("SELECT has_plus_addressing(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
     def test_is_disposable_email_spark(self, spark, disposable_email_test_data):
         """Test detection of disposable email addresses with Spark."""
@@ -741,19 +723,21 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["is_disposable"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_disposable']}"
-            )
+            assert (
+                row["is_disposable"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_disposable']}"
 
     @pytest.mark.requires_postgres
-    def test_is_disposable_email_sql(self, db_cursor, load_sql_functions, disposable_email_test_data):
+    def test_is_disposable_email_sql(
+        self, db_cursor, load_sql_functions, disposable_email_test_data
+    ):
         """Test detection of disposable email addresses with SQL."""
         for email, expected in disposable_email_test_data:
             db_cursor.execute("SELECT is_disposable_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
     def test_is_corporate_email_spark(self, spark, corporate_email_test_data):
         """Test detection of corporate email addresses with Spark."""
@@ -764,19 +748,21 @@ class TestEmailValidation:
 
         results = result_df.collect()
         for row in results:
-            assert row["is_corporate"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_corporate']}"
-            )
+            assert (
+                row["is_corporate"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_corporate']}"
 
     @pytest.mark.requires_postgres
-    def test_is_corporate_email_sql(self, db_cursor, load_sql_functions, corporate_email_test_data):
+    def test_is_corporate_email_sql(
+        self, db_cursor, load_sql_functions, corporate_email_test_data
+    ):
         """Test detection of corporate email addresses with SQL."""
         for email, expected in corporate_email_test_data:
             db_cursor.execute("SELECT is_corporate_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
 
 @pytest.mark.unit
@@ -790,24 +776,26 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert row["cleaned"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['cleaned']}'"
-            )
+            assert (
+                row["cleaned"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['cleaned']}'"
 
     @pytest.mark.requires_postgres
-    def test_remove_whitespace_sql(self, db_cursor, load_sql_functions, whitespace_removal_test_data):
+    def test_remove_whitespace_sql(
+        self, db_cursor, load_sql_functions, whitespace_removal_test_data
+    ):
         """Test whitespace removal from emails with SQL."""
         for email, expected in whitespace_removal_test_data:
             db_cursor.execute("SELECT remove_whitespace(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
+            result = db_cursor.fetchone()["result"]
 
             # Handle NULL differences
             if result is None and expected == "":
                 result = ""
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_lowercase_email_spark(self, spark, lowercase_email_test_data):
         """Test email lowercasing with Spark."""
@@ -816,23 +804,25 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert row["lowercased"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['lowercased']}'"
-            )
+            assert (
+                row["lowercased"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['lowercased']}'"
 
     @pytest.mark.requires_postgres
-    def test_lowercase_email_sql(self, db_cursor, load_sql_functions, lowercase_email_test_data):
+    def test_lowercase_email_sql(
+        self, db_cursor, load_sql_functions, lowercase_email_test_data
+    ):
         """Test email lowercasing with SQL."""
         for email, expected in lowercase_email_test_data:
             db_cursor.execute("SELECT lowercase_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
+            result = db_cursor.fetchone()["result"]
 
             if result is None and expected == "":
                 result = ""
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_lowercase_domain_spark(self, spark, lowercase_domain_test_data):
         """Test lowercasing only domain part with Spark."""
@@ -843,46 +833,54 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert row["domain_lower"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_lower']}'"
-            )
+            assert (
+                row["domain_lower"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_lower']}'"
 
     @pytest.mark.requires_postgres
-    def test_lowercase_domain_sql(self, db_cursor, load_sql_functions, lowercase_domain_test_data):
+    def test_lowercase_domain_sql(
+        self, db_cursor, load_sql_functions, lowercase_domain_test_data
+    ):
         """Test lowercasing only domain part with SQL."""
         for email, expected in lowercase_domain_test_data:
             db_cursor.execute("SELECT lowercase_domain(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
-    def test_remove_plus_addressing_spark(self, spark, remove_plus_addressing_test_data):
+    def test_remove_plus_addressing_spark(
+        self, spark, remove_plus_addressing_test_data
+    ):
         """Test removal of plus addressing with Spark."""
-        df = spark.createDataFrame(remove_plus_addressing_test_data, ["email", "expected"])
+        df = spark.createDataFrame(
+            remove_plus_addressing_test_data, ["email", "expected"]
+        )
         result_df = df.withColumn(
             "no_plus", emails.remove_plus_addressing(F.col("email"))
         )
 
         results = result_df.collect()
         for row in results:
-            assert row["no_plus"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_plus']}'"
-            )
+            assert (
+                row["no_plus"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_plus']}'"
 
     @pytest.mark.requires_postgres
-    def test_remove_plus_addressing_sql(self, db_cursor, load_sql_functions, remove_plus_addressing_test_data):
+    def test_remove_plus_addressing_sql(
+        self, db_cursor, load_sql_functions, remove_plus_addressing_test_data
+    ):
         """Test removal of plus addressing with SQL."""
         for email, expected in remove_plus_addressing_test_data:
             db_cursor.execute("SELECT remove_plus_addressing(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
+            result = db_cursor.fetchone()["result"]
 
             if result is None and expected == "":
                 result = ""
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_remove_dots_from_gmail_spark(self, spark, remove_dots_gmail_test_data):
         """Test removal of dots from Gmail addresses with Spark."""
@@ -893,19 +891,21 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert row["no_dots"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_dots']}'"
-            )
+            assert (
+                row["no_dots"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_dots']}'"
 
     @pytest.mark.requires_postgres
-    def test_remove_dots_from_gmail_sql(self, db_cursor, load_sql_functions, remove_dots_gmail_test_data):
+    def test_remove_dots_from_gmail_sql(
+        self, db_cursor, load_sql_functions, remove_dots_gmail_test_data
+    ):
         """Test removal of dots from Gmail addresses with SQL."""
         for email, expected in remove_dots_gmail_test_data:
             db_cursor.execute("SELECT remove_dots_from_gmail(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_fix_common_typos_spark(self, spark, fix_common_typos_test_data):
         """Test fixing common email domain typos with Spark."""
@@ -914,19 +914,21 @@ class TestEmailCleaning:
 
         results = result_df.collect()
         for row in results:
-            assert row["fixed"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['fixed']}'"
-            )
+            assert (
+                row["fixed"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['fixed']}'"
 
     @pytest.mark.requires_postgres
-    def test_fix_common_typos_sql(self, db_cursor, load_sql_functions, fix_common_typos_test_data):
+    def test_fix_common_typos_sql(
+        self, db_cursor, load_sql_functions, fix_common_typos_test_data
+    ):
         """Test fixing common email domain typos with SQL."""
         for email, expected in fix_common_typos_test_data:
             db_cursor.execute("SELECT fix_common_typos(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     @pytest.mark.skip(
         reason="SmartPrimitive doesn't handle multiple parameters correctly"
@@ -983,9 +985,9 @@ class TestEmailStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert row["standardized"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['standardized']}'"
-            )
+            assert (
+                row["standardized"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['standardized']}'"
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
     def test_normalize_gmail(self, spark):
@@ -1004,9 +1006,9 @@ class TestEmailStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert row["normalized"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['normalized']}'"
-            )
+            assert (
+                row["normalized"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['normalized']}'"
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
     def test_get_canonical_email(self, spark):
@@ -1027,9 +1029,9 @@ class TestEmailStandardization:
 
         results = result_df.collect()
         for row in results:
-            assert row["canonical"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['canonical']}'"
-            )
+            assert (
+                row["canonical"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['canonical']}'"
 
 
 @pytest.mark.unit
@@ -1045,23 +1047,25 @@ class TestEmailInformation:
 
         results = result_df.collect()
         for row in results:
-            assert row["name"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['name']}'"
-            )
+            assert (
+                row["name"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['name']}'"
 
     @pytest.mark.requires_postgres
-    def test_extract_name_from_email_sql(self, db_cursor, load_sql_functions, extract_name_test_data):
+    def test_extract_name_from_email_sql(
+        self, db_cursor, load_sql_functions, extract_name_test_data
+    ):
         """Test extracting person's name from email with SQL."""
         for email, expected in extract_name_test_data:
             db_cursor.execute("SELECT extract_name_from_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
+            result = db_cursor.fetchone()["result"]
 
             if result is None and expected == "":
                 result = ""
 
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_get_email_provider_spark(self, spark, email_provider_test_data):
         """Test getting email provider name with Spark."""
@@ -1070,19 +1074,21 @@ class TestEmailInformation:
 
         results = result_df.collect()
         for row in results:
-            assert row["provider"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['provider']}'"
-            )
+            assert (
+                row["provider"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['provider']}'"
 
     @pytest.mark.requires_postgres
-    def test_get_email_provider_sql(self, db_cursor, load_sql_functions, email_provider_test_data):
+    def test_get_email_provider_sql(
+        self, db_cursor, load_sql_functions, email_provider_test_data
+    ):
         """Test getting email provider name with SQL."""
         for email, expected in email_provider_test_data:
             db_cursor.execute("SELECT get_email_provider(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
     def test_mask_email_spark(self, spark, email_masking_test_data):
         """Test email masking for privacy with Spark."""
@@ -1091,19 +1097,21 @@ class TestEmailInformation:
 
         results = result_df.collect()
         for row in results:
-            assert row["masked"] == row["expected"], (
-                f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['masked']}'"
-            )
+            assert (
+                row["masked"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['masked']}'"
 
     @pytest.mark.requires_postgres
-    def test_mask_email_sql(self, db_cursor, load_sql_functions, email_masking_test_data):
+    def test_mask_email_sql(
+        self, db_cursor, load_sql_functions, email_masking_test_data
+    ):
         """Test email masking for privacy with SQL."""
         for email, expected in email_masking_test_data:
             db_cursor.execute("SELECT mask_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected '{expected}', got '{result}'"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected '{expected}', got '{result}'"
 
 
 @pytest.mark.unit
@@ -1119,72 +1127,87 @@ class TestEmailFiltering:
 
         results = result_df.collect()
         for row in results:
-            assert row["filtered"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
-            )
+            assert (
+                row["filtered"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
 
     @pytest.mark.requires_postgres
-    def test_filter_valid_emails_sql(self, db_cursor, load_sql_functions, filter_valid_emails_test_data):
+    def test_filter_valid_emails_sql(
+        self, db_cursor, load_sql_functions, filter_valid_emails_test_data
+    ):
         """Test filtering to keep only valid emails with SQL."""
         for email, expected in filter_valid_emails_test_data:
             db_cursor.execute("SELECT filter_valid_emails(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
-    def test_filter_corporate_emails_spark(self, spark, filter_corporate_emails_test_data):
+    def test_filter_corporate_emails_spark(
+        self, spark, filter_corporate_emails_test_data
+    ):
         """Test filtering to keep only corporate emails with Spark."""
-        df = spark.createDataFrame(filter_corporate_emails_test_data, ["email", "expected"])
+        df = spark.createDataFrame(
+            filter_corporate_emails_test_data, ["email", "expected"]
+        )
         result_df = df.withColumn(
             "filtered", emails.filter_corporate_emails(F.col("email"))
         )
 
         results = result_df.collect()
         for row in results:
-            assert row["filtered"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
-            )
+            assert (
+                row["filtered"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
 
     @pytest.mark.requires_postgres
-    def test_filter_corporate_emails_sql(self, db_cursor, load_sql_functions, filter_corporate_emails_test_data):
+    def test_filter_corporate_emails_sql(
+        self, db_cursor, load_sql_functions, filter_corporate_emails_test_data
+    ):
         """Test filtering to keep only corporate emails with SQL."""
         for email, expected in filter_corporate_emails_test_data:
             db_cursor.execute("SELECT filter_corporate_emails(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
-            )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
-    def test_filter_non_disposable_emails_spark(self, spark, filter_non_disposable_emails_test_data):
+    def test_filter_non_disposable_emails_spark(
+        self, spark, filter_non_disposable_emails_test_data
+    ):
         """Test filtering to exclude disposable emails with Spark."""
-        df = spark.createDataFrame(filter_non_disposable_emails_test_data, ["email", "expected"])
+        df = spark.createDataFrame(
+            filter_non_disposable_emails_test_data, ["email", "expected"]
+        )
         result_df = df.withColumn(
             "filtered", emails.filter_non_disposable_emails(F.col("email"))
         )
 
         results = result_df.collect()
         for row in results:
-            assert row["filtered"] == row["expected"], (
-                f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
-            )
+            assert (
+                row["filtered"] == row["expected"]
+            ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
 
     @pytest.mark.requires_postgres
-    def test_filter_non_disposable_emails_sql(self, db_cursor, load_sql_functions, filter_non_disposable_emails_test_data):
+    def test_filter_non_disposable_emails_sql(
+        self, db_cursor, load_sql_functions, filter_non_disposable_emails_test_data
+    ):
         """Test filtering to exclude disposable emails with SQL."""
         for email, expected in filter_non_disposable_emails_test_data:
-            db_cursor.execute("SELECT filter_non_disposable_emails(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result == expected, (
-                f"Failed for '{email}': expected {expected}, got {result}"
+            db_cursor.execute(
+                "SELECT filter_non_disposable_emails(%s) as result", (email,)
             )
+            result = db_cursor.fetchone()["result"]
+            assert (
+                result == expected
+            ), f"Failed for '{email}': expected {expected}, got {result}"
 
 
 @pytest.mark.unit
 class TestEmailEdgeCases:
     """Test edge cases and complex scenarios."""
-    
-    
+
     def test_null_and_empty_handling_sql(self, db_cursor, load_sql_functions):
         """Test handling of null and empty values in SQL functions."""
         test_data = [
@@ -1197,20 +1220,20 @@ class TestEmailEdgeCases:
         for (email,) in test_data:
             # Test various SQL functions with null/empty inputs
             db_cursor.execute("SELECT extract_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
+            result = db_cursor.fetchone()["result"]
             assert result == "" or result is None
 
             db_cursor.execute("SELECT extract_username(%s) as result", (email,))
-            result = db_cursor.fetchone()['result'] 
+            result = db_cursor.fetchone()["result"]
             assert result == "" or result is None
 
             db_cursor.execute("SELECT extract_domain(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
+            result = db_cursor.fetchone()["result"]
             assert result == "" or result is None
 
             db_cursor.execute("SELECT is_valid_email(%s) as result", (email,))
-            result = db_cursor.fetchone()['result']
-            assert result is False 
+            result = db_cursor.fetchone()["result"]
+            assert result is False
 
     def test_null_and_empty_handling(self, spark):
         """Test handling of null and empty values."""
@@ -1261,9 +1284,9 @@ class TestEmailEdgeCases:
         results = result_df.collect()
         for row in results:
             # Should at least extract something
-            assert row["domain"] != "", (
-                f"Failed to extract domain from '{row['email']}'"
-            )
+            assert (
+                row["domain"] != ""
+            ), f"Failed to extract domain from '{row['email']}'"
 
     def test_very_long_emails(self, spark):
         """Test handling of very long email addresses."""
@@ -1283,9 +1306,9 @@ class TestEmailEdgeCases:
 
         results = result_df.collect()
         for row in results:
-            assert row["is_valid"] == row["expected_valid"], (
-                f"Failed for long email: expected {row['expected_valid']}, got {row['is_valid']}"
-            )
+            assert (
+                row["is_valid"] == row["expected_valid"]
+            ), f"Failed for long email: expected {row['expected_valid']}, got {row['is_valid']}"
 
     def test_special_characters(self, spark):
         """Test handling of special characters in emails."""
@@ -1306,9 +1329,9 @@ class TestEmailEdgeCases:
         results = result_df.collect()
         # Just verify extraction works without errors
         for row in results:
-            assert row["username"] != "" or row["domain"] != "", (
-                f"Failed to extract from '{row['email']}'"
-            )
+            assert (
+                row["username"] != "" or row["domain"] != ""
+            ), f"Failed to extract from '{row['email']}'"
 
     def test_hash_email_sha256_basic(self, spark):
         """Test basic SHA256 hashing functionality for emails."""
