@@ -99,7 +99,7 @@ class Emails:
         return """
 CREATE OR REPLACE FUNCTION extract_email(input_text TEXT)
 RETURNS TEXT AS $$
-    SELECT REGEXP_EXTRACT(input_text, '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', 1)
+    SELECT (regexp_matches(input_text, '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'))[1]
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -120,7 +120,9 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION extract_all_emails(input_text TEXT)
 RETURNS TEXT[] AS $$
-    SELECT REGEXP_EXTRACT_ALL(input_text, '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}')
+    SELECT ARRAY(
+        SELECT (regexp_matches(input_text, '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', 'g'))[1]
+    )
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -141,7 +143,11 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION extract_username(email TEXT)
 RETURNS TEXT AS $$
-    SELECT SPLIT_PART(email, '@', 1)
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' OR email !~ '@' THEN NULL
+            ELSE SPLIT_PART(email, '@', 1)
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -162,7 +168,11 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION extract_domain(email TEXT)
 RETURNS TEXT AS $$
-    SELECT SPLIT_PART(email, '@', 2)
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' OR email !~ '@' THEN NULL
+            ELSE SPLIT_PART(email, '@', 2)
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -228,10 +238,19 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION is_valid_email(email TEXT, min_length INT DEFAULT 6, max_length INT DEFAULT 254)
 RETURNS BOOLEAN AS $$
-    SELECT 
-        email ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        AND LENGTH(email) >= min_length
-        AND LENGTH(email) <= max_length
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' THEN FALSE
+            ELSE
+                email ~ '^[a-zA-Z0-9_%+-]+(\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$'
+                AND email !~ '\.\.'  -- No consecutive dots
+                AND email !~ '^\.'   -- No starting dot
+                AND email !~ '\.$'   -- No ending dot
+                AND email !~ '@\.'   -- No dot after @
+                AND email !~ '\.@'   -- No dot before @
+                AND LENGTH(email) >= min_length
+                AND LENGTH(email) <= max_length
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -240,9 +259,17 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION is_valid_username(email TEXT, min_length INT DEFAULT 1, max_length INT DEFAULT 64)
 RETURNS BOOLEAN AS $$
-    SELECT 
-        LENGTH(SPLIT_PART(email, '@', 1)) >= min_length
-        AND LENGTH(SPLIT_PART(email, '@', 1)) <= max_length
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' OR email !~ '@' THEN FALSE
+            ELSE
+                extract_username(email) IS NOT NULL
+                AND LENGTH(extract_username(email)) >= min_length
+                AND LENGTH(extract_username(email)) <= max_length
+                AND extract_username(email) !~ '^\.'   -- No starting dot
+                AND extract_username(email) !~ '\.$'   -- No ending dot
+                AND extract_username(email) !~ '\.\.'  -- No consecutive dots
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -251,12 +278,16 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION is_valid_domain(email TEXT)
 RETURNS BOOLEAN AS $$
-    SELECT 
-        extract_domain(email) ~ '^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
-        AND LENGTH(extract_domain(email)) <= 253
-        AND extract_domain(email) !~ '^-'
-        AND extract_domain(email) !~ '-\\.'
-        AND extract_domain(email) !~ '\\.\\.'
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' OR extract_domain(email) IS NULL THEN FALSE
+            ELSE
+                extract_domain(email) ~ '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                AND LENGTH(extract_domain(email)) <= 253
+                AND extract_domain(email) !~ '^-'
+                AND extract_domain(email) !~ '-\.'
+                AND extract_domain(email) !~ '\.\.'
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -277,7 +308,11 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION has_plus_addressing(email TEXT)
 RETURNS BOOLEAN AS $$
-    SELECT email ~ '^[^@]*\\+[^@]*@'
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' THEN FALSE
+            ELSE email ~ '^[^@]*\+[^@]*@'
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -298,11 +333,15 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION is_disposable_email(email TEXT)
 RETURNS BOOLEAN AS $$
-    SELECT LOWER(extract_domain(email)) = ANY(ARRAY[
-        '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 
-        'temp-mail.org', 'throwaway.email', 'yopmail.com', 
-        'tempmail.com', 'trashmail.com', 'getnada.com'
-    ])
+    SELECT
+        CASE
+            WHEN email IS NULL OR email = '' OR extract_domain(email) IS NULL THEN FALSE
+            ELSE LOWER(extract_domain(email)) = ANY(ARRAY[
+                '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
+                'temp-mail.org', 'throwaway.email', 'yopmail.com',
+                'tempmail.com', 'trashmail.com', 'getnada.com'
+            ])
+        END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -356,10 +395,10 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION lowercase_domain(email TEXT)
 RETURNS TEXT AS $$
-    SELECT CASE 
-        WHEN email LIKE '%@%' THEN 
+    SELECT CASE
+        WHEN email LIKE '%@%' THEN
             extract_username(email) || '@' || LOWER(extract_domain(email))
-        ELSE COALESCE(email, '')
+        ELSE email
     END
 $$ LANGUAGE SQL IMMUTABLE;
 """
@@ -378,10 +417,10 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION remove_dots_from_gmail(email TEXT)
 RETURNS TEXT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN LOWER(extract_domain(email)) IN ('gmail.com', 'googlemail.com') THEN
             REPLACE(extract_username(email), '.', '') || '@' || extract_domain(email)
-        ELSE COALESCE(email, '')
+        ELSE email
     END
 $$ LANGUAGE SQL IMMUTABLE;
 """
@@ -406,9 +445,11 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION fix_common_typos(email TEXT)
 RETURNS TEXT AS $$
-    SELECT 
-        extract_username(email) || '@' ||
-        CASE LOWER(extract_domain(email))
+    SELECT CASE
+        WHEN email IS NULL OR email = '' OR email NOT LIKE '%@%' THEN email
+        ELSE
+            extract_username(email) || '@' ||
+            CASE LOWER(extract_domain(email))
             WHEN 'gmai.com' THEN 'gmail.com'
             WHEN 'gmial.com' THEN 'gmail.com'
             WHEN 'gmaill.com' THEN 'gmail.com'
@@ -421,8 +462,10 @@ RETURNS TEXT AS $$
             WHEN 'hotmall.com' THEN 'hotmail.com'
             WHEN 'outlok.com' THEN 'outlook.com'
             WHEN 'outlook.co' THEN 'outlook.com'
+            WHEN 'example.cmo' THEN 'example.com'
             ELSE extract_domain(email)
-        END
+            END
+    END
 $$ LANGUAGE SQL IMMUTABLE;
 """
 
@@ -668,7 +711,7 @@ RETURNS TEXT AS $$
                 ELSE REPEAT(mask_char, 3)
             END ||
             '.' || extract_tld(email)
-        ELSE COALESCE(email, '')
+        ELSE email
     END
 $$ LANGUAGE SQL IMMUTABLE;
 """
@@ -738,7 +781,8 @@ $$ LANGUAGE SQL IMMUTABLE;
         return """
 CREATE OR REPLACE FUNCTION filter_non_disposable_emails(email TEXT)
 RETURNS TEXT AS $$
-    SELECT CASE 
+    SELECT CASE
+        WHEN email IS NULL OR email = '' THEN NULL
         WHEN NOT is_disposable_email(email) THEN email
         ELSE NULL
     END

@@ -132,19 +132,64 @@ def load_sql_functions(postgres_db):
         # Load all email SQL functions
         emails = Emails("postgres")
 
-        # Get all method names that return SQL functions (don't start with _)
+        # Define loading order to respect function dependencies
+        # Base functions first, then functions that depend on them
         method_names = [
+            # Basic extraction functions (no dependencies)
+            'extract_username', 'extract_domain', 'extract_domain_name', 'extract_tld',
+            # Validation functions (no dependencies)
+            'is_valid_email', 'is_valid_username', 'is_valid_domain',
+            'has_plus_addressing', 'is_disposable_email', 'is_corporate_email',
+            # Functions that depend on extraction functions
+            'extract_name_from_email', 'get_email_provider', 'mask_email',
+            # Cleaning functions (no dependencies)
+            'remove_whitespace', 'to_lowercase', 'remove_dots_gmail', 'remove_plus_addressing',
+            'normalize_gmail', 'fix_common_typos', 'standardize_email',
+            # Filter functions (depend on validation functions)
+            'filter_valid_emails', 'filter_corporate_emails', 'filter_non_disposable_emails',
+        ]
+
+        # Add any remaining methods not explicitly ordered
+        all_methods = [
             method for method in dir(emails)
             if not method.startswith('_') and callable(getattr(emails, method)) and method != 'dialect'
         ]
+        for method in all_methods:
+            if method not in method_names:
+                method_names.append(method)
+
+        # Load functions one by one with individual transactions
+        success_count = 0
+        failed_functions = []
 
         for method_name in method_names:
             try:
+                # Start a savepoint for each function
+                cur.execute(f"SAVEPOINT {method_name}_load")
+
                 sql_function = getattr(emails, method_name)()
                 if sql_function and isinstance(sql_function, str) and sql_function.strip():
                     cur.execute(sql_function)
+                    success_count += 1
+
+                # Release the savepoint if successful
+                cur.execute(f"RELEASE SAVEPOINT {method_name}_load")
+
             except Exception as e:
-                print(f"Warning: Failed to load SQL function {method_name}: {e}")
+                # Rollback to savepoint on error
+                try:
+                    cur.execute(f"ROLLBACK TO SAVEPOINT {method_name}_load")
+                    failed_functions.append((method_name, str(e)))
+                except:
+                    pass
+
+        print(f"Successfully loaded {success_count} SQL functions")
+        if failed_functions:
+            print(f"Failed to load {len(failed_functions)} SQL functions:")
+            for func_name, error in failed_functions[:3]:  # Show first 3 errors
+                print(f"  - {func_name}: {error[:100]}...")
+            if len(failed_functions) > 3:
+                print(f"  ... and {len(failed_functions) - 3} more")
 
         postgres_db.commit()
 
