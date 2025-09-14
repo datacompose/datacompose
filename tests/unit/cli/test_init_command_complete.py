@@ -30,7 +30,7 @@ class TestInitCommand:
         """Test getting the default config template."""
         config = InitCommand.get_config_template("default")
         assert config == DEFAULT_CONFIG
-        assert config["version"] == "1.0"
+        assert config["version"] == "0.2.7.0"
         assert "targets" in config
         assert "pyspark" in config["targets"]
 
@@ -46,7 +46,7 @@ class TestInitCommand:
     def test_get_config_template_advanced(self):
         """Test getting the advanced config template."""
         config = InitCommand.get_config_template("advanced")
-        assert config["version"] == "1.0"
+        assert config["version"] == "0.2.7.0"
         assert "targets" in config
         assert "pyspark" in config["targets"]
         assert "aliases" in config
@@ -417,7 +417,7 @@ class TestPromptForConfig:
         result = InitCommand.prompt_for_config(template)
 
         assert result is not None
-        assert result["version"] == "1.0"
+        assert result["version"] == "0.2.7.0"
         assert "pyspark" in result["targets"]
 
     @patch.object(InitCommand, "prompt_for_targets")
@@ -463,7 +463,7 @@ class TestRunInit:
             with open(config_path) as f:
                 config = json.load(f)
             assert "existing" not in config
-            assert config["version"] == "1.0"
+            assert config["version"] == "0.2.7.0"
 
     def test_run_init_yes_mode(self):
         """Test init in non-interactive mode (--yes)."""
@@ -639,7 +639,7 @@ class TestInitEdgeCases:
             # Should have valid JSON now
             with open(config_path) as f:
                 config = json.load(f)
-            assert config["version"] == "1.0"
+            assert config["version"] == "0.2.7.0"
 
     def test_init_with_nested_output_path(self):
         """Test init with nested output path that doesn't exist."""

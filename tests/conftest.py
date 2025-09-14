@@ -17,6 +17,13 @@ try:
 except ImportError:
     POSTGRES_AVAILABLE = False
 
+# Config loader for database connections
+try:
+    from datacompose.cli.config import ConfigLoader
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+
 
 @pytest.fixture(scope="session")
 def spark():
@@ -71,13 +78,33 @@ def postgres_connection():
         pytest.skip("psycopg2 not installed, skipping PostgreSQL tests")
 
     try:
-        conn = psycopg2.connect(
-            host=os.environ.get("POSTGRES_HOST", "localhost"),
-            port=os.environ.get("POSTGRES_PORT", 5432),
-            database=os.environ.get("POSTGRES_DB", "datawarehouse"),
-            user=os.environ.get("POSTGRES_USER", "postgres"),
-            password=os.environ.get("POSTGRES_PASSWORD", "postgres123")
-        )
+        # Try to use ConfigLoader if available
+        if CONFIG_AVAILABLE:
+            try:
+                conn_params = ConfigLoader.get_postgres_config()
+                # Override database to use test database if not already set
+                if conn_params["database"] == "postgres":
+                    conn_params["database"] = "datawarehouse"
+            except Exception:
+                # Fall back to environment variables
+                conn_params = {
+                    "host": os.environ.get("POSTGRES_HOST", "localhost"),
+                    "port": int(os.environ.get("POSTGRES_PORT", 5432)),
+                    "database": os.environ.get("POSTGRES_DB", "datawarehouse"),
+                    "user": os.environ.get("POSTGRES_USER", "postgres"),
+                    "password": os.environ.get("POSTGRES_PASSWORD", "postgres123"),
+                }
+        else:
+            # Use environment variables directly
+            conn_params = {
+                "host": os.environ.get("POSTGRES_HOST", "localhost"),
+                "port": int(os.environ.get("POSTGRES_PORT", 5432)),
+                "database": os.environ.get("POSTGRES_DB", "datawarehouse"),
+                "user": os.environ.get("POSTGRES_USER", "postgres"),
+                "password": os.environ.get("POSTGRES_PASSWORD", "postgres123"),
+            }
+
+        conn = psycopg2.connect(**conn_params)
         conn.autocommit = False
         return conn
     except psycopg2.OperationalError as e:

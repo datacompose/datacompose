@@ -39,7 +39,10 @@ class TestAddCommand:
     @pytest.fixture
     def init_datacompose(self, runner, temp_dir):
         """Fixture to initialize datacompose project."""
-        pass
+        from datacompose.cli.commands.init import init_command
+
+        result = runner.invoke(init_command, ["--output", str(temp_dir)])
+        assert result.exit_code == 0, "Failed to initialize datacompose project"
 
     def test_add_help(self, runner, cli_command):
         """Test add command help output."""
@@ -48,7 +51,6 @@ class TestAddCommand:
         assert "Add UDFs" in result.output
         assert "TRANSFORMER:" in result.output
         assert "--target" in result.output
-        assert "--type" in result.output
         assert "--output" in result.output
         assert "--verbose" in result.output
 
@@ -162,9 +164,10 @@ class TestAddCommand:
             # Should fail on invalid platform
             assert result.exit_code == 1
 
-    def test_add_invalid_type_for_platform(self, runner, temp_dir, cli_command):
-        """Test add command with invalid type for a platform."""
+    def test_add_with_postgres_target(self, runner, temp_dir, cli_command):
+        """Test add command with postgres target (replaces type validation test)."""
         with runner.isolated_filesystem():
+            # Since we removed --type, just test that postgres target works
             result = runner.invoke(
                 cli_command,
                 [
@@ -172,11 +175,10 @@ class TestAddCommand:
                     "test_transformer",
                     "--target",
                     "postgres",
-                    "--type",
-                    "invalid_type",
                 ],
             )
-            # Should fail on invalid type for platform
+            # May fail due to transformer not found, but should not fail on target validation
+            # Exit code 1 is expected for transformer not found, not target validation
             assert result.exit_code == 1
 
     def test_add_real_transformer_with_explicit_type(

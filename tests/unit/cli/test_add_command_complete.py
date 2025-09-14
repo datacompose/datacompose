@@ -15,7 +15,6 @@ sys.path.insert(0, str(project_root))
 from datacompose.cli.commands.add import (  # noqa: E402
     complete_transformer,
     complete_target,
-    complete_type,
     _run_add,
 )
 from datacompose.cli.main import cli  # noqa: E402
@@ -106,83 +105,6 @@ class TestAddCommandCompletion:
             result = complete_target(None, None, "py")
             assert result == []
 
-    def test_complete_type_with_target_context(self):
-        """Test type completion when target is already specified."""
-        mock_ctx = MagicMock()
-        mock_ctx.params = {"target": "pyspark"}
-
-        with patch(
-            "datacompose.cli.commands.add.TransformerDiscovery"
-        ) as MockDiscovery:
-            mock_instance = MockDiscovery.return_value
-            mock_instance.list_generators.return_value = [
-                "pyspark.pandas_udf",
-                "pyspark.sql_udf",
-                "postgres.sql_udf",
-            ]
-
-            result = complete_type(mock_ctx, None, "")
-            assert len(result) == 2
-            assert all(
-                isinstance(item, click.shell_completion.CompletionItem)
-                for item in result
-            )
-            types = [item.value for item in result]
-            assert "pandas_udf" in types
-            assert "sql_udf" in types
-
-    def test_complete_type_without_target_context(self):
-        """Test type completion without target context."""
-        mock_ctx = MagicMock()
-        mock_ctx.params = {}
-
-        with patch(
-            "datacompose.cli.commands.add.TransformerDiscovery"
-        ) as MockDiscovery:
-            mock_instance = MockDiscovery.return_value
-            mock_instance.list_generators.return_value = [
-                "pyspark.pandas_udf",
-                "pyspark.sql_udf",
-                "postgres.sql_udf",
-            ]
-
-            result = complete_type(mock_ctx, None, "")
-            assert len(result) == 3  # pandas_udf and sql_udf (2 instances not deduped)
-            assert all(
-                isinstance(item, click.shell_completion.CompletionItem)
-                for item in result
-            )
-            types = [item.value for item in result]
-            assert "pandas_udf" in types
-            assert "sql_udf" in types
-
-    def test_complete_type_partial_match(self):
-        """Test type completion with partial match."""
-        mock_ctx = MagicMock()
-        mock_ctx.params = {"target": "pyspark"}
-
-        with patch(
-            "datacompose.cli.commands.add.TransformerDiscovery"
-        ) as MockDiscovery:
-            mock_instance = MockDiscovery.return_value
-            mock_instance.list_generators.return_value = [
-                "pyspark.pandas_udf",
-                "pyspark.sql_udf",
-            ]
-
-            result = complete_type(mock_ctx, None, "pan")
-            assert len(result) == 1
-            assert isinstance(result[0], click.shell_completion.CompletionItem)
-            assert result[0].value == "pandas_udf"
-
-    def test_complete_type_exception_handling(self):
-        """Test type completion handles exceptions gracefully."""
-        mock_ctx = MagicMock()
-        with patch.object(
-            TransformerDiscovery, "__init__", side_effect=Exception("Discovery error")
-        ):
-            result = complete_type(mock_ctx, None, "sql")
-            assert result == []
 
 
 @pytest.mark.unit
@@ -345,20 +267,6 @@ class TestAddCommandIntegration:
             result = runner.invoke(cli, ["add", "emails", "--target", "invalid"])
             assert result.exit_code == 1
 
-    def test_add_command_type_validation_failure(self, runner):
-        """Test add command when type validation fails."""
-        with patch("datacompose.cli.commands.add.validate_platform") as mock_platform:
-            with patch(
-                "datacompose.cli.commands.add.validate_type_for_platform"
-            ) as mock_type:
-                mock_platform.return_value = True
-                mock_type.return_value = False
-
-                result = runner.invoke(
-                    cli,
-                    ["add", "emails", "--target", "pyspark", "--type", "invalid_type"],
-                )
-                assert result.exit_code == 1
 
     def test_add_command_successful_execution(self, runner):
         """Test successful execution of add command."""

@@ -33,18 +33,13 @@ class TestAddCommandValidation:
         # Only pyspark is currently available
         # assert "postgres" in result.output  # Would be here if postgres generator existed
 
-    def test_invalid_type_shows_helpful_error(self, runner):
-        """Test that invalid type shows helpful error message."""
-        result = runner.invoke(
-            cli,
-            ["add", "emails", "--target", "pyspark", "--type", "invalid_type"],
-        )
+    def test_valid_target_with_transformer_works(self, runner):
+        """Test that valid target with transformer works (replaces type validation test)."""
+        result = runner.invoke(cli, ["add", "emails", "--target", "pyspark"])
 
-        assert result.exit_code == 1
-        assert (
-            "Type 'invalid_type' not available for platform 'pyspark'" in result.output
-            or "Platform 'pyspark' not found" in result.output  # If no typed generators
-        )
+        # The command may fail if transformer doesn't exist, but target validation should pass
+        # Check that it's not a target validation error
+        assert "Platform 'pyspark' not found" not in result.output
 
     def test_valid_platform_and_type_works(self, runner):
         """Test that valid platform and type combination works."""
@@ -75,8 +70,8 @@ class TestAddCommandValidation:
                 or "not found" in result.output.lower()
             )
 
-    def test_multiple_validation_errors_show_platform_first(self, runner):
-        """Test that platform validation happens before type validation."""
+    def test_invalid_platform_validation_priority(self, runner):
+        """Test that platform validation happens and shows helpful errors."""
         result = runner.invoke(
             cli,
             [
@@ -84,14 +79,9 @@ class TestAddCommandValidation:
                 "emails",
                 "--target",
                 "invalid_platform",
-                "--type",
-                "invalid_type",
             ],
         )
 
         assert result.exit_code == 1
-        # Should show platform error, not type error
+        # Should show platform error
         assert "Platform 'invalid_platform' not found" in result.output
-        assert (
-            "Type 'invalid_type'" not in result.output
-        )  # Type validation shouldn't run

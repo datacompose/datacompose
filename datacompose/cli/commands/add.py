@@ -8,7 +8,7 @@ import click
 
 from datacompose.cli.colors import dim, error, highlight, info, success
 from datacompose.cli.config import ConfigLoader
-from datacompose.cli.validation import validate_platform, validate_type_for_platform
+from datacompose.cli.validation import validate_platform
 from datacompose.transformers.discovery import TransformerDiscovery
 
 
@@ -43,39 +43,6 @@ def complete_target(ctx, param, incomplete):
         return []
 
 
-def complete_type(ctx, param, incomplete):
-    """Complete generator types based on selected target."""
-    try:
-        discovery = TransformerDiscovery()
-        generators = discovery.list_generators()
-
-        # Try to get the target from context
-        target = None
-        if ctx.params.get("target"):
-            target = ctx.params["target"]
-
-        if target:
-            # Filter to types for this specific target
-            target_generators = [
-                gen for gen in generators if gen.startswith(f"{target}.")
-            ]
-            types = [gen.split(".", 1)[1] for gen in target_generators if "." in gen]
-            return [
-                click.shell_completion.CompletionItem(t)  # type: ignore
-                for t in types
-                if t.startswith(incomplete)
-            ]
-        else:
-            # Return all available types
-            types = [gen.split(".", 1)[1] for gen in generators if "." in gen]
-            return [
-                click.shell_completion.CompletionItem(t)  # type: ignore
-                for t in types
-                if t.startswith(incomplete)
-            ]
-    except Exception:
-        return []
-
 
 # Get the directory where this module is located
 _MODULE_DIR = Path(__file__).parent
@@ -88,12 +55,7 @@ _MODULE_DIR = Path(__file__).parent
     "-t",
     default=None,
     shell_complete=complete_target,
-    help="Target platform (e.g., 'pyspark', 'postgres', 'snowflake'). Uses default from datacompose.json if not specified",
-)
-@click.option(
-    "--type",
-    shell_complete=complete_type,
-    help="UDF type for the platform (e.g., 'pandas_udf', 'sql_udf'). Uses platform default if not specified",
+    help="Target platform (e.g., 'pyspark', 'postgres'). Uses default from datacompose.json if not specified",
 )
 @click.option(
     "--output",
@@ -102,7 +64,7 @@ _MODULE_DIR = Path(__file__).parent
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
-def add(ctx, transformer, target, type, output, verbose):
+def add(ctx, transformer, target, output, verbose):
     """Add UDFs for transformers.
 
     TRANSFORMER: Transformer to add UDF for (e.g., 'emails')
@@ -145,11 +107,7 @@ def add(ctx, transformer, target, type, output, verbose):
     if not validate_platform(target, discovery):
         ctx.exit(1)
 
-    # Validate type if specified
-    if type and not validate_type_for_platform(target, type, discovery):
-        ctx.exit(1)
-
-    # Combine target and type into generator reference
+    # Execute the add command
     exit_code = _run_add(transformer, target, output, verbose)
     if exit_code != 0:
         ctx.exit(exit_code)

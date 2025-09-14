@@ -14,10 +14,111 @@ import click
 
 from datacompose.cli.colors import dim, error, highlight, info, success
 
+# Try to import readline for path completion
+try:
+    import readline
+    READLINE_AVAILABLE = True
+except ImportError:
+    READLINE_AVAILABLE = False
+
 # Get the directory where this module is located
 
+
+class PathCompleter:
+    """Path completer for readline to provide tab completion for file paths."""
+
+    def __init__(self, filter_extensions=None):
+        """Initialize path completer.
+
+        Args:
+            filter_extensions: Optional list of extensions to filter (e.g., ['.env', '.txt'])
+        """
+        self.filter_extensions = filter_extensions or []
+
+    def complete(self, text, state):
+        """Complete file paths for readline."""
+        # Expand user home directory
+        if text.startswith('~'):
+            text = os.path.expanduser(text)
+
+        # Get directory and partial filename
+        if os.path.isdir(text):
+            directory = text
+            partial = ''
+        else:
+            directory = os.path.dirname(text) or '.'
+            partial = os.path.basename(text)
+
+        # Get matching files and directories
+        try:
+            entries = []
+            for entry in os.listdir(directory):
+                if entry.startswith(partial):
+                    full_path = os.path.join(directory, entry)
+
+                    # Add trailing slash for directories
+                    if os.path.isdir(full_path):
+                        entries.append(os.path.join(directory if directory != '.' else '', entry) + '/')
+                    else:
+                        # Filter by extensions if specified
+                        if self.filter_extensions:
+                            if any(entry.endswith(ext) for ext in self.filter_extensions):
+                                entries.append(os.path.join(directory if directory != '.' else '', entry))
+                        else:
+                            entries.append(os.path.join(directory if directory != '.' else '', entry))
+
+            # Return the state-th match
+            if state < len(entries):
+                return entries[state]
+        except (OSError, PermissionError):
+            pass
+
+        return None
+
+
+def input_with_path_completion(prompt, default=None, filter_extensions=None):
+    """Get input with path completion support.
+
+    Args:
+        prompt: The prompt to display
+        default: Default value if user just presses enter
+        filter_extensions: Optional list of extensions to filter
+
+    Returns:
+        User input string
+    """
+    if READLINE_AVAILABLE:
+        # Save current completer
+        old_completer = readline.get_completer()
+        old_delims = readline.get_completer_delims()
+
+        try:
+            # Set up our path completer
+            completer = PathCompleter(filter_extensions)
+            readline.set_completer(completer.complete)
+            # Remove some delimiters that are common in paths
+            readline.set_completer_delims(' \t\n;')
+
+            # Get input with completion
+            value = input(prompt).strip()
+
+        finally:
+            # Restore old completer
+            readline.set_completer(old_completer)
+            readline.set_completer_delims(old_delims)
+    else:
+        # Fallback to regular input
+        value = input(prompt).strip()
+
+    # Return default if empty
+    if not value and default is not None:
+        return default
+
+    return value
+
+
 DEFAULT_CONFIG = {
-    "version": "1.0",
+    "version": "0.2.7.0",
     "default_target": "pyspark",
     "aliases": {"utils": "./src/utils"},
     "targets": {
@@ -177,13 +278,33 @@ class InitCommand:
         result = {}
         for i, (key, target_info) in enumerate(available_targets.items()):
             if selected[i]:
-                prompt = f"{success('[✓]')} {target_info['name']} output directory? {dim('(default: ' + target_info['output'] + ')')} "
-                output_path = input(prompt).strip()
-                if not output_path:
-                    output_path = target_info["output"]
+                prompt = f"{success('[✓]')} {target_info['name']} output directory? {dim('(default: ' + target_info['output'] + ', TAB for completion)')} "
+
+                # Use path completion for directories
+                output_path = input_with_path_completion(
+                    prompt,
+                    default=target_info["output"],
+                    filter_extensions=None  # Show all paths for output directories
+                )
 
                 result[key] = {"output": output_path}
-                print(dim(f"   -> Set to: {output_path}\n"))
+                print(dim(f"   -> Set to: {output_path}"))
+
+                # For SQL databases, also ask for env_file path
+                if key in ["postgres", "mysql"]:
+                    env_prompt = f"{success('[✓]')} {target_info['name']} environment file path? {dim('(default: .env, TAB for completion)')} "
+
+                    # Use path completion for .env files
+                    env_path = input_with_path_completion(
+                        env_prompt,
+                        default=".env",
+                        filter_extensions=['.env', '']  # Allow .env files and files without extensions
+                    )
+
+                    result[key]["env_file"] = env_path
+                    print(dim(f"   -> Environment file: {env_path}\n"))
+                else:
+                    print()  # Add spacing for non-SQL targets
 
         return result
 
@@ -201,6 +322,7 @@ class InitCommand:
                 "output": "./transformers/pyspark",
                 "name": "PySpark (Apache Spark)",
             },
+            "postgres": {"output": "./transformers/postgres", "name": "PostgreSQL"},
         }
 
         selected_targets = InitCommand.prompt_for_targets(available_targets)
@@ -272,6 +394,46 @@ class InitCommand:
                 directory.mkdir(parents=True, exist_ok=True)
                 if verbose:
                     print(f"Created directory: {directory}")
+
+        # Create .env.example if PostgreSQL is configured
+        if "targets" in config and "postgres" in config["targets"]:
+            InitCommand.create_env_example(config["targets"]["postgres"], verbose)
+
+    @staticmethod
+    def create_env_example(postgres_config: Dict[str, Any], verbose: bool = False):
+        """Create .env.example file with PostgreSQL template."""
+        env_example_content = """# PostgreSQL Connection Configuration
+# Copy this file to .env and update with your credentials
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=your_database_name
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+
+# Optional: Connection Pool Settings
+# POSTGRES_POOL_SIZE=5
+# POSTGRES_MAX_OVERFLOW=10
+
+# Optional: SSL Configuration
+# POSTGRES_SSLMODE=prefer
+# POSTGRES_SSLCERT=/path/to/client-cert.pem
+# POSTGRES_SSLKEY=/path/to/client-key.pem
+# POSTGRES_SSLROOTCERT=/path/to/ca-cert.pem
+"""
+
+        env_example_path = Path(".env.example")
+        if not env_example_path.exists():
+            with open(env_example_path, "w") as f:
+                f.write(env_example_content)
+            if verbose:
+                print(f"Created {env_example_path}")
+
+            # Also remind user to create their .env file
+            env_file = postgres_config.get("env_file", ".env")
+            if env_file != ".env":
+                print(info(f"Remember to copy .env.example to {env_file} and update with your credentials"))
+            else:
+                print(info("Remember to copy .env.example to .env and update with your credentials"))
 
     @staticmethod
     def setup_shell_completion(verbose: bool = False) -> bool:
