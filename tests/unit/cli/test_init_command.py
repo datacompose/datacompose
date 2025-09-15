@@ -165,6 +165,86 @@ class TestInitCommandPostgres:
                 assert postgres_config['host'] == 'localhost'  # default
                 assert postgres_config['port'] == 5432  # default
 
+    def test_init_register_postgres_flag_with_yes(self, runner):
+        """Test --register-postgres flag with --yes mode."""
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["init", "--yes", "--register-postgres", "--skip-completion"])
+            assert result.exit_code == 0
+            assert "Configuration initialized" in result.output
+
+            # Check that config includes PostgreSQL with auto-registration
+            config_file = Path("datacompose.json")
+            assert config_file.exists()
+
+            with open(config_file, "r") as f:
+                config = json.load(f)
+
+            # PostgreSQL should be added as a target
+            assert "postgres" in config["targets"]
+            postgres_config = config["targets"]["postgres"]
+
+            # Check auto-registration settings
+            assert postgres_config["auto_register"] is True
+            assert postgres_config["function_schema"] == "public"
+            assert postgres_config["env_file"] == ".env"
+
+            # Default target should be postgres when --register-postgres is used
+            assert config["default_target"] == "postgres"
+
+    def test_init_register_postgres_flag_without_yes(self, runner):
+        """Test --register-postgres flag only affects --yes mode."""
+        with runner.isolated_filesystem():
+            # The flag should not affect interactive mode (would need input simulation)
+            # This test verifies the flag exists and is parsed correctly
+            result = runner.invoke(cli, ["init", "--help"])
+            assert result.exit_code == 0
+            assert "--register-postgres" in result.output
+            assert "Enable auto-registration of PostgreSQL functions" in result.output
+
+    def test_init_test_connection_flag(self, runner):
+        """Test --test-connection flag appears in help."""
+        result = runner.invoke(cli, ["init", "--help"])
+        assert result.exit_code == 0
+        assert "--test-connection" in result.output
+        assert "Test PostgreSQL database connection during setup" in result.output
+
+    def test_init_postgres_auto_registration_config_structure(self, runner):
+        """Test that PostgreSQL auto-registration creates correct config structure."""
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["init", "--yes", "--register-postgres", "--skip-completion"])
+            assert result.exit_code == 0
+
+            # Verify .env.example is created for PostgreSQL
+            env_example = Path(".env.example")
+            assert env_example.exists()
+
+            env_content = env_example.read_text()
+            assert "POSTGRES_HOST=" in env_content
+            assert "POSTGRES_PORT=" in env_content
+            assert "POSTGRES_DB=" in env_content
+            assert "POSTGRES_USER=" in env_content
+            assert "POSTGRES_PASSWORD=" in env_content
+
+    def test_init_register_postgres_preserves_pyspark(self, runner):
+        """Test that --register-postgres keeps existing targets."""
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["init", "--yes", "--register-postgres", "--skip-completion"])
+            assert result.exit_code == 0
+
+            config_file = Path("datacompose.json")
+            with open(config_file, "r") as f:
+                config = json.load(f)
+
+            # Both targets should exist
+            assert "pyspark" in config["targets"]
+            assert "postgres" in config["targets"]
+
+            # PySpark config should be unchanged
+            assert config["targets"]["pyspark"]["output"] == "./transformers/pyspark"
+
+            # But default should switch to postgres
+            assert config["default_target"] == "postgres"
+
     def test_init_postgres_env_example_creation(self, runner):
         """Test that .env.example template content is correct."""
         # Test the env example content generation directly

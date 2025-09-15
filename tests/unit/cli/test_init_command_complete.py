@@ -442,7 +442,7 @@ class TestRunInit:
             config_path = Path(tmpdir) / "datacompose.json"
             config_path.write_text('{"existing": true}')
 
-            result = _run_init(False, str(config_path), False, True, True)
+            result = _run_init(False, str(config_path), False, True, True, False, False)
             assert result == 1
 
             # File should not be modified
@@ -456,7 +456,7 @@ class TestRunInit:
             config_path = Path(tmpdir) / "datacompose.json"
             config_path.write_text('{"existing": true}')
 
-            result = _run_init(True, str(config_path), False, True, True)
+            result = _run_init(True, str(config_path), False, True, True, False, False)
             assert result == 0
 
             # File should be overwritten
@@ -470,7 +470,7 @@ class TestRunInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "datacompose.json"
 
-            result = _run_init(False, str(config_path), False, True, True)
+            result = _run_init(False, str(config_path), False, True, True, False, False)
             assert result == 0
             assert config_path.exists()
 
@@ -482,7 +482,7 @@ class TestRunInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "datacompose.json"
 
-            result = _run_init(False, str(config_path), False, False, True)
+            result = _run_init(False, str(config_path), False, False, True, False, False)
             assert result == 0
             assert config_path.exists()
             mock_prompt.assert_called_once()
@@ -495,7 +495,7 @@ class TestRunInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "datacompose.json"
 
-            result = _run_init(False, str(config_path), False, False, True)
+            result = _run_init(False, str(config_path), False, False, True, False, False)
             assert result == 0
             assert not config_path.exists()
 
@@ -509,7 +509,7 @@ class TestRunInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "datacompose.json"
 
-            result = _run_init(False, str(config_path), False, False, False)
+            result = _run_init(False, str(config_path), False, False, False, False, False)
             assert result == 0
             mock_completion.assert_called_once()
 
@@ -521,7 +521,7 @@ class TestRunInit:
             with patch.object(
                 InitCommand, "prompt_completion_setup"
             ) as mock_completion:
-                result = _run_init(False, str(config_path), True, True, True)
+                result = _run_init(False, str(config_path), True, True, True, False, False)
                 assert result == 0
                 mock_completion.assert_not_called()
 
@@ -531,7 +531,7 @@ class TestRunInit:
             config_path = Path(tmpdir) / "datacompose.json"
 
             with patch("builtins.print") as mock_print:
-                result = _run_init(False, str(config_path), True, True, True)
+                result = _run_init(False, str(config_path), True, True, True, False, False)
                 assert result == 0
 
                 # Check for verbose output
@@ -542,14 +542,14 @@ class TestRunInit:
     def test_run_init_exception_handling(self):
         """Test init with exception during execution."""
         with patch("builtins.open", side_effect=OSError("Cannot write")):
-            result = _run_init(False, "test.json", False, True, True)
+            result = _run_init(False, "test.json", False, True, True, False, False)
             assert result == 1
 
     def test_run_init_exception_verbose(self):
         """Test init with exception in verbose mode."""
         with patch("builtins.open", side_effect=OSError("Cannot write")):
             with patch("traceback.print_exc") as mock_traceback:
-                result = _run_init(False, "test.json", True, True, True)
+                result = _run_init(False, "test.json", True, True, True, False, False)
                 assert result == 1
                 mock_traceback.assert_called_once()
 
@@ -559,7 +559,7 @@ class TestRunInit:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "datacompose.json"
 
-            result = _run_init(False, str(config_path), False, True, True)
+            result = _run_init(False, str(config_path), False, True, True, False, False)
             assert result == 0
             mock_create_dirs.assert_called_once()
 
@@ -633,7 +633,7 @@ class TestInitEdgeCases:
             config_path = Path(tmpdir) / "datacompose.json"
             config_path.write_text("invalid json{")
 
-            result = _run_init(True, str(config_path), False, True, True)
+            result = _run_init(True, str(config_path), False, True, True, False, False)
             assert result == 0
 
             # Should have valid JSON now
@@ -648,7 +648,7 @@ class TestInitEdgeCases:
             # Create parent directories first
             config_path.parent.mkdir(parents=True, exist_ok=True)
 
-            result = _run_init(False, str(config_path), False, True, True)
+            result = _run_init(False, str(config_path), False, True, True, False, False)
             assert result == 0
             assert config_path.exists()
 
