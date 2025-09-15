@@ -19,9 +19,13 @@ def validate_platform(platform: str, discovery: TransformerDiscovery) -> bool:
     available_generators = discovery.list_generators()
     available_platforms = list(set(g.split(".")[0] for g in available_generators))
 
-    if platform not in available_platforms:
+    # Add user-friendly aliases
+    aliases = list(discovery.PLATFORM_ALIASES.keys())
+    all_valid_platforms = available_platforms + aliases
+
+    if platform not in all_valid_platforms:
         print(error(f"Platform '{platform}' not found."))
-        print(info(f"Available platforms: {', '.join(sorted(available_platforms))}"))
+        print(info(f"Available platforms: {', '.join(sorted(all_valid_platforms))}"))
         return False
     return True
 

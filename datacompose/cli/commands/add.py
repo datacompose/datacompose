@@ -34,9 +34,16 @@ def complete_target(ctx, param, incomplete):
         generators = discovery.list_generators()
         # Extract platform names (part before the dot)
         platforms = list(set(gen.split(".")[0] for gen in generators))
+
+        # Add user-friendly aliases
+        aliases = list(discovery.PLATFORM_ALIASES.keys())
+
+        # Combine both platforms and aliases
+        all_targets = platforms + aliases
+
         return [
             click.shell_completion.CompletionItem(p)  # type: ignore
-            for p in platforms
+            for p in all_targets
             if p.startswith(incomplete)
         ]
     except Exception:
@@ -184,6 +191,41 @@ def _run_add(transformer, target, output, verbose) -> int:
                 print(f"  - UDF code: {result['output_path']}")
                 if result.get("test_path"):
                     print(f"  - Test file: {result['test_path']}")
+
+        # Check for auto-registration if target is postgres
+        if target == "postgres":
+            config = ConfigLoader.load_config()
+            postgres_config = config.get("targets", {}).get("postgres", {}) if config else {}
+
+            if postgres_config.get("auto_register", False):
+                print(info("Auto-registration enabled for PostgreSQL..."))
+
+                # Check if generator supports registration (only PostgreSQL generator does)
+                if hasattr(generator, 'register_functions'):
+                    try:
+                        # Read the generated SQL file
+                        with open(result['output_path'], 'r') as f:
+                            sql_content = f.read()
+
+                        # Register the functions
+                        success_reg, message = generator.register_functions(sql_content)
+
+                        if success_reg:
+                            print(success(f"✓ {message}"))
+                        else:
+                            print(error(f"✗ Registration failed: {message}"))
+                            print(info("You can manually register functions by running:"))
+                            print(dim(f"  psql -d your_database -f {result['output_path']}"))
+
+                    except Exception as e:
+                        print(error(f"✗ Auto-registration failed: {e}"))
+                        print(info("You can manually register functions by running:"))
+                        print(dim(f"  psql -d your_database -f {result['output_path']}"))
+                else:
+                    print(dim("Auto-registration not supported for this generator"))
+            elif verbose:
+                print(dim("Auto-registration disabled for PostgreSQL"))
+                print(dim("To enable: set 'auto_register: true' in datacompose.json postgres target config"))
 
         return 0
 

@@ -147,10 +147,20 @@ DEFAULT_CONFIG = {
     "--yes", "-y", is_flag=True, help="Skip interactive prompts and use defaults"
 )
 @click.option("--skip-completion", is_flag=True, help="Skip shell completion setup")
+@click.option(
+    "--register-postgres",
+    is_flag=True,
+    help="Enable auto-registration of PostgreSQL functions (sets auto_register: true in config)",
+)
+@click.option(
+    "--test-connection",
+    is_flag=True,
+    help="Test PostgreSQL database connection during setup",
+)
 @click.pass_context
-def init(ctx, force, output, verbose, yes, skip_completion):
+def init(ctx, force, output, verbose, yes, skip_completion, register_postgres, test_connection):
     """Initialize project configuration."""
-    exit_code = _run_init(force, output, verbose, yes, skip_completion)
+    exit_code = _run_init(force, output, verbose, yes, skip_completion, register_postgres, test_connection)
     if exit_code != 0:
         ctx.exit(exit_code)
 
@@ -210,7 +220,7 @@ class InitCommand:
             return input()
 
     @staticmethod
-    def prompt_for_targets(available_targets: Dict[str, Dict]) -> Dict[str, Dict]:
+    def prompt_for_targets(available_targets: Dict[str, Dict], test_connection: bool = False) -> Dict[str, Dict]:
         """Interactive multi-select for choosing targets with arrow key navigation."""
         target_keys = list(available_targets.keys())
         selected = [i == 0 for i in target_keys]
@@ -290,7 +300,7 @@ class InitCommand:
                 result[key] = {"output": output_path}
                 print(dim(f"   -> Set to: {output_path}"))
 
-                # For SQL databases, also ask for env_file path
+                # For SQL databases, also ask for env_file path and auto-registration
                 if key in ["postgres", "mysql"]:
                     env_prompt = f"{success('[✓]')} {target_info['name']} environment file path? {dim('(default: .env, TAB for completion)')} "
 
@@ -302,14 +312,68 @@ class InitCommand:
                     )
 
                     result[key]["env_file"] = env_path
-                    print(dim(f"   -> Environment file: {env_path}\n"))
+                    print(dim(f"   -> Environment file: {env_path}"))
+
+                    # PostgreSQL-specific auto-registration settings
+                    if key == "postgres":
+                        # Always ask user interactively about auto-registration
+                        auto_register_prompt = f"{success('[✓]')} Enable auto-registration of PostgreSQL functions? {dim('(Y/n)')} "
+                        auto_register_response = input(auto_register_prompt).strip().lower()
+
+                        auto_register = auto_register_response in ["", "y", "yes"]
+                        result[key]["auto_register"] = auto_register
+
+                        if auto_register:
+                            print(dim("   -> Auto-registration: enabled"))
+
+                            # Ask for function schema
+                            schema_prompt = f"{success('[✓]')} PostgreSQL schema for functions? {dim('(default: public)')} "
+                            schema = input(schema_prompt).strip() or "public"
+                            result[key]["function_schema"] = schema
+                            print(dim(f"   -> Function schema: {schema}"))
+
+                            # Ask about connection testing
+                            test_prompt = f"{success('[✓]')} Test database connection now? {dim('(y/N)')} "
+                            test_response = input(test_prompt).strip().lower()
+                            should_test = test_response in ["y", "yes"]
+
+                            if should_test or test_connection:
+                                print(dim("   -> Testing database connection..."))
+                                success_test, message = InitCommand.test_postgres_connection_with_config(result[key])
+                                if success_test:
+                                    print(dim(f"   -> {success('✓')} {message}"))
+                                else:
+                                    print(dim(f"   -> {error('✗')} {message}"))
+                                    print(dim("   -> You can fix the connection later by updating your .env file"))
+                        else:
+                            print(dim("   -> Auto-registration: disabled"))
+
+                    print()  # Add spacing
                 else:
                     print()  # Add spacing for non-SQL targets
 
         return result
 
     @staticmethod
-    def prompt_for_config(template_config: Dict[str, Any]) -> Dict[str, Any] | None:
+    def test_postgres_connection_with_config(postgres_config: Dict[str, Any]) -> tuple[bool, str]:
+        """Test PostgreSQL connection using the provided config."""
+        try:
+            from datacompose.cli.config import ConfigLoader
+
+            # Create temporary config structure for testing
+            test_config = {
+                "targets": {
+                    "postgres": postgres_config
+                }
+            }
+
+            return ConfigLoader.test_postgres_connection(test_config)
+
+        except Exception as e:
+            return False, f"Connection test failed: {str(e)}"
+
+    @staticmethod
+    def prompt_for_config(template_config: Dict[str, Any], test_connection: bool = False) -> Dict[str, Any] | None:
         """Interactively prompt user for configuration options."""
         print(highlight("Setting up your Datacompose project configuration..."))
         print(dim("Press Enter to use the default value shown in brackets.\n"))
@@ -325,7 +389,7 @@ class InitCommand:
             "postgres": {"output": "./transformers/postgres", "name": "PostgreSQL"},
         }
 
-        selected_targets = InitCommand.prompt_for_targets(available_targets)
+        selected_targets = InitCommand.prompt_for_targets(available_targets, test_connection)
 
         # Check if user quit the selection
         if not selected_targets:
@@ -562,7 +626,7 @@ POSTGRES_PASSWORD=your_password
             return False
 
 
-def _run_init(force, output, verbose, yes, skip_completion) -> int:
+def _run_init(force, output, verbose, yes, skip_completion, register_postgres, test_connection) -> int:
     """Execute the init command."""
     config_path = Path(output)
 
@@ -579,9 +643,21 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
         # Either prompt for interactive configuration or use defaults
         if yes:
             config = template_config
+            # Apply command line flags to default config when using --yes
+            if register_postgres:
+                # Add PostgreSQL target with auto-registration if requested
+                config["targets"]["postgres"] = {
+                    "output": "./transformers/postgres",
+                    "env_file": ".env",
+                    "auto_register": True,
+                    "function_schema": "public"
+                }
+                # Set postgres as default if no other default is set
+                if config.get("default_target") == "pyspark":
+                    config["default_target"] = "postgres"
             print("Using default configuration...")
         else:
-            config = InitCommand.prompt_for_config(template_config)
+            config = InitCommand.prompt_for_config(template_config, test_connection)
             # Check if user cancelled the configuration
             if config is None:
                 return 0

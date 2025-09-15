@@ -10,6 +10,15 @@ from typing import Dict, List, Optional, Tuple
 class TransformerDiscovery:
     """Discovers available transformers and generators."""
 
+    # Platform aliases for user-friendly target names
+    PLATFORM_ALIASES = {
+        "postgres": "sql.postgres_generator",
+        "postgresql": "sql.postgres_generator",
+        # Future SQL database aliases can be added here
+        # "mysql": "sql.mysql_generator",
+        # "sqlite": "sql.sqlite_generator",
+    }
+
     def __init__(
         self, transformers_dir: Path | None = None, generators_dir: Path | None = None
     ):
@@ -76,22 +85,31 @@ class TransformerDiscovery:
                             module = importlib.import_module(module_path)
 
                             # Find generator classes or factory functions
+                            # First, look for classes defined in this specific module (not imported)
+                            module_generators = []
                             for attr_name in dir(module):
                                 attr = getattr(module, attr_name)
-                                # Check for generator classes
+                                # Check for generator classes defined in this module
                                 if (
                                     isinstance(attr, type)
-                                    and hasattr(attr, "_get_template_content")
+                                    and hasattr(attr, "generate")
                                     and attr.__name__.endswith("Generator")
+                                    and attr.__module__ == module.__name__  # Must be defined in this module
                                 ):
-                                    generators[platform_name][generator_name] = attr
+                                    module_generators.append((attr_name, attr))
                                 # Check for factory functions that create generators
                                 elif (
                                     callable(attr)
                                     and attr_name.endswith("Generator")
                                     and not attr_name.startswith("_")
                                 ):
-                                    generators[platform_name][generator_name] = attr
+                                    module_generators.append((attr_name, attr))
+
+                            # Use the first generator found (prioritizing those defined in this module)
+                            if module_generators:
+                                # Sort to prefer more specific names (e.g., PostgreSQLGenerator over SQLGenerator)
+                                module_generators.sort(key=lambda x: len(x[0]), reverse=True)
+                                generators[platform_name][generator_name] = module_generators[0][1]
                         except Exception:
                             # Skip modules that can't be imported
                             continue
@@ -132,11 +150,15 @@ class TransformerDiscovery:
         Resolve generator reference to generator class.
 
         Args:
-            generator_ref: Either "platform.type" or just "platform" (defaults to pandas_udf for pyspark)
+            generator_ref: Either "platform.type", just "platform", or a platform alias
 
         Returns:
             Generator class or None
         """
+        # Check if generator_ref is a platform alias
+        if generator_ref in self.PLATFORM_ALIASES:
+            generator_ref = self.PLATFORM_ALIASES[generator_ref]
+
         if "." in generator_ref:
             # New format: platform.type
             platform, gen_type = generator_ref.split(".", 1)
