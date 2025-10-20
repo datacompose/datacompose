@@ -99,4 +99,4 @@ vite.config.ts.timestamp-*
 .svelte-kit/*
 docs-svelte/.svelte-kit/*
 
-transformers/
+#transformers/
