@@ -37,8 +37,59 @@ def standardize_iso(col: Column) -> Column:
         "2024-Jan-15" -> "2024-01-15 00:00:00"
         "15-01-2024 14:30" -> "2024-01-15 14:30:00"
     """
-    # TODO: Implement format detection and conversion
-    return col
+    # Try multiple formats in order using coalesce
+    # try_to_timestamp returns null if format doesn't match or date is invalid
+    # This handles ambiguous cases like "01/15/2024" vs "15/01/2024" because
+    # invalid dates (like month 15) will return null
+
+    parsed = F.coalesce(
+        # ISO formats (highest priority - unambiguous)
+        F.try_to_timestamp(col, F.lit("yyyy-MM-dd'T'HH:mm:ss")),
+        F.try_to_timestamp(col, F.lit("yyyy-MM-dd HH:mm:ss")),
+        F.try_to_timestamp(col, F.lit("yyyy-MM-dd'T'HH:mm")),
+        F.try_to_timestamp(col, F.lit("yyyy-MM-dd HH:mm")),
+        F.try_to_timestamp(col, F.lit("yyyy-MM-dd")),
+
+        # US formats with time and AM/PM
+        F.try_to_timestamp(col, F.lit("MM/dd/yyyy h:mm a")),
+        F.try_to_timestamp(col, F.lit("M/d/yyyy h:mm a")),
+        F.try_to_timestamp(col, F.lit("MM/dd/yyyy hh:mm a")),
+
+        # US formats with 24-hour time
+        F.try_to_timestamp(col, F.lit("MM/dd/yyyy HH:mm:ss")),
+        F.try_to_timestamp(col, F.lit("MM/dd/yyyy HH:mm")),
+        F.try_to_timestamp(col, F.lit("M/d/yyyy HH:mm")),
+
+        # US formats without time
+        F.try_to_timestamp(col, F.lit("MM/dd/yyyy")),
+        F.try_to_timestamp(col, F.lit("M/d/yyyy")),
+
+        # Named month formats with time and AM/PM
+        F.try_to_timestamp(col, F.lit("MMMM d, yyyy h:mm a")),
+        F.try_to_timestamp(col, F.lit("MMM d, yyyy h:mm a")),
+        F.try_to_timestamp(col, F.lit("MMMM d, yyyy hh:mm a")),
+        F.try_to_timestamp(col, F.lit("MMM d, yyyy hh:mm a")),
+
+        # Named month formats without time
+        F.try_to_timestamp(col, F.lit("MMMM d, yyyy")),
+        F.try_to_timestamp(col, F.lit("MMM d, yyyy")),
+        F.try_to_timestamp(col, F.lit("MMMM dd, yyyy")),
+        F.try_to_timestamp(col, F.lit("MMM dd, yyyy")),
+        F.try_to_timestamp(col, F.lit("d-MMM-yyyy")),
+        F.try_to_timestamp(col, F.lit("dd-MMM-yyyy")),
+        F.try_to_timestamp(col, F.lit("d MMMM yyyy")),
+        F.try_to_timestamp(col, F.lit("dd MMMM yyyy")),
+
+        # EU formats (after US formats due to ambiguity)
+        F.try_to_timestamp(col, F.lit("dd/MM/yyyy")),
+        F.try_to_timestamp(col, F.lit("d/M/yyyy")),
+        F.try_to_timestamp(col, F.lit("dd.MM.yyyy")),
+        F.try_to_timestamp(col, F.lit("d.M.yyyy")),
+    )
+
+    # Format as ISO string "yyyy-MM-dd HH:mm:ss"
+    # Returns null if parsed is null
+    return F.date_format(parsed, "yyyy-MM-dd HH:mm:ss")
 
 
 @datetimes.register()
