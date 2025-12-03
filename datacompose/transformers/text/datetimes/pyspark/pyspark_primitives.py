@@ -22,6 +22,112 @@ datetimes = PrimitiveRegistry("datetimes")
 
 
 # ============================================================================
+# Extraction Functions
+# ============================================================================
+
+
+@datetimes.register()
+def extract_datetime_from_text(col: Column) -> Column:
+    """
+    Extract first datetime mention from free text.
+
+    Supports:
+        - ISO formats: 2024-01-15, 2024-12-31T23:59:59Z
+        - US formats: 01/15/2024, 3/7/2024
+        - EU formats: 15/01/2024, 31.12.2024
+        - Named months: January 15, 2024, Jan 15, 2024, 15-Jan-2024
+        - Date with time: 2024-01-15 14:30, 01/15/2024 2:30 PM
+        - Natural language: tomorrow, yesterday, next Monday, in 3 days
+        - Quarter notation: Q3 2024
+        - Year only: 2024
+
+    Returns the extracted date string or None if no date found.
+    """
+    # Try extracting different date formats in order of specificity
+    # Use F.coalesce to return first non-null match
+
+    # ISO format with timezone: 2024-03-01T10:30:00Z
+    iso_tz = F.regexp_extract(col, r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?", 0)
+
+    # ISO format with time: 2024-01-15 14:30 or 2024-12-31T23:59:59
+    iso_time = F.regexp_extract(col, r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?", 0)
+
+    # ISO date only: 2024-01-15
+    iso_date = F.regexp_extract(col, r"\d{4}-\d{2}-\d{2}", 0)
+
+    # Named month with optional time: January 15, 2024 at 10:00 AM
+    named_month_long = F.regexp_extract(
+        col,
+        r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?,\s+\d{4}(?:\s+at\s+\d{1,2}:\d{2}\s+[AP]M)?",
+        0
+    )
+
+    # Short named month with optional time: Jan 15, 2024 at 10:00 AM
+    named_month_short = F.regexp_extract(
+        col,
+        r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}(?:\s+at\s+\d{1,2}:\d{2}\s+[AP]M)?",
+        0
+    )
+
+    # Day-Month-Year with named month: 15-Jan-2024, 15 January 2024
+    day_named_month = F.regexp_extract(
+        col,
+        r"\d{1,2}[\s-](?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|September|Oct|October|Nov|November|Dec|December)[\s-]\d{4}",
+        0
+    )
+
+    # US/EU date with time and AM/PM: 01/15/2024 2:30 PM
+    date_time_ampm = F.regexp_extract(col, r"\d{1,2}/\d{1,2}/\d{2,4}\s+\d{1,2}:\d{2}\s+[AP]M", 0)
+
+    # US/EU date with time: 01/15/2024 14:30
+    date_time = F.regexp_extract(col, r"\d{1,2}/\d{1,2}/\d{2,4}\s+\d{1,2}:\d{2}", 0)
+
+    # US/EU date with slash: 01/15/2024, 3/7/2024
+    date_slash = F.regexp_extract(col, r"\d{1,2}/\d{1,2}/\d{2,4}", 0)
+
+    # EU date with dots: 31.12.2024
+    date_dot = F.regexp_extract(col, r"\d{1,2}\.\d{1,2}\.\d{4}", 0)
+
+    # Quarter notation: Q3 2024
+    quarter = F.regexp_extract(col, r"Q[1-4]\s+\d{4}", 0)
+
+    # Natural language - relative days with numbers: "in 3 days", "3 days ago"
+    relative_days = F.regexp_extract(col, r"(?:in\s+)?\d+\s+days?(?:\s+ago)?", 0)
+
+    # Natural language - simple patterns
+    tomorrow = F.regexp_extract(col, r"\btomorrow\b", 0)
+    yesterday = F.regexp_extract(col, r"\byesterday\b", 0)
+    next_day = F.regexp_extract(col, r"\bnext\s+(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", 0)
+    last_period = F.regexp_extract(col, r"\blast\s+(?:week|month|year|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", 0)
+
+    # Just year: 2024 (but not part of a larger date)
+    # Use negative lookbehind/lookahead to avoid matching years in dates
+    year_only = F.regexp_extract(col, r"(?<![/\-\d])\b(20\d{2}|19\d{2})\b(?![/\-\dT])", 1)
+
+    # Return first non-empty match using coalesce
+    return F.coalesce(
+        F.when(iso_tz != "", iso_tz),
+        F.when(iso_time != "", iso_time),
+        F.when(iso_date != "", iso_date),
+        F.when(named_month_long != "", named_month_long),
+        F.when(named_month_short != "", named_month_short),
+        F.when(day_named_month != "", day_named_month),
+        F.when(date_time_ampm != "", date_time_ampm),
+        F.when(date_time != "", date_time),
+        F.when(date_slash != "", date_slash),
+        F.when(date_dot != "", date_dot),
+        F.when(quarter != "", quarter),
+        F.when(relative_days != "", relative_days),
+        F.when(tomorrow != "", tomorrow),
+        F.when(yesterday != "", yesterday),
+        F.when(next_day != "", next_day),
+        F.when(last_period != "", last_period),
+        F.when(year_only != "", year_only),
+        F.lit(None)  # Return None if no date found
+    )
+
+
+# ============================================================================
 # Core Standardization Functions
 # ============================================================================
 
@@ -37,6 +143,12 @@ def standardize_iso(col: Column) -> Column:
         "2024-Jan-15" -> "2024-01-15 00:00:00"
         "15-01-2024 14:30" -> "2024-01-15 14:30:00"
     """
+    # Normalize whitespace:
+    # 1. Trim leading/trailing whitespace (spaces, tabs, newlines)
+    # 2. Collapse multiple internal whitespace characters into single spaces
+    trimmed = F.regexp_replace(col, r"^\s+|\s+$", "")
+    normalized = F.regexp_replace(trimmed, r"\s+", " ")
+
     # Try multiple formats in order using coalesce
     # try_to_timestamp returns null if format doesn't match or date is invalid
     # This handles ambiguous cases like "01/15/2024" vs "15/01/2024" because
@@ -44,41 +156,45 @@ def standardize_iso(col: Column) -> Column:
 
     parsed = F.coalesce(
         # ISO formats (highest priority - unambiguous)
-        F.try_to_timestamp(col, F.lit("yyyy-MM-dd'T'HH:mm:ss")),
-        F.try_to_timestamp(col, F.lit("yyyy-MM-dd HH:mm:ss")),
-        F.try_to_timestamp(col, F.lit("yyyy-MM-dd'T'HH:mm")),
-        F.try_to_timestamp(col, F.lit("yyyy-MM-dd HH:mm")),
-        F.try_to_timestamp(col, F.lit("yyyy-MM-dd")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm:ss'Z'")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm:ss")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd HH:mm:ss")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd HH:mm")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd")),
+        # ISO date with 12-hour time and AM/PM
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd h:mm a")),
+        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd hh:mm a")),
         # US formats with time and AM/PM
-        F.try_to_timestamp(col, F.lit("MM/dd/yyyy h:mm a")),
-        F.try_to_timestamp(col, F.lit("M/d/yyyy h:mm a")),
-        F.try_to_timestamp(col, F.lit("MM/dd/yyyy hh:mm a")),
+        F.try_to_timestamp(normalized, F.lit("MM/dd/yyyy h:mm a")),
+        F.try_to_timestamp(normalized, F.lit("M/d/yyyy h:mm a")),
+        F.try_to_timestamp(normalized, F.lit("MM/dd/yyyy hh:mm a")),
         # US formats with 24-hour time
-        F.try_to_timestamp(col, F.lit("MM/dd/yyyy HH:mm:ss")),
-        F.try_to_timestamp(col, F.lit("MM/dd/yyyy HH:mm")),
-        F.try_to_timestamp(col, F.lit("M/d/yyyy HH:mm")),
+        F.try_to_timestamp(normalized, F.lit("MM/dd/yyyy HH:mm:ss")),
+        F.try_to_timestamp(normalized, F.lit("MM/dd/yyyy HH:mm")),
+        F.try_to_timestamp(normalized, F.lit("M/d/yyyy HH:mm")),
         # US formats without time
-        F.try_to_timestamp(col, F.lit("MM/dd/yyyy")),
-        F.try_to_timestamp(col, F.lit("M/d/yyyy")),
+        F.try_to_timestamp(normalized, F.lit("MM/dd/yyyy")),
+        F.try_to_timestamp(normalized, F.lit("M/d/yyyy")),
         # Named month formats with time and AM/PM
-        F.try_to_timestamp(col, F.lit("MMMM d, yyyy h:mm a")),
-        F.try_to_timestamp(col, F.lit("MMM d, yyyy h:mm a")),
-        F.try_to_timestamp(col, F.lit("MMMM d, yyyy hh:mm a")),
-        F.try_to_timestamp(col, F.lit("MMM d, yyyy hh:mm a")),
+        F.try_to_timestamp(normalized, F.lit("MMMM d, yyyy h:mm a")),
+        F.try_to_timestamp(normalized, F.lit("MMM d, yyyy h:mm a")),
+        F.try_to_timestamp(normalized, F.lit("MMMM d, yyyy hh:mm a")),
+        F.try_to_timestamp(normalized, F.lit("MMM d, yyyy hh:mm a")),
         # Named month formats without time
-        F.try_to_timestamp(col, F.lit("MMMM d, yyyy")),
-        F.try_to_timestamp(col, F.lit("MMM d, yyyy")),
-        F.try_to_timestamp(col, F.lit("MMMM dd, yyyy")),
-        F.try_to_timestamp(col, F.lit("MMM dd, yyyy")),
-        F.try_to_timestamp(col, F.lit("d-MMM-yyyy")),
-        F.try_to_timestamp(col, F.lit("dd-MMM-yyyy")),
-        F.try_to_timestamp(col, F.lit("d MMMM yyyy")),
-        F.try_to_timestamp(col, F.lit("dd MMMM yyyy")),
+        F.try_to_timestamp(normalized, F.lit("MMMM d, yyyy")),
+        F.try_to_timestamp(normalized, F.lit("MMM d, yyyy")),
+        F.try_to_timestamp(normalized, F.lit("MMMM dd, yyyy")),
+        F.try_to_timestamp(normalized, F.lit("MMM dd, yyyy")),
+        F.try_to_timestamp(normalized, F.lit("d-MMM-yyyy")),
+        F.try_to_timestamp(normalized, F.lit("dd-MMM-yyyy")),
+        F.try_to_timestamp(normalized, F.lit("d MMMM yyyy")),
+        F.try_to_timestamp(normalized, F.lit("dd MMMM yyyy")),
         # EU formats (after US formats due to ambiguity)
-        F.try_to_timestamp(col, F.lit("dd/MM/yyyy")),
-        F.try_to_timestamp(col, F.lit("d/M/yyyy")),
-        F.try_to_timestamp(col, F.lit("dd.MM.yyyy")),
-        F.try_to_timestamp(col, F.lit("d.M.yyyy")),
+        F.try_to_timestamp(normalized, F.lit("dd/MM/yyyy")),
+        F.try_to_timestamp(normalized, F.lit("d/M/yyyy")),
+        F.try_to_timestamp(normalized, F.lit("dd.MM.yyyy")),
+        F.try_to_timestamp(normalized, F.lit("d.M.yyyy")),
     )
 
     # Format as ISO string "yyyy-MM-dd HH:mm:ss"
@@ -502,25 +618,40 @@ def extract_day_of_week(col: Column) -> Column:
 # ============================================================================
 
 
-@datetimes.register()
-def normalize_timezone(col: Column, target_tz: str = "UTC") -> Column:
+def normalize_timezone(col: Column, target_tz: Column) -> Column:
     """
     Convert datetimes to specified timezone.
-    Default converts to UTC.
+
+    Args:
+        col: Datetime column
+        target_tz: Target timezone as Column (e.g., F.lit("UTC"), F.lit("America/New_York"))
 
     Examples:
-        "2024-01-15 14:30:00 EST" -> "2024-01-15 19:30:00 UTC"
+        ("2024-01-15 14:30:00 EST", "UTC") -> "2024-01-15 19:30:00 UTC"
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
+        Currently returns input unchanged - full timezone conversion not yet implemented.
     """
     # TODO: Implement timezone normalization
+    # For now, just return the input column to avoid crashes
     return col
 
 
-@datetimes.register()
-def add_timezone(col: Column, timezone: str) -> Column:
+def add_timezone(col: Column, timezone: Column) -> Column:
     """
     Add timezone information to naive datetimes.
+
+    Args:
+        col: Datetime column
+        timezone: Timezone to add as Column (e.g., F.lit("UTC"), F.lit("America/New_York"))
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
+        Currently returns input unchanged - full timezone functionality not yet implemented.
     """
     # TODO: Implement timezone addition
+    # For now, just return the input column to avoid crashes
     return col
 
 
@@ -533,54 +664,84 @@ def remove_timezone(col: Column) -> Column:
     return col
 
 
+# Manually register multi-column timezone functions to namespace
+datetimes.normalize_timezone = normalize_timezone
+datetimes.add_timezone = add_timezone
+
+
 # ============================================================================
 # Date Math Functions
 # ============================================================================
 
 
-@datetimes.register()
-def add_days(col: Column, days: int) -> Column:
+def add_days(col: Column, days: Column) -> Column:
     """
     Add or subtract days from a date.
+
+    Args:
+        col: Date column
+        days: Number of days to add (can be Column or literal will be cast to Column)
 
     Examples:
         ("2024-01-15", 5) -> "2024-01-20"
         ("2024-01-15", -5) -> "2024-01-10"
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
     """
     # First standardize to get consistent format
     standardized = standardize_iso(col)
 
     # Convert to date, add days, then format back to string
+    # PySpark's date_add requires INT type for days, so cast it
     return F.when(
         standardized.isNotNull(),
         F.date_format(
             F.date_add(
-                F.to_date(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss")), days
+                F.to_date(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss")),
+                days.cast("int")
             ),
             "yyyy-MM-dd HH:mm:ss",
         ),
     ).otherwise(None)
 
 
-@datetimes.register()
-def add_months(col: Column, months: int) -> Column:
+def add_months(col: Column, months: Column) -> Column:
     """
     Add or subtract months from a date.
     Handles month-end edge cases properly.
+
+    Args:
+        col: Date column
+        months: Number of months to add (can be Column or literal will be cast to Column)
+
+    Examples:
+        ("2024-01-15", 1) -> "2024-02-15"
+        ("2024-01-31", 1) -> "2024-02-29" (leap year)
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
     """
     # First standardize to get consistent format
     standardized = standardize_iso(col)
 
     # Convert to date, add months, then format back to string
+    # PySpark's add_months requires INT type for months, so cast it
     return F.when(
         standardized.isNotNull(),
         F.date_format(
             F.add_months(
-                F.to_date(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss")), months
+                F.to_date(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss")),
+                months.cast("int")
             ),
             "yyyy-MM-dd HH:mm:ss",
         ),
     ).otherwise(None)
+
+
+# Manually register multi-column add_days and add_months functions to namespace
+datetimes.add_days = add_days
+datetimes.add_months = add_months
 
 
 def date_diff_days(col1: Column, col2: Column) -> Column:
@@ -750,13 +911,130 @@ def date_diff_seconds(col1: Column, col2: Column) -> Column:
     ).otherwise(None)
 
 
-# Manually register multi-column date_diff functions to namespace
+def business_days_between(start_col: Column, end_col: Column) -> Column:
+    """
+    Calculate number of business days (Mon-Fri) between two dates.
+
+    The calculation is inclusive of start_date and exclusive of end_date.
+    Weekends (Saturday and Sunday) are excluded from the count.
+
+    Args:
+        start_col: Start date column
+        end_col: End date column
+
+    Returns:
+        Number of business days in the range [start_date, end_date)
+
+    Examples:
+        ("2024-01-15", "2024-01-19") -> 4  # Mon to Fri (Mon, Tue, Wed, Thu)
+        ("2024-01-15", "2024-01-17") -> 2  # Mon to Wed (Mon, Tue)
+        ("2024-01-12", "2024-01-15") -> 1  # Fri to Mon (Fri only, weekend excluded)
+        ("2024-01-15", "2024-01-22") -> 5  # Mon to next Mon (Mon-Fri)
+        ("2024-01-15", "2024-01-15") -> 0  # Same day
+        ("2024-01-13", "2024-01-14") -> 0  # Sat to Sun (no business days)
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
+        In PySpark dayofweek: 1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday, 6=Friday, 7=Saturday
+    """
+    # Standardize both dates
+    standardized_start = standardize_iso(start_col)
+    standardized_end = standardize_iso(end_col)
+
+    # Convert to dates
+    start_date = F.to_date(F.to_timestamp(standardized_start, "yyyy-MM-dd HH:mm:ss"))
+    end_date = F.to_date(F.to_timestamp(standardized_end, "yyyy-MM-dd HH:mm:ss"))
+
+    # Calculate total days between dates (end - start)
+    total_days = F.datediff(end_date, start_date)
+
+    # Get day of week for start date (1=Sun, 2=Mon, ..., 7=Sat)
+    start_dow = F.dayofweek(start_date)
+
+    # Calculate number of complete weeks
+    complete_weeks = F.floor(total_days / 7)
+
+    # Each complete week has 5 business days
+    business_days_from_weeks = complete_weeks * 5
+
+    # Calculate remaining days after complete weeks
+    remaining_days = total_days % 7
+
+    # For the remaining days, we need to count how many are business days
+    # We'll iterate through each remaining day and check if it's a business day
+    # Create a helper that counts business days in the remaining portion
+
+    # For each of the remaining days (0-6), check if that day is a business day
+    # by calculating what day of week it falls on
+    business_days_in_remainder = (
+        # Day 0 (start day)
+        F.when((remaining_days >= 1) & start_dow.isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        # Day 1
+        F.when((remaining_days >= 2) & ((start_dow + 1) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        # Day 2
+        F.when((remaining_days >= 3) & ((start_dow + 2) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        # Day 3
+        F.when((remaining_days >= 4) & ((start_dow + 3) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        # Day 4
+        F.when((remaining_days >= 5) & ((start_dow + 4) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        # Day 5
+        F.when((remaining_days >= 6) & ((start_dow + 5) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        # Day 6
+        F.when((remaining_days >= 7) & ((start_dow + 6) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0)
+    )
+
+    total_business_days = business_days_from_weeks + business_days_in_remainder
+
+    return F.when(
+        standardized_start.isNotNull() & standardized_end.isNotNull(),
+        total_business_days.cast("int")
+    ).otherwise(None)
+
+
+def date_diff(col1: Column, col2: Column, unit: Column) -> Column:
+    """
+    Calculate difference between two dates with configurable unit.
+
+    This is a convenience wrapper that routes to the appropriate specific function
+    based on the unit parameter.
+
+    Args:
+        col1: First date column
+        col2: Second date column
+        unit: Unit of measurement as Column (e.g., F.lit("days"), F.lit("months"))
+
+    Returns:
+        Difference in specified units (col1 - col2)
+
+    Examples:
+        datetimes.date_diff(F.col("end"), F.col("start"), F.lit("days"))
+        datetimes.date_diff(F.col("date1"), F.col("date2"), F.lit("months"))
+
+    Note:
+        This function takes 3 column arguments and is manually added to the namespace.
+        For performance, consider using specific functions like date_diff_days() directly.
+    """
+    # Use case/when to route to the appropriate function based on unit
+    return (
+        F.when(unit == "days", date_diff_days(col1, col2))
+        .when(unit == "months", date_diff_months(col1, col2))
+        .when(unit == "years", date_diff_years(col1, col2))
+        .when(unit == "hours", date_diff_hours(col1, col2))
+        .when(unit == "minutes", date_diff_minutes(col1, col2))
+        .when(unit == "seconds", date_diff_seconds(col1, col2))
+        .otherwise(None)  # Invalid unit
+    )
+
+
+# Manually register multi-column date_diff and business_days functions to namespace
+datetimes.date_diff = date_diff
 datetimes.date_diff_days = date_diff_days
 datetimes.date_diff_months = date_diff_months
 datetimes.date_diff_years = date_diff_years
 datetimes.date_diff_hours = date_diff_hours
 datetimes.date_diff_minutes = date_diff_minutes
 datetimes.date_diff_seconds = date_diff_seconds
+datetimes.business_days_between = business_days_between
 
 
 # ============================================================================
@@ -932,11 +1210,21 @@ def end_of_quarter(col: Column) -> Column:
     ).otherwise(None)
 
 
-@datetimes.register()
-def fiscal_year(col: Column, fiscal_start_month: int = 10) -> Column:
+def fiscal_year(col: Column, fiscal_start_month: Column) -> Column:
     """
     Get fiscal year for a date.
-    Default assumes October 1 fiscal year start (US government).
+
+    Args:
+        col: Date column
+        fiscal_start_month: Month number (1-12) when fiscal year starts (can be Column or literal)
+                           Default for US government is 10 (October)
+
+    Examples:
+        ("2024-11-15", 10) -> 2025  # November is after October start, so FY 2025
+        ("2024-09-15", 10) -> 2024  # September is before October start, so FY 2024
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
     """
     # Standardize first
     standardized = standardize_iso(col)
@@ -946,11 +1234,14 @@ def fiscal_year(col: Column, fiscal_start_month: int = 10) -> Column:
     year = F.year(ts)
     month = F.month(ts)
 
+    # Cast fiscal_start_month to int for comparison
+    fiscal_start = fiscal_start_month.cast("int")
+
     # If month >= fiscal_start_month, fiscal year is year + 1
     # Otherwise, fiscal year is same as calendar year
     return F.when(
         standardized.isNotNull(),
-        F.when(month >= fiscal_start_month, year + 1).otherwise(year),
+        F.when(month >= fiscal_start, year + 1).otherwise(year),
     ).otherwise(None)
 
 
@@ -959,27 +1250,40 @@ def fiscal_year(col: Column, fiscal_start_month: int = 10) -> Column:
 # ============================================================================
 
 
-@datetimes.register()
-def calculate_age(col: Column, reference_date: Optional[Column] = None) -> Column:
+def calculate_age(col: Column, reference_date: Column) -> Column:
     """
     Calculate age in years from a birthdate.
-    Uses current_date() if reference_date not provided.
+
+    Args:
+        col: Birthdate column
+        reference_date: Reference date column to calculate age from
+
+    Examples:
+        ("2000-01-15", "2024-01-15") -> 24
+        ("1990-06-10", "2024-12-02") -> 34
+
+    Note:
+        This function takes 2 column arguments and is manually added to the namespace.
+        For current date, pass F.current_date() as reference_date.
     """
     # Standardize birthdate
     standardized_birth = standardize_iso(col)
     birth_ts = F.to_timestamp(standardized_birth, "yyyy-MM-dd HH:mm:ss")
 
-    # Get reference date
-    if reference_date is None:
-        ref_ts = F.current_timestamp()
-    else:
-        standardized_ref = standardize_iso(reference_date)
-        ref_ts = F.to_timestamp(standardized_ref, "yyyy-MM-dd HH:mm:ss")
+    # Standardize reference date
+    standardized_ref = standardize_iso(reference_date)
+    ref_ts = F.to_timestamp(standardized_ref, "yyyy-MM-dd HH:mm:ss")
 
     # Calculate years difference
     return F.when(
-        standardized_birth.isNotNull(), F.floor(F.months_between(ref_ts, birth_ts) / 12)
+        standardized_birth.isNotNull() & standardized_ref.isNotNull(),
+        F.floor(F.months_between(ref_ts, birth_ts) / 12)
     ).otherwise(None)
+
+
+# Manually register multi-column fiscal_year and calculate_age functions to namespace
+datetimes.fiscal_year = fiscal_year
+datetimes.calculate_age = calculate_age
 
 
 @datetimes.register()

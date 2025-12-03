@@ -5,6 +5,7 @@ Tests timezone conversions, normalizations, and edge cases.
 
 import pytest
 from pyspark.sql import functions as F
+from pyspark.sql.types import StructType, StructField, StringType
 from datetime import datetime
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
@@ -119,7 +120,11 @@ class TestTimezoneDetection:
             # These should still parse, but document the assumption
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected"])
+        schema = StructType([
+            StructField("datetime_str", StringType(), True),
+            StructField("expected", StringType(), True)
+        ])
+        df = spark.createDataFrame(test_data, schema)
         result_df = df.withColumn(
             "normalized", datetimes.normalize_timezone(F.col("datetime_str"), F.lit("UTC"))
         )
@@ -398,7 +403,11 @@ class TestTimezoneEdgeCases:
             ("01/15/2024 2:30 PM", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected_tz"])
+        schema = StructType([
+            StructField("datetime_str", StringType(), True),
+            StructField("expected_tz", StringType(), True)
+        ])
+        df = spark.createDataFrame(test_data, schema)
 
         # Test adding timezone
         result_df = df.withColumn(

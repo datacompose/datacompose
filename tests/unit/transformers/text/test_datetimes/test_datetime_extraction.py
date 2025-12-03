@@ -69,11 +69,8 @@ class TestDatetimeExtraction:
 
         df = spark.createDataFrame(test_data, ["text", "expected"])
 
-        # Note: This function doesn't exist yet in the primitives
-        # You'll need to implement extract_datetime_from_text
-        # For now, let's use a placeholder
         result_df = df.withColumn(
-            "datetime", F.lit(None)  # TODO: Replace with actual extraction function
+            "datetime", datetimes.extract_datetime_from_text(F.col("text"))
         )
 
         results = result_df.collect()
@@ -341,7 +338,7 @@ class TestDatetimeParsing:
 
         df = spark.createDataFrame(test_data, ["date_str", "expected_utc"])
         result_df = df.withColumn(
-            "utc_time", datetimes.normalize_timezone(F.col("date_str"))
+            "utc_time", datetimes.normalize_timezone(F.col("date_str"), F.lit("UTC"))
         )
 
         results = result_df.collect()
@@ -651,7 +648,6 @@ class TestDatetimeArithmetic:
             assert row["diff"] == row["expected"], \
                 f"Seconds diff failed: {row['date1']} - {row['date2']} = {row['diff']}, expected {row['expected']}"
 
-    @pytest.mark.skip(reason="business_days_between not yet implemented")
     def test_business_days_calculation(self, spark):
         """Test business days calculations."""
 

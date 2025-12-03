@@ -102,7 +102,11 @@ class TestDatetimeMessyData:
             ("Jan", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        schema = StructType([
+            StructField("date_str", StringType(), True),
+            StructField("expected", StringType(), True)
+        ])
+        df = spark.createDataFrame(test_data, schema)
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -171,7 +175,11 @@ class TestDatetimeMessyData:
             ("`2024-01-15`", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        schema = StructType([
+            StructField("date_str", StringType(), True),
+            StructField("expected", StringType(), True)
+        ])
+        df = spark.createDataFrame(test_data, schema)
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -461,7 +469,11 @@ class TestDatetimeDataCorruption:
             ("\x002024-01-15", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        schema = StructType([
+            StructField("date_str", StringType(), True),
+            StructField("expected", StringType(), True)
+        ])
+        df = spark.createDataFrame(test_data, schema)
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )

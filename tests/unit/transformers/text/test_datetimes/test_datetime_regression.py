@@ -76,10 +76,10 @@ class TestKnownBugs:
         """
 
         test_data = [
-            ("2024-01-31", 1, "2024-02-29"),  # Leap year
-            ("2023-01-31", 1, "2023-02-28"),  # Non-leap year
-            ("2024-03-31", 1, "2024-04-30"),  # April has 30 days
-            ("2024-05-31", 1, "2024-06-30"),  # June has 30 days
+            ("2024-01-31", 1, "2024-02-29 00:00:00"),  # Leap year
+            ("2023-01-31", 1, "2023-02-28 00:00:00"),  # Non-leap year
+            ("2024-03-31", 1, "2024-04-30 00:00:00"),  # April has 30 days
+            ("2024-05-31", 1, "2024-06-30 00:00:00"),  # June has 30 days
         ]
 
         df = spark.createDataFrame(test_data, ["date", "months_to_add", "expected"])
@@ -151,13 +151,13 @@ class TestEdgeCaseRegressions:
         """
 
         test_data = [
-            # Unambiguous dates (month > 12)
-            ("13/01/2024", None),  # Invalid: month can't be 13
+            # Unambiguous dates (day > 12) - parsed as DD/MM/YYYY
+            ("13/01/2024", "2024-01-13 00:00:00"),  # Valid: DD/MM/YYYY (day > 12)
             ("01/13/2024", "2024-01-13 00:00:00"),  # Valid: MM/DD/YYYY
 
-            # Ambiguous dates that should prefer MM/DD/YYYY
-            ("01/02/2024", "2024-01-02 00:00:00"),  # Jan 2, not Feb 1
-            ("02/03/2024", "2024-02-03 00:00:00"),  # Feb 3, not Mar 2
+            # Ambiguous dates that should prefer MM/DD/YYYY (both interpretations valid)
+            ("01/02/2024", "2024-01-02 00:00:00"),  # Jan 2 (MM/DD/YYYY tried first)
+            ("02/03/2024", "2024-02-03 00:00:00"),  # Feb 3 (MM/DD/YYYY tried first)
 
             # Dates that can only be DD/MM/YYYY
             ("31/01/2024", "2024-01-31 00:00:00"),
@@ -270,9 +270,14 @@ class TestDataTypeRegressions:
 
         df = spark.createDataFrame(test_data, ["date_str"])
 
-        # Convert to actual timestamp
-        df_with_ts = df.withColumn(
-            "as_timestamp", F.to_timestamp(F.col("date_str"), "yyyy-MM-dd")
+        # First standardize to get timestamps
+        df_standardized = df.withColumn(
+            "standardized", datetimes.standardize_iso(F.col("date_str"))
+        )
+
+        # Then convert standardized string to actual timestamp type
+        df_with_ts = df_standardized.withColumn(
+            "as_timestamp", F.to_timestamp(F.col("standardized"), "yyyy-MM-dd HH:mm:ss")
         )
 
         # Should handle both strings and timestamps
@@ -283,8 +288,10 @@ class TestDataTypeRegressions:
         )
 
         results = result_df.collect()
-        # Both methods should work
-        assert len(results) > 0
+        # Both methods should work and return the same year
+        for row in results:
+            assert row["from_string"] == 2024
+            assert row["from_timestamp"] == 2024
 
     def test_numeric_string_dates(self, spark):
         """
