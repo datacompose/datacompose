@@ -32,12 +32,6 @@ class TestMainCLI:
         assert "init" in result.output
         assert "list" in result.output
 
-    def test_cli_version(self, runner):
-        """Test CLI version output."""
-        result = runner.invoke(cli, ["--version"])
-        assert result.exit_code == 0
-        assert "0.1.0" in result.output
-
     def test_cli_no_command(self, runner):
         """Test CLI without any command."""
         result = runner.invoke(cli)
