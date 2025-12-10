@@ -1,3 +1,54 @@
+"""
+Datetime transformation primitives for PySpark.
+
+Preview Output:
++---------------------------+---------------------+------------+----------+------+-------+---------+
+|datetime_text              |standardized         |date_only   |time_only |year  |month  |quarter  |
++---------------------------+---------------------+------------+----------+------+-------+---------+
+|2024-01-15T14:30:00Z       |2024-01-15 14:30:00  |2024-01-15  |14:30:00  |2024  |1      |1        |
+|01/15/2024 2:30 PM         |2024-01-15 14:30:00  |2024-01-15  |14:30:00  |2024  |1      |1        |
+|January 15, 2024           |2024-01-15 00:00:00  |2024-01-15  |00:00:00  |2024  |1      |1        |
+|15-Jan-2024                |2024-01-15 00:00:00  |2024-01-15  |00:00:00  |2024  |1      |1        |
+|Q3 2024                    |2024-07-01           |2024-07-01  |null      |2024  |7      |3        |
++---------------------------+---------------------+------------+----------+------+-------+---------+
+
+Usage Example:
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from transformers.pyspark.datetimes import datetimes
+
+# Initialize Spark
+spark = SparkSession.builder.appName("DataCleaning").getOrCreate()
+
+# Create sample data
+data = [
+    ("Meeting scheduled for 2024-01-15T14:30:00Z",),
+    ("Invoice date: 01/15/2024",),
+    ("Event on January 15, 2024 at 10:00 AM",),
+    ("Report due 15-Jan-2024",),
+]
+df = spark.createDataFrame(data, ["text"])
+
+# Extract and standardize datetime components
+result_df = df.select(
+    F.col("text"),
+    datetimes.extract_datetime_from_text(F.col("text")).alias("extracted"),
+    datetimes.standardize_iso(F.col("text")).alias("standardized"),
+    datetimes.standardize_date(F.col("text")).alias("date_only"),
+    datetimes.extract_year(F.col("text")).alias("year"),
+    datetimes.extract_month(F.col("text")).alias("month"),
+)
+
+# Show results
+result_df.show(truncate=False)
+
+# Filter to valid dates
+valid_dates = result_df.filter(datetimes.is_valid_date(F.col("text")))
+
+Installation:
+datacompose add datetimes
+"""
+
 import re
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -28,20 +79,21 @@ datetimes = PrimitiveRegistry("datetimes")
 
 @datetimes.register()
 def extract_datetime_from_text(col: Column) -> Column:
-    """
-    Extract first datetime mention from free text.
+    """Extract first datetime mention from free text.
 
-    Supports:
-        - ISO formats: 2024-01-15, 2024-12-31T23:59:59Z
-        - US formats: 01/15/2024, 3/7/2024
-        - EU formats: 15/01/2024, 31.12.2024
-        - Named months: January 15, 2024, Jan 15, 2024, 15-Jan-2024
-        - Date with time: 2024-01-15 14:30, 01/15/2024 2:30 PM
-        - Natural language: tomorrow, yesterday, next Monday, in 3 days
-        - Quarter notation: Q3 2024
-        - Year only: 2024
+    Supports ISO, US, EU formats, named months, natural language, and more.
 
-    Returns the extracted date string or None if no date found.
+    Args:
+        col: Column containing text with potential datetime
+
+    Returns:
+        Column with extracted date string or None if no date found
+
+    Example:
+        df.select(datetimes.extract_datetime_from_text(F.col("text")))
+        # "Meeting on 2024-01-15" -> "2024-01-15"
+        # "Due 01/15/2024 2:30 PM" -> "01/15/2024 2:30 PM"
+        # "Event tomorrow" -> "tomorrow"
     """
     # Try extracting different date formats in order of specificity
     # Use F.coalesce to return first non-null match
@@ -134,14 +186,21 @@ def extract_datetime_from_text(col: Column) -> Column:
 
 @datetimes.register()
 def standardize_iso(col: Column) -> Column:
-    """
-    Convert datetimes strings to ISO 8601 format (YYYY-MM-DD HH:MM:SS).
+    """Convert datetime strings to ISO 8601 format (YYYY-MM-DD HH:MM:SS).
+
     Attempts to parse common formats and standardize them.
 
-    Examples:
-        "01/15/2024" -> "2024-01-15 00:00:00"
-        "2024-Jan-15" -> "2024-01-15 00:00:00"
-        "15-01-2024 14:30" -> "2024-01-15 14:30:00"
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with standardized ISO datetime string or None if unparseable
+
+    Example:
+        df.select(datetimes.standardize_iso(F.col("date")))
+        # "01/15/2024" -> "2024-01-15 00:00:00"
+        # "2024-Jan-15" -> "2024-01-15 00:00:00"
+        # "15-01-2024 14:30" -> "2024-01-15 14:30:00"
     """
     # Normalize whitespace:
     # 1. Trim leading/trailing whitespace (spaces, tabs, newlines)
@@ -204,12 +263,18 @@ def standardize_iso(col: Column) -> Column:
 
 @datetimes.register()
 def standardize_date(col: Column) -> Column:
-    """
-    Extract and standardize just the date portion to YYYY-MM-DD format.
+    """Extract and standardize just the date portion to YYYY-MM-DD format.
 
-    Examples:
-        "2024-01-15 14:30:00" -> "2024-01-15"
-        "01/15/2024" -> "2024-01-15"
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with standardized date string (YYYY-MM-DD) or None
+
+    Example:
+        df.select(datetimes.standardize_date(F.col("datetime")))
+        # "2024-01-15 14:30:00" -> "2024-01-15"
+        # "01/15/2024" -> "2024-01-15"
     """
     # First standardize to ISO format, then extract just the date part
     iso_datetime = standardize_iso(col)
@@ -221,12 +286,18 @@ def standardize_date(col: Column) -> Column:
 
 @datetimes.register()
 def standardize_time(col: Column) -> Column:
-    """
-    Extract and standardize just the time portion to HH:MM:SS format.
+    """Extract and standardize just the time portion to HH:MM:SS format.
 
-    Examples:
-        "2024-01-15 14:30:00" -> "14:30:00"
-        "2:30 PM" -> "14:30:00"
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with standardized time string (HH:MM:SS) or None
+
+    Example:
+        df.select(datetimes.standardize_time(F.col("datetime")))
+        # "2024-01-15 14:30:00" -> "14:30:00"
+        # "2:30 PM" -> "14:30:00"
     """
     # First standardize to ISO format, then extract just the time part
     iso_datetime = standardize_iso(col)
@@ -243,15 +314,21 @@ def standardize_time(col: Column) -> Column:
 
 @datetimes.register()
 def detect_format(col: Column) -> Column:
-    """
-    Detect the datetimes format of a string.
+    """Detect the datetime format of a string.
+
     Returns format string that can be used with to_timestamp().
 
-    Examples:
-        "2024-01-15" -> "yyyy-MM-dd"
-        "01/15/2024" -> "MM/dd/yyyy"
-        "15-Jan-2024" -> "dd-MMM-yyyy"
-        "01/02/03" -> "M/d/yy"
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with detected format pattern or "unknown"
+
+    Example:
+        df.select(datetimes.detect_format(F.col("date")))
+        # "2024-01-15" -> "yyyy-MM-dd"
+        # "01/15/2024" -> "MM/dd/yyyy"
+        # "15-Jan-2024" -> "dd-MMM-yyyy"
     """
     # Try to detect format by testing which format successfully parses
     # Order matters - try more specific formats first, then more general
@@ -304,16 +381,21 @@ def detect_format(col: Column) -> Column:
 
 @datetimes.register()
 def parse_flexible(col: Column) -> Column:
-    """
-    Parse datetimes strings with multiple possible formats.
-    Tries common formats in order of likelihood.
+    """Parse datetime strings with multiple possible formats.
 
-    Handles formats like:
-        - ISO: "2024-01-15", "2024-01-15T14:30:00"
-        - US: "01/15/2024", "1/15/24"
-        - EU: "15/01/2024", "15.01.2024"
-        - Named months: "Jan 15, 2024", "15-Jan-2024"
-        - Incomplete dates: "2024", "Jan 2024", "Q1 2024", "FY2024"
+    Handles ISO, US, EU, named months, quarters, fiscal years, and more.
+
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with parsed date string (YYYY-MM-DD) or None
+
+    Example:
+        df.select(datetimes.parse_flexible(F.col("date")))
+        # "Q3 2024" -> "2024-07-01"
+        # "FY2024" -> "2023-10-01"
+        # "Jan 2024" -> "2024-01-01"
     """
     # Handle quarter notation: Q1 2024 -> 2024-01-01, Q2 2024 -> 2024-04-01, etc.
     quarter_match = F.regexp_extract(col, r"^Q([1-4])\s+(\d{4})$", 0)
@@ -420,15 +502,19 @@ def parse_flexible(col: Column) -> Column:
 def parse_natural_language(
     col: Column, reference_date: Optional[Column] = None
 ) -> Column:
-    """
-    Parse natural language date expressions.
+    """Parse natural language date expressions.
 
-    Examples:
-        "yesterday" -> (current_date - 1 day)
-        "last Monday" -> (most recent Monday)
-        "next month" -> (current_date + 1 month)
-        "3 days ago" -> (current_date - 3 days)
-        "end of year" -> "YYYY-12-31"
+    Args:
+        col: Column containing natural language date text
+        reference_date (Optional): Reference date for relative calculations
+
+    Returns:
+        Column with parsed date or original value (TODO: not yet implemented)
+
+    Example:
+        df.select(datetimes.parse_natural_language(F.col("text")))
+        # "yesterday" -> (current_date - 1 day)
+        # "3 days ago" -> (current_date - 3 days)
     """
     # TODO: Implement natural language parsing
     return col
@@ -441,14 +527,21 @@ def parse_natural_language(
 
 @datetimes.register()
 def is_valid_date(col: Column) -> Column:
-    """
-    Check if a string represents a valid date.
-    Returns true if parseable as date, false otherwise.
+    """Check if a string represents a valid date.
 
-    Validates:
-        - Month is 1-12
-        - Day is valid for the month (handles leap years)
-        - Year is reasonable (e.g., 1900-2100)
+    Validates month (1-12), day (valid for month), and handles leap years.
+
+    Args:
+        col: Column containing date text to validate
+
+    Returns:
+        Column with boolean indicating if date is valid
+
+    Example:
+        df.select(datetimes.is_valid_date(F.col("date")))
+        # "2024-01-15" -> True
+        # "2024-13-01" -> False
+        # "invalid" -> False
     """
     # A date is valid if standardize_iso can parse it successfully
     standardized = standardize_iso(col)
@@ -459,9 +552,20 @@ def is_valid_date(col: Column) -> Column:
 
 @datetimes.register()
 def is_valid_datetimes(col: Column) -> Column:
-    """
-    Check if a string represents a valid datetimes.
+    """Check if a string represents a valid datetime.
+
     More comprehensive than is_valid_date, includes time validation.
+
+    Args:
+        col: Column containing datetime text to validate
+
+    Returns:
+        Column with boolean indicating if datetime is valid
+
+    Example:
+        df.select(datetimes.is_valid_datetimes(F.col("datetime")))
+        # "2024-01-15 14:30:00" -> True
+        # "invalid" -> False
     """
     # Use same logic as is_valid_date since standardize_iso handles both
     return is_valid_date(col)
@@ -469,8 +573,18 @@ def is_valid_datetimes(col: Column) -> Column:
 
 @datetimes.register()
 def is_business_day(col: Column) -> Column:
-    """
-    Check if a date falls on a business day (Monday-Friday).
+    """Check if a date falls on a business day (Monday-Friday).
+
+    Args:
+        col: Column containing date text
+
+    Returns:
+        Column with boolean indicating if date is a business day
+
+    Example:
+        df.select(datetimes.is_business_day(F.col("date")))
+        # "2024-01-15" (Monday) -> True
+        # "2024-01-13" (Saturday) -> False
     """
     # First standardize, then check if dayofweek is 2-6 (Mon-Fri in PySpark)
     # In PySpark: 1=Sunday, 2=Monday, ..., 7=Saturday
@@ -485,9 +599,19 @@ def is_business_day(col: Column) -> Column:
 
 @datetimes.register()
 def is_future_date(col: Column, reference_date: Optional[Column] = None) -> Column:
-    """
-    Check if a date is in the future.
-    Uses current_date() if reference_date not provided.
+    """Check if a date is in the future.
+
+    Args:
+        col: Column containing date text
+        reference_date (Optional): Reference date column (defaults to current_date)
+
+    Returns:
+        Column with boolean indicating if date is in the future
+
+    Example:
+        df.select(datetimes.is_future_date(F.col("date")))
+        # "2099-01-15" -> True
+        # "2000-01-15" -> False
     """
     standardized = standardize_iso(col)
     ref = F.current_date() if reference_date is None else reference_date
@@ -500,9 +624,19 @@ def is_future_date(col: Column, reference_date: Optional[Column] = None) -> Colu
 
 @datetimes.register()
 def is_past_date(col: Column, reference_date: Optional[Column] = None) -> Column:
-    """
-    Check if a date is in the past.
-    Uses current_date() if reference_date not provided.
+    """Check if a date is in the past.
+
+    Args:
+        col: Column containing date text
+        reference_date (Optional): Reference date column (defaults to current_date)
+
+    Returns:
+        Column with boolean indicating if date is in the past
+
+    Example:
+        df.select(datetimes.is_past_date(F.col("date")))
+        # "2000-01-15" -> True
+        # "2099-01-15" -> False
     """
     standardized = standardize_iso(col)
     ref = F.current_date() if reference_date is None else reference_date
@@ -520,12 +654,18 @@ def is_past_date(col: Column, reference_date: Optional[Column] = None) -> Column
 
 @datetimes.register()
 def extract_year(col: Column) -> Column:
-    """
-    Extract year from datetimes string.
+    """Extract year from datetime string.
 
-    Examples:
-        "2024-01-15" -> 2024
-        "01/15/2024" -> 2024
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with extracted year as integer or None
+
+    Example:
+        df.select(datetimes.extract_year(F.col("date")))
+        # "2024-01-15" -> 2024
+        # "01/15/2024" -> 2024
     """
     # First standardize, then convert to timestamp and extract year
     standardized = standardize_iso(col)
@@ -537,12 +677,18 @@ def extract_year(col: Column) -> Column:
 
 @datetimes.register()
 def extract_month(col: Column) -> Column:
-    """
-    Extract month from datetimes string (1-12).
+    """Extract month from datetime string (1-12).
 
-    Examples:
-        "2024-01-15" -> 1
-        "Jan 15, 2024" -> 1
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with extracted month as integer (1-12) or None
+
+    Example:
+        df.select(datetimes.extract_month(F.col("date")))
+        # "2024-01-15" -> 1
+        # "Jan 15, 2024" -> 1
     """
     # First standardize, then convert to timestamp and extract month
     standardized = standardize_iso(col)
@@ -554,12 +700,18 @@ def extract_month(col: Column) -> Column:
 
 @datetimes.register()
 def extract_day(col: Column) -> Column:
-    """
-    Extract day from datetimes string (1-31).
+    """Extract day from datetime string (1-31).
 
-    Examples:
-        "2024-01-15" -> 15
-        "15/01/2024" -> 15
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with extracted day as integer (1-31) or None
+
+    Example:
+        df.select(datetimes.extract_day(F.col("date")))
+        # "2024-01-15" -> 15
+        # "15/01/2024" -> 15
     """
     # First standardize, then convert to timestamp and extract day
     standardized = standardize_iso(col)
@@ -571,12 +723,18 @@ def extract_day(col: Column) -> Column:
 
 @datetimes.register()
 def extract_quarter(col: Column) -> Column:
-    """
-    Extract quarter from datetimes string (1-4).
+    """Extract quarter from datetime string (1-4).
 
-    Examples:
-        "2024-01-15" -> 1
-        "2024-07-01" -> 3
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with extracted quarter as integer (1-4) or None
+
+    Example:
+        df.select(datetimes.extract_quarter(F.col("date")))
+        # "2024-01-15" -> 1
+        # "2024-07-01" -> 3
     """
     # First standardize, then convert to timestamp and extract quarter
     standardized = standardize_iso(col)
@@ -588,8 +746,18 @@ def extract_quarter(col: Column) -> Column:
 
 @datetimes.register()
 def extract_week_of_year(col: Column) -> Column:
-    """
-    Extract week number from datetimes string (1-53).
+    """Extract week number from datetime string (1-53).
+
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with extracted week number as integer (1-53) or None
+
+    Example:
+        df.select(datetimes.extract_week_of_year(F.col("date")))
+        # "2024-01-15" -> 3
+        # "2024-12-31" -> 1
     """
     # First standardize, then convert to timestamp and extract week
     standardized = standardize_iso(col)
@@ -601,9 +769,20 @@ def extract_week_of_year(col: Column) -> Column:
 
 @datetimes.register()
 def extract_day_of_week(col: Column) -> Column:
-    """
-    Extract day of week from datetimes string.
+    """Extract day of week from datetime string.
+
     Returns string name (Monday, Tuesday, etc).
+
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with day name string or None
+
+    Example:
+        df.select(datetimes.extract_day_of_week(F.col("date")))
+        # "2024-01-15" -> "Monday"
+        # "2024-01-13" -> "Saturday"
     """
     # First standardize, then convert to timestamp and extract day name
     standardized = standardize_iso(col)
@@ -619,19 +798,20 @@ def extract_day_of_week(col: Column) -> Column:
 
 
 def normalize_timezone(col: Column, target_tz: Column) -> Column:
-    """
-    Convert datetimes to specified timezone.
+    """Convert datetime to specified timezone.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
-        col: Datetime column
-        target_tz: Target timezone as Column (e.g., F.lit("UTC"), F.lit("America/New_York"))
+        col: Column containing datetime text
+        target_tz: Target timezone as Column (e.g., F.lit("UTC"))
 
-    Examples:
-        ("2024-01-15 14:30:00 EST", "UTC") -> "2024-01-15 19:30:00 UTC"
+    Returns:
+        Column with timezone-converted datetime (TODO: not yet implemented)
 
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
-        Currently returns input unchanged - full timezone conversion not yet implemented.
+    Example:
+        df.select(datetimes.normalize_timezone(F.col("dt"), F.lit("UTC")))
+        # "2024-01-15 14:30:00 EST" -> "2024-01-15 19:30:00 UTC"
     """
     # TODO: Implement timezone normalization
     # For now, just return the input column to avoid crashes
@@ -639,16 +819,19 @@ def normalize_timezone(col: Column, target_tz: Column) -> Column:
 
 
 def add_timezone(col: Column, timezone: Column) -> Column:
-    """
-    Add timezone information to naive datetimes.
+    """Add timezone information to naive datetime.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
-        col: Datetime column
-        timezone: Timezone to add as Column (e.g., F.lit("UTC"), F.lit("America/New_York"))
+        col: Column containing naive datetime text
+        timezone: Timezone to add as Column (e.g., F.lit("America/New_York"))
 
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
-        Currently returns input unchanged - full timezone functionality not yet implemented.
+    Returns:
+        Column with timezone-aware datetime (TODO: not yet implemented)
+
+    Example:
+        df.select(datetimes.add_timezone(F.col("dt"), F.lit("America/New_York")))
     """
     # TODO: Implement timezone addition
     # For now, just return the input column to avoid crashes
@@ -657,8 +840,17 @@ def add_timezone(col: Column, timezone: Column) -> Column:
 
 @datetimes.register()
 def remove_timezone(col: Column) -> Column:
-    """
-    Remove timezone information, keeping local time.
+    """Remove timezone information, keeping local time.
+
+    Args:
+        col: Column containing timezone-aware datetime text
+
+    Returns:
+        Column with timezone removed (TODO: not yet implemented)
+
+    Example:
+        df.select(datetimes.remove_timezone(F.col("datetime")))
+        # "2024-01-15 14:30:00 EST" -> "2024-01-15 14:30:00"
     """
     # TODO: Implement timezone removal
     return col
@@ -675,19 +867,21 @@ datetimes.add_timezone = add_timezone
 
 
 def add_days(col: Column, days: Column) -> Column:
-    """
-    Add or subtract days from a date.
+    """Add or subtract days from a date.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
-        col: Date column
-        days: Number of days to add (can be Column or literal will be cast to Column)
+        col: Column containing date text
+        days: Number of days to add as Column (negative to subtract)
 
-    Examples:
-        ("2024-01-15", 5) -> "2024-01-20"
-        ("2024-01-15", -5) -> "2024-01-10"
+    Returns:
+        Column with adjusted date string or None
 
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
+    Example:
+        df.select(datetimes.add_days(F.col("date"), F.lit(5)))
+        # "2024-01-15" -> "2024-01-20"
+        # "2024-01-15" + (-5) -> "2024-01-10"
     """
     # First standardize to get consistent format
     standardized = standardize_iso(col)
@@ -707,20 +901,22 @@ def add_days(col: Column, days: Column) -> Column:
 
 
 def add_months(col: Column, months: Column) -> Column:
-    """
-    Add or subtract months from a date.
+    """Add or subtract months from a date.
+
     Handles month-end edge cases properly.
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
-        col: Date column
-        months: Number of months to add (can be Column or literal will be cast to Column)
+        col: Column containing date text
+        months: Number of months to add as Column (negative to subtract)
 
-    Examples:
-        ("2024-01-15", 1) -> "2024-02-15"
-        ("2024-01-31", 1) -> "2024-02-29" (leap year)
+    Returns:
+        Column with adjusted date string or None
 
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
+    Example:
+        df.select(datetimes.add_months(F.col("date"), F.lit(1)))
+        # "2024-01-15" -> "2024-02-15"
+        # "2024-01-31" -> "2024-02-29" (leap year)
     """
     # First standardize to get consistent format
     standardized = standardize_iso(col)
@@ -745,23 +941,21 @@ datetimes.add_months = add_months
 
 
 def date_diff_days(col1: Column, col2: Column) -> Column:
-    """
-    Calculate difference between two dates in days.
+    """Calculate difference between two dates in days.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         col1: First date column
         col2: Second date column
 
     Returns:
-        Number of days between dates (col1 - col2)
+        Column with number of days between dates (col1 - col2)
 
-    Examples:
-        ("2024-01-20", "2024-01-15") -> 5
-        ("2024-01-15", "2024-01-20") -> -5
-
-    Note:
-        This function takes 2 column arguments and cannot be registered with
-        @datetimes.register(). It's manually added to the namespace.
+    Example:
+        df.select(datetimes.date_diff_days(F.col("end"), F.col("start")))
+        # ("2024-01-20", "2024-01-15") -> 5
+        # ("2024-01-15", "2024-01-20") -> -5
     """
     standardized1 = standardize_iso(col1)
     standardized2 = standardize_iso(col2)
@@ -775,19 +969,21 @@ def date_diff_days(col1: Column, col2: Column) -> Column:
 
 
 def date_diff_months(col1: Column, col2: Column) -> Column:
-    """
-    Calculate difference between two dates in months.
+    """Calculate difference between two dates in months.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         col1: First date column
         col2: Second date column
 
     Returns:
-        Number of months between dates (col1 - col2)
+        Column with number of months between dates (col1 - col2)
 
-    Examples:
-        ("2024-03-15", "2024-01-15") -> 2
-        ("2025-01-15", "2024-01-15") -> 12
+    Example:
+        df.select(datetimes.date_diff_months(F.col("end"), F.col("start")))
+        # ("2024-03-15", "2024-01-15") -> 2
+        # ("2025-01-15", "2024-01-15") -> 12
     """
     standardized1 = standardize_iso(col1)
     standardized2 = standardize_iso(col2)
@@ -802,19 +998,21 @@ def date_diff_months(col1: Column, col2: Column) -> Column:
 
 
 def date_diff_years(col1: Column, col2: Column) -> Column:
-    """
-    Calculate difference between two dates in years.
+    """Calculate difference between two dates in years.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         col1: First date column
         col2: Second date column
 
     Returns:
-        Number of years between dates (col1 - col2)
+        Column with number of years between dates (col1 - col2)
 
-    Examples:
-        ("2025-01-15", "2024-01-15") -> 1
-        ("2024-01-15", "2020-01-15") -> 4
+    Example:
+        df.select(datetimes.date_diff_years(F.col("end"), F.col("start")))
+        # ("2025-01-15", "2024-01-15") -> 1
+        # ("2024-01-15", "2020-01-15") -> 4
     """
     standardized1 = standardize_iso(col1)
     standardized2 = standardize_iso(col2)
@@ -829,18 +1027,20 @@ def date_diff_years(col1: Column, col2: Column) -> Column:
 
 
 def date_diff_hours(col1: Column, col2: Column) -> Column:
-    """
-    Calculate difference between two datetimes in hours.
+    """Calculate difference between two datetimes in hours.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         col1: First datetime column
         col2: Second datetime column
 
     Returns:
-        Number of hours between datetimes (col1 - col2)
+        Column with number of hours between datetimes (col1 - col2)
 
-    Examples:
-        ("2024-01-15 14:30:00", "2024-01-15 12:30:00") -> 2
+    Example:
+        df.select(datetimes.date_diff_hours(F.col("end"), F.col("start")))
+        # ("2024-01-15 14:30:00", "2024-01-15 12:30:00") -> 2
     """
     standardized1 = standardize_iso(col1)
     standardized2 = standardize_iso(col2)
@@ -857,18 +1057,20 @@ def date_diff_hours(col1: Column, col2: Column) -> Column:
 
 
 def date_diff_minutes(col1: Column, col2: Column) -> Column:
-    """
-    Calculate difference between two datetimes in minutes.
+    """Calculate difference between two datetimes in minutes.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         col1: First datetime column
         col2: Second datetime column
 
     Returns:
-        Number of minutes between datetimes (col1 - col2)
+        Column with number of minutes between datetimes (col1 - col2)
 
-    Examples:
-        ("2024-01-15 14:30:00", "2024-01-15 14:00:00") -> 30
+    Example:
+        df.select(datetimes.date_diff_minutes(F.col("end"), F.col("start")))
+        # ("2024-01-15 14:30:00", "2024-01-15 14:00:00") -> 30
     """
     standardized1 = standardize_iso(col1)
     standardized2 = standardize_iso(col2)
@@ -885,18 +1087,20 @@ def date_diff_minutes(col1: Column, col2: Column) -> Column:
 
 
 def date_diff_seconds(col1: Column, col2: Column) -> Column:
-    """
-    Calculate difference between two datetimes in seconds.
+    """Calculate difference between two datetimes in seconds.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         col1: First datetime column
         col2: Second datetime column
 
     Returns:
-        Number of seconds between datetimes (col1 - col2)
+        Column with number of seconds between datetimes (col1 - col2)
 
-    Examples:
-        ("2024-01-15 14:30:30", "2024-01-15 14:30:00") -> 30
+    Example:
+        df.select(datetimes.date_diff_seconds(F.col("end"), F.col("start")))
+        # ("2024-01-15 14:30:30", "2024-01-15 14:30:00") -> 30
     """
     standardized1 = standardize_iso(col1)
     standardized2 = standardize_iso(col2)
@@ -912,30 +1116,22 @@ def date_diff_seconds(col1: Column, col2: Column) -> Column:
 
 
 def business_days_between(start_col: Column, end_col: Column) -> Column:
-    """
-    Calculate number of business days (Mon-Fri) between two dates.
+    """Calculate number of business days (Mon-Fri) between two dates.
 
-    The calculation is inclusive of start_date and exclusive of end_date.
-    Weekends (Saturday and Sunday) are excluded from the count.
+    Inclusive of start_date, exclusive of end_date. Weekends excluded.
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
         start_col: Start date column
         end_col: End date column
 
     Returns:
-        Number of business days in the range [start_date, end_date)
+        Column with number of business days in range [start_date, end_date)
 
-    Examples:
-        ("2024-01-15", "2024-01-19") -> 4  # Mon to Fri (Mon, Tue, Wed, Thu)
-        ("2024-01-15", "2024-01-17") -> 2  # Mon to Wed (Mon, Tue)
-        ("2024-01-12", "2024-01-15") -> 1  # Fri to Mon (Fri only, weekend excluded)
-        ("2024-01-15", "2024-01-22") -> 5  # Mon to next Mon (Mon-Fri)
-        ("2024-01-15", "2024-01-15") -> 0  # Same day
-        ("2024-01-13", "2024-01-14") -> 0  # Sat to Sun (no business days)
-
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
-        In PySpark dayofweek: 1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday, 6=Friday, 7=Saturday
+    Example:
+        df.select(datetimes.business_days_between(F.col("start"), F.col("end")))
+        # ("2024-01-15", "2024-01-19") -> 4  # Mon to Fri
+        # ("2024-01-13", "2024-01-14") -> 0  # Sat to Sun
     """
     # Standardize both dates
     standardized_start = standardize_iso(start_col)
@@ -992,27 +1188,22 @@ def business_days_between(start_col: Column, end_col: Column) -> Column:
 
 
 def date_diff(col1: Column, col2: Column, unit: Column) -> Column:
-    """
-    Calculate difference between two dates with configurable unit.
+    """Calculate difference between two dates with configurable unit.
 
-    This is a convenience wrapper that routes to the appropriate specific function
-    based on the unit parameter.
+    Convenience wrapper that routes to specific function based on unit.
+    Note: This function takes 3 column arguments and is manually added to the namespace.
 
     Args:
         col1: First date column
         col2: Second date column
-        unit: Unit of measurement as Column (e.g., F.lit("days"), F.lit("months"))
+        unit: Unit as Column ("days", "months", "years", "hours", "minutes", "seconds")
 
     Returns:
-        Difference in specified units (col1 - col2)
+        Column with difference in specified units (col1 - col2)
 
-    Examples:
-        datetimes.date_diff(F.col("end"), F.col("start"), F.lit("days"))
-        datetimes.date_diff(F.col("date1"), F.col("date2"), F.lit("months"))
-
-    Note:
-        This function takes 3 column arguments and is manually added to the namespace.
-        For performance, consider using specific functions like date_diff_days() directly.
+    Example:
+        df.select(datetimes.date_diff(F.col("end"), F.col("start"), F.lit("days")))
+        df.select(datetimes.date_diff(F.col("d1"), F.col("d2"), F.lit("months")))
     """
     # Use case/when to route to the appropriate function based on unit
     return (
@@ -1044,35 +1235,21 @@ datetimes.business_days_between = business_days_between
 
 @datetimes.register()
 def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
-    """
-    Format date according to specified pattern.
+    """Format date according to specified pattern.
+
+    Uses Java SimpleDateFormat patterns.
 
     Args:
-        col: Date/datetime column to format
-        format: Format pattern string (Java SimpleDateFormat patterns)
-                Default: "yyyy-MM-dd"
-
-    Format patterns:
-        - "yyyy-MM-dd" -> "2024-01-15" (default)
-        - "MM/dd/yyyy" -> "01/15/2024"
-        - "dd/MM/yyyy" -> "15/01/2024"
-        - "dd-MMM-yyyy" -> "15-Jan-2024"
-        - "MMMM d, yyyy" -> "January 15, 2024"
-        - "EEEE, MMMM d, yyyy" -> "Monday, January 15, 2024"
-        - "MM-dd-yy" -> "01-15-24"
-        - "HH:mm:ss" -> "14:30:45"
-        - "h:mm a" -> "2:30 PM"
-        - "yyyy-MM-dd'T'HH:mm:ss" -> "2024-01-15T14:30:45"
+        col: Column containing date/datetime text
+        format: Format pattern string (default: "yyyy-MM-dd")
 
     Returns:
-        Formatted date string
+        Column with formatted date string or None
 
-    Examples:
-        Inside @compose:
-            datetimes.format_date(format="MM/dd/yyyy")
-
-        Direct call:
-            datetimes.format_date(F.col("date"), format="MM/dd/yyyy")
+    Example:
+        df.select(datetimes.format_date(F.col("date"), format="MM/dd/yyyy"))
+        # "2024-01-15" -> "01/15/2024"
+        # "2024-01-15" with "MMMM d, yyyy" -> "January 15, 2024"
     """
     # First standardize the date
     standardized = standardize_iso(col)
@@ -1088,8 +1265,17 @@ def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
 
 @datetimes.register()
 def to_unix_timestamp(col: Column) -> Column:
-    """
-    Convert datetimes to Unix timestamp (seconds since epoch).
+    """Convert datetime to Unix timestamp (seconds since epoch).
+
+    Args:
+        col: Column containing datetime text
+
+    Returns:
+        Column with Unix timestamp (TODO: not yet implemented)
+
+    Example:
+        df.select(datetimes.to_unix_timestamp(F.col("datetime")))
+        # "2024-01-15 00:00:00" -> 1705276800
     """
     # TODO: Implement Unix timestamp conversion
     return F.lit(None)
@@ -1097,8 +1283,17 @@ def to_unix_timestamp(col: Column) -> Column:
 
 @datetimes.register()
 def from_unix_timestamp(col: Column) -> Column:
-    """
-    Convert Unix timestamp to datetimes string.
+    """Convert Unix timestamp to datetime string.
+
+    Args:
+        col: Column containing Unix timestamp
+
+    Returns:
+        Column with datetime string (TODO: not yet implemented)
+
+    Example:
+        df.select(datetimes.from_unix_timestamp(F.col("timestamp")))
+        # 1705276800 -> "2024-01-15 00:00:00"
     """
     # TODO: Implement Unix timestamp parsing
     return col
@@ -1111,11 +1306,17 @@ def from_unix_timestamp(col: Column) -> Column:
 
 @datetimes.register()
 def start_of_month(col: Column) -> Column:
-    """
-    Get the first day of the month for a given date.
+    """Get the first day of the month for a given date.
 
-    Examples:
-        "2024-01-15" -> "2024-01-01"
+    Args:
+        col: Column containing date text
+
+    Returns:
+        Column with first day of month as datetime string
+
+    Example:
+        df.select(datetimes.start_of_month(F.col("date")))
+        # "2024-01-15" -> "2024-01-01 00:00:00"
     """
     # Standardize, then use trunc to get first day of month
     standardized = standardize_iso(col)
@@ -1131,12 +1332,20 @@ def start_of_month(col: Column) -> Column:
 
 @datetimes.register()
 def end_of_month(col: Column) -> Column:
-    """
-    Get the last day of the month for a given date.
+    """Get the last day of the month for a given date.
 
-    Examples:
-        "2024-01-15" -> "2024-01-31"
-        "2024-02-10" -> "2024-02-29" (leap year)
+    Handles leap years correctly.
+
+    Args:
+        col: Column containing date text
+
+    Returns:
+        Column with last day of month as datetime string
+
+    Example:
+        df.select(datetimes.end_of_month(F.col("date")))
+        # "2024-01-15" -> "2024-01-31 00:00:00"
+        # "2024-02-10" -> "2024-02-29 00:00:00" (leap year)
     """
     # Standardize, then use last_day to get last day of month
     standardized = standardize_iso(col)
@@ -1152,8 +1361,18 @@ def end_of_month(col: Column) -> Column:
 
 @datetimes.register()
 def start_of_quarter(col: Column) -> Column:
-    """
-    Get the first day of the quarter for a given date.
+    """Get the first day of the quarter for a given date.
+
+    Args:
+        col: Column containing date text
+
+    Returns:
+        Column with first day of quarter as datetime string
+
+    Example:
+        df.select(datetimes.start_of_quarter(F.col("date")))
+        # "2024-05-15" -> "2024-04-01 00:00:00"
+        # "2024-01-15" -> "2024-01-01 00:00:00"
     """
     # Standardize first
     standardized = standardize_iso(col)
@@ -1180,8 +1399,18 @@ def start_of_quarter(col: Column) -> Column:
 
 @datetimes.register()
 def end_of_quarter(col: Column) -> Column:
-    """
-    Get the last day of the quarter for a given date.
+    """Get the last day of the quarter for a given date.
+
+    Args:
+        col: Column containing date text
+
+    Returns:
+        Column with last day of quarter as datetime string
+
+    Example:
+        df.select(datetimes.end_of_quarter(F.col("date")))
+        # "2024-05-15" -> "2024-06-30 00:00:00"
+        # "2024-01-15" -> "2024-03-31 00:00:00"
     """
     # Standardize first
     standardized = standardize_iso(col)
@@ -1211,20 +1440,21 @@ def end_of_quarter(col: Column) -> Column:
 
 
 def fiscal_year(col: Column, fiscal_start_month: Column) -> Column:
-    """
-    Get fiscal year for a date.
+    """Get fiscal year for a date.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
-        col: Date column
-        fiscal_start_month: Month number (1-12) when fiscal year starts (can be Column or literal)
-                           Default for US government is 10 (October)
+        col: Column containing date text
+        fiscal_start_month: Month (1-12) when fiscal year starts as Column
 
-    Examples:
-        ("2024-11-15", 10) -> 2025  # November is after October start, so FY 2025
-        ("2024-09-15", 10) -> 2024  # September is before October start, so FY 2024
+    Returns:
+        Column with fiscal year as integer
 
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
+    Example:
+        df.select(datetimes.fiscal_year(F.col("date"), F.lit(10)))
+        # "2024-11-15" with Oct start -> 2025
+        # "2024-09-15" with Oct start -> 2024
     """
     # Standardize first
     standardized = standardize_iso(col)
@@ -1251,20 +1481,21 @@ def fiscal_year(col: Column, fiscal_start_month: Column) -> Column:
 
 
 def calculate_age(col: Column, reference_date: Column) -> Column:
-    """
-    Calculate age in years from a birthdate.
+    """Calculate age in years from a birthdate.
+
+    Note: This function takes 2 column arguments and is manually added to the namespace.
 
     Args:
-        col: Birthdate column
-        reference_date: Reference date column to calculate age from
+        col: Column containing birthdate text
+        reference_date: Reference date column (use F.current_date() for today)
 
-    Examples:
-        ("2000-01-15", "2024-01-15") -> 24
-        ("1990-06-10", "2024-12-02") -> 34
+    Returns:
+        Column with age in years as integer
 
-    Note:
-        This function takes 2 column arguments and is manually added to the namespace.
-        For current date, pass F.current_date() as reference_date.
+    Example:
+        df.select(datetimes.calculate_age(F.col("birth"), F.current_date()))
+        # "2000-01-15" with ref "2024-01-15" -> 24
+        # "1990-06-10" with ref "2024-12-02" -> 34
     """
     # Standardize birthdate
     standardized_birth = standardize_iso(col)
@@ -1288,14 +1519,19 @@ datetimes.calculate_age = calculate_age
 
 @datetimes.register()
 def format_duration(seconds_col: Column) -> Column:
-    """
-    Format duration in seconds to human-readable string.
+    """Format duration in seconds to human-readable string.
 
-    Examples:
-        90 -> "1 minute 30 seconds"
-        3661 -> "1 hour 1 minute 1 second"
-        86400 -> "1 day"
-        694861 -> "1 week 1 day 1 hour 1 minute 1 second"
+    Args:
+        seconds_col: Column containing duration in seconds
+
+    Returns:
+        Column with human-readable duration string
+
+    Example:
+        df.select(datetimes.format_duration(F.col("seconds")))
+        # 90 -> "1 minute 30 seconds"
+        # 3661 -> "1 hour 1 minute 1 second"
+        # 86400 -> "1 day"
     """
     # Handle negative durations
     is_negative = seconds_col < 0
