@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-01
+
+### Added
+- **Text Transformation Primitives**: New comprehensive text manipulation module (`text`) with 57 functions
+  - **Validation functions (14)**: `is_valid_hex`, `is_valid_base64`, `is_valid_url_encoded`, `has_control_characters`, `has_zero_width_characters`, `has_non_ascii`, `has_escape_sequences`, `has_url_encoding`, `has_html_entities`, `has_ansi_codes`, `has_non_printable`, `has_accents`, `has_unicode_issues`, `has_whitespace_issues`
+  - **Transformation functions (23)**: `hex_to_text`, `text_to_hex`, `clean_hex`, `extract_hex`, `decode_base64`, `encode_base64`, `clean_base64`, `extract_base64`, `decode_url`, `encode_url`, `decode_html_entities`, `encode_html_entities`, `unescape_string`, `escape_string`, `normalize_line_endings`, `to_ascii`, `to_codepoints`, `from_codepoints`, `reverse_string`, `truncate`, `pad_left`, `pad_right`
+  - **Cleaning functions (20)**: `remove_control_characters`, `remove_zero_width_characters`, `remove_non_printable`, `remove_ansi_codes`, `strip_invisible`, `remove_bom`, `normalize_unicode`, `remove_accents`, `normalize_whitespace`, `remove_html_tags`, `remove_urls`, `remove_emojis`, `remove_punctuation`, `remove_digits`, `remove_letters`, `remove_escape_sequences`, `strip_to_alphanumeric`, `clean_for_comparison`, `slugify`, `collapse_repeats`, `clean_string`
+  - All functions use native PySpark SQL functions (no UDFs) for optimal performance
+  - Comprehensive null and empty string handling
+  - 508 unit tests with full coverage
+
+### Fixed
+- **Text Primitives**: Various fixes to text transformation functions
+  - `decode_url`: Fixed %2B decoding to properly preserve literal plus signs vs form-encoded spaces
+  - `extract_hex`: Improved pattern to require `0x`/`#` prefix or MAC address format, avoiding false matches
+  - `extract_base64`: Improved pattern to require `=` padding or `base64,` prefix for reliable extraction
+  - `unescape_string`: Fixed backslash escape handling with placeholder approach
+  - `collapse_repeats`: Added working implementation for `max_repeat=2`
+  - `has_unicode_issues`: Added combining character detection (U+0300-U+036F range)
+  - `clean_string`: Fixed ANSI code removal order (must run before control char removal)
+
 ## [0.2.7.0] - 2025-09-11
 
 ### Fixed
