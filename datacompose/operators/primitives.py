@@ -66,35 +66,7 @@ class SmartPrimitive:
         self.name = name or func.__name__
         self.__doc__ = func.__doc__
 
-    def _single_column_call(self, col, **kwargs):
-        """Handle single-column primitive calls."""
-        if col is not None:
-            return self.func(col, **kwargs)
-        else:
-            @wraps(self.func)
-            def configured(c):  # type: ignore
-                return self.func(c, **kwargs)
-
-            configured.__name__ = (
-                f"{self.name}({', '.join(f'{k}={v}' for k, v in kwargs.items())})"
-            )
-            return configured
-
-    def _multi_column_call(self, *cols, **kwargs):
-        """Handle multi-column primitive calls."""
-        if cols:
-            return self.func(*cols, **kwargs)
-        else:
-            @wraps(self.func)
-            def configured(*c):  # type: ignore
-                return self.func(*c, **kwargs)
-
-            configured.__name__ = (
-                f"{self.name}({', '.join(f'{k}={v}' for k, v in kwargs.items())})"
-            )
-            return configured
-
-    def __call__(self, *args, **kwargs):  # type: ignore
+    def __call__(self, *cols, **kwargs):  # type: ignore
         """Apply the transformation or return a configured version.
 
         Auto-detects single vs multi-column based on argument count:
@@ -106,15 +78,18 @@ class SmartPrimitive:
             If columns provided: The transformed Column
             If no columns: A configured function that takes Column(s)
         """
-        if len(args) == 0:
-            # No columns - return configured function for multi-column
-            return self._multi_column_call(**kwargs)
-        elif len(args) == 1:
-            # Single column
-            return self._single_column_call(args[0], **kwargs)
+        if cols:
+            return self.func(*cols, **kwargs)
         else:
-            # Multiple columns
-            return self._multi_column_call(*args, **kwargs)
+
+            @wraps(self.func)
+            def configured(*c):  # type: ignore
+                return self.func(*c, **kwargs)
+
+            configured.__name__ = (
+                f"{self.name}({', '.join(f'{k}={v}' for k, v in kwargs.items())})"
+            )
+            return configured
 
 
 class PrimitiveRegistry:
