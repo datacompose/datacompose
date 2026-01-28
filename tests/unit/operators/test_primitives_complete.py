@@ -19,7 +19,6 @@ from datacompose.operators.primitives import (  # noqa: E402
     _fallback_compose,
 )
 
-
 # Fixtures removed - using root conftest.py spark fixture
 
 
@@ -84,6 +83,78 @@ class TestSmartPrimitive:
         # Test with custom name
         primitive2 = SmartPrimitive(test_func, "custom_name")
         assert primitive2.name == "custom_name"
+
+    def test_smart_primitive_multi_column_direct_call(self, spark):
+        """Test calling SmartPrimitive with multiple columns."""
+
+        def compare_func(col1, col2):
+            return F.levenshtein(col1, col2)
+
+        primitive = SmartPrimitive(compare_func, "compare")
+
+        # Test direct call with two columns
+        df = spark.createDataFrame([("hello", "hallo")], ["a", "b"])
+        result = df.select(primitive(F.col("a"), F.col("b"))).collect()
+        assert result[0][0] == 1  # Levenshtein distance of 1
+
+    def test_smart_primitive_multi_column_configured_call(self, spark):
+        """Test creating configured version of multi-column SmartPrimitive."""
+
+        def compare_func(col1, col2, case_sensitive=True):
+            if case_sensitive:
+                return col1 == col2
+            return F.lower(col1) == F.lower(col2)
+
+        primitive = SmartPrimitive(compare_func, "compare")
+
+        # Create configured version
+        case_insensitive = primitive(case_sensitive=False)
+        assert callable(case_insensitive)
+
+        # Test configured version
+        df = spark.createDataFrame([("Hello", "hello")], ["a", "b"])
+        result = df.select(case_insensitive(F.col("a"), F.col("b"))).collect()
+        assert result[0][0] is True
+
+    def test_smart_primitive_multi_column_with_kwarg(self, spark):
+        """Test SmartPrimitive with two columns and a keyword arg in same call."""
+
+        def compare_func(col1, col2, threshold=0.5):
+            # Return True if levenshtein similarity >= threshold
+            dist = F.levenshtein(col1, col2)
+            max_len = F.greatest(F.length(col1), F.length(col2))
+            similarity = F.when(max_len == 0, F.lit(1.0)).otherwise(
+                F.lit(1.0) - (dist / max_len)
+            )
+            return similarity >= F.lit(threshold)
+
+        primitive = SmartPrimitive(compare_func, "compare")
+
+        df = spark.createDataFrame([("hello", "hallo")], ["a", "b"])
+
+        # Two columns + kwarg in same call
+        result = df.select(primitive(F.col("a"), F.col("b"), threshold=0.7)).collect()
+        assert result[0][0] is True  # similarity ~0.8 >= 0.7
+
+        result = df.select(primitive(F.col("a"), F.col("b"), threshold=0.9)).collect()
+        assert result[0][0] is False  # similarity ~0.8 < 0.9
+
+    def test_smart_primitive_multi_column_three_args(self, spark):
+        """Test SmartPrimitive with three columns."""
+
+        def concat_three(col1, col2, col3, sep=" "):
+            return F.concat_ws(sep, col1, col2, col3)
+
+        primitive = SmartPrimitive(concat_three, "concat_three")
+
+        df = spark.createDataFrame([("a", "b", "c")], ["x", "y", "z"])
+        result = df.select(primitive(F.col("x"), F.col("y"), F.col("z"))).collect()
+        assert result[0][0] == "a b c"
+
+        # With configured separator
+        with_dash = primitive(sep="-")
+        result = df.select(with_dash(F.col("x"), F.col("y"), F.col("z"))).collect()
+        assert result[0][0] == "a-b-c"
 
 
 @pytest.mark.unit
@@ -309,14 +380,14 @@ class TestEdgeCasesAndErrors:
         # Just verify the module loads without PySpark
         assert True
 
-    def test_primitive_with_none_column(self):
-        """Test SmartPrimitive with None column returns configured function."""
+    def test_primitive_with_only_kwargs_returns_configured(self):
+        """Test SmartPrimitive with only kwargs returns configured function."""
 
         def test_func(col, param=1):
             return col
 
         primitive = SmartPrimitive(test_func)
-        configured = primitive(None, param=2)
+        configured = primitive(param=2)
 
         assert callable(configured)
         assert "param=2" in configured.__name__
