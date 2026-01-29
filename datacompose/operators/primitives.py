@@ -28,28 +28,31 @@ logger = logging.getLogger(__name__)
 class SmartPrimitive:
     """Wraps a PySpark column transformation function to enable partial application.
 
-    SmartPrimitive allows column transformation functions to be:
-    1. Called directly with a column: `primitive(col)`
-    2. Pre-configured with parameters: `primitive(param=value)` returns a configured function
+    SmartPrimitive handles both single-column and multi-column transformations:
+    1. Single column: `primitive(col)` or `primitive(param=value)(col)`
+    2. Multi column: `primitive(col1, col2)` or `primitive(param=value)(col1, col2)`
 
-    This enables building reusable, parameterized transformations that can be composed
-    into data pipelines.
+    The behavior is auto-detected based on the number of arguments passed.
 
-    Example:
+    Example (single column):
+        >>> @registry.register()
         >>> def trim_spaces(col, chars=' '):
-        ...     return f.trim(col, chars)
+        ...     return F.trim(col, chars)
         >>>
-        >>> trim = SmartPrimitive(trim_spaces)
-        >>>
-        >>> # Direct usage
-        >>> df.select(trim(f.col("text")))
-        >>>
-        >>> # Pre-configured usage
-        >>> trim_tabs = trim(chars='\t')
-        >>> df.select(trim_tabs(f.col("text")))
+        >>> df.select(registry.trim_spaces(F.col("text")))
+        >>> configured = registry.trim_spaces(chars='\\t')
+        >>> df.select(configured(F.col("text")))
 
+    Example (multi column):
+        >>> @registry.register()
+        >>> def levenshtein(col1, col2, normalize=False):
+        ...     return F.levenshtein(col1, col2)
+        >>>
+        >>> df.withColumn("score", registry.levenshtein(F.col("a"), F.col("b")))
+        >>> configured = registry.levenshtein(normalize=True)
+        >>> df.withColumn("score", configured(F.col("a"), F.col("b")))
 
-    Please note that you will not use this directly. It will be used in the PrimitiveRegistry class
+    Please note that you will not use this directly. It will be used in the PrimitiveRegistry class.
     """
 
     def __init__(self, func: Callable, name: Optional[str] = None):
@@ -63,25 +66,25 @@ class SmartPrimitive:
         self.name = name or func.__name__
         self.__doc__ = func.__doc__
 
-    def __call__(self, col: Optional[Column] = None, **kwargs):  # type: ignore
+    def __call__(self, *cols, **kwargs):  # type: ignore
         """Apply the transformation or return a configured version.
 
-        Args:
-            col: Optional PySpark Column to transform. If provided, applies the
-                 transformation immediately. If None, returns a configured function.
-            **kwargs: Parameters to pass to the transformation function
+        Auto-detects single vs multi-column based on argument count:
+        - 0 args: returns configured function (partial application)
+        - 1 arg: single-column call
+        - 2+ args: multi-column call
 
         Returns:
-            If col is provided: The transformed Column
-            If col is None: A configured function that takes a Column
+            If columns provided: The transformed Column
+            If no columns: A configured function that takes Column(s)
         """
-        if col is not None:  # type: ignore
-            return self.func(col, **kwargs)  # type: ignore
+        if cols:
+            return self.func(*cols, **kwargs)
         else:
 
             @wraps(self.func)
-            def configured(col: Column):  # type: ignore
-                return self.func(col, **kwargs)  # type: ignore
+            def configured(*c):  # type: ignore
+                return self.func(*c, **kwargs)
 
             configured.__name__ = (
                 f"{self.name}({', '.join(f'{k}={v}' for k, v in kwargs.items())})"
