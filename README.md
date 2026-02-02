@@ -71,9 +71,10 @@ The code lives in your repo. Modify it. Delete what you don't need. No external 
 
 ## Available Transformers
 
-**Phones** - Standardize formats, extract from text, validate, handle extensions  
-**Addresses** - Parse components, standardize states, validate zips, detect PO boxes  
+**Phones** - Standardize formats, extract from text, validate, handle extensions
+**Addresses** - Parse components, standardize states, validate zips, detect PO boxes
 **Emails** - Validate, extract domains, fix typos (gmial→gmail), standardize
+**Fuzzy Matching** - Levenshtein distance, Soundex, Jaccard similarity, n-grams, cosine similarity
 
 More coming based on what you need.
 

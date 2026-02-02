@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datacompose"
-version = "0.3.0"
+version = "0.4.0"
 description = "Copy-pasteable data transformation primitives for PySpark. Inspired by shadcn-svelte."
 authors = [
     {name = "Datacompose Contributors"},
@@ -47,11 +47,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tc-cole/datacompose"
-Documentation = "https://github.com/tc-cole/datacompose/tree/main/docs"
-Repository = "https://github.com/tc-cole/datacompose.git"
-Issues = "https://github.com/tc-cole/datacompose/issues"
-Changelog = "https://github.com/tc-cole/datacompose/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/datacompose/datacompose"
+Documentation = "https://datacompose.io"
+Repository = "https://github.com/datacompose/datacompose.git"
+Issues = "https://github.com/datacompose/datacompose/issues"
+Changelog = "https://github.com/datacompose/datacompose/blob/main/CHANGELOG.md"
 
 [project.scripts]
 datacompose = "datacompose.cli.main:main"

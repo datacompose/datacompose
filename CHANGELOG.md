@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-02
+
+### Added
+- **Fuzzy Matching Primitives**: New analytics module for string similarity and comparison
+  - **Distance functions**: `levenshtein`, `levenshtein_normalized`, `levenshtein_threshold`
+  - **Phonetic functions**: `soundex`, `soundex_match`
+  - **Token-based functions**: `jaccard_similarity`, `token_overlap`
+  - **N-gram functions**: `ngram_similarity`, `ngram_distance`
+  - **Utility functions**: `exact_match`, `contains_match`, `prefix_match`
+  - **Advanced**: `cosine_similarity` for term-frequency based comparison
+  - Multi-column support for row-wise comparisons
+  - All functions use native PySpark SQL functions (no UDFs) for optimal performance
+
+### Changed
+- **Primitives Module**: Updated to handle multi-column operations
+
 ## [0.3.0] - 2026-01-01
 
 ### Added
