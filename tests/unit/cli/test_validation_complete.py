@@ -15,7 +15,7 @@ from datacompose.cli.validation import (  # noqa: E402
     get_available_platforms,
     get_available_types_for_platform,
 )
-from datacompose.transformers.discovery import TransformerDiscovery  # noqa: E402
+from datacompose.cli.discovery import TransformerDiscovery  # noqa: E402
 
 
 @pytest.mark.unit

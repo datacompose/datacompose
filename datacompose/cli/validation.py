@@ -2,7 +2,7 @@
 Validation utilities for CLI commands.
 """
 
-from datacompose.transformers.discovery import TransformerDiscovery
+from datacompose.cli.discovery import TransformerDiscovery
 from datacompose.cli.colors import error, info
 
 

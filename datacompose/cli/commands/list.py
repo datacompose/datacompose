@@ -4,7 +4,7 @@ List command for showing available targets and transformers.
 
 import click
 
-from datacompose.transformers.discovery import TransformerDiscovery
+from datacompose.cli.discovery import TransformerDiscovery
 
 
 # Completion function for list items

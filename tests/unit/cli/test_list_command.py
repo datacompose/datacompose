@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 
 from datacompose.cli.commands.list import ListCommand  # noqa: E402
 from datacompose.cli.main import cli  # noqa: E402
-from datacompose.transformers.discovery import TransformerDiscovery  # noqa: E402
+from datacompose.cli.discovery import TransformerDiscovery  # noqa: E402
 
 
 @pytest.mark.unit

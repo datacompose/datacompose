@@ -21,9 +21,6 @@ try:
 except ImportError:
     logging.debug("PySpark not available")
 
-# Set up module logger
-logger = logging.getLogger(__name__)
-
 
 class SmartPrimitive:
     """Wraps a PySpark column transformation function to enable partial application.
