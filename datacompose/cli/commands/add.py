@@ -9,7 +9,7 @@ import click
 from datacompose.cli.colors import dim, error, highlight, info, success
 from datacompose.cli.config import ConfigLoader
 from datacompose.cli.validation import validate_platform, validate_type_for_platform
-from datacompose.cli.discovery import TransformerDiscovery
+from datacompose.transformers.discovery import TransformerDiscovery
 
 
 # Completion functions for Click shell completion

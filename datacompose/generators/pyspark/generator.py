@@ -2,11 +2,6 @@
 Spark pandas UDF generator.
 """
 
-try: 
-    from sqlframe.duckdb import functions as F
-except:
-    raise ImportError
-
 from pathlib import Path
 
 from ..base import BaseGenerator
