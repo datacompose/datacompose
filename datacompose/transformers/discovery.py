@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 
-
 class TransformerDiscovery:
     """Discovers available transformers and generators."""
 
