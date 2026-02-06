@@ -25,6 +25,44 @@ class BackendNotInitializedError(Exception):
     pass
 
 
+class _LazyFunctionsProxy:
+    """Lazy proxy that defers backend module loading until actual attribute access."""
+
+    def __getattr__(self, name: str):
+        global _module
+
+        if _backend is None:
+            raise BackendNotInitializedError(
+                "Backend not initialized. Call set_backend() before using functions. "
+                f"Example: set_backend('duckdb')"
+            )
+
+        if _module is None:
+            backend_modules = {
+                "duckdb": "sqlframe.duckdb.functions",
+                "bigquery": "sqlframe.bigquery.functions",
+                "snowflake": "sqlframe.snowflake.functions",
+                "pyspark": "sqlframe.spark.functions",
+                "postgres": "sqlframe.postgres.functions",
+            }
+
+            module_path = backend_modules[_backend]
+            try:
+                _module = importlib.import_module(module_path)
+            except ImportError as e:
+                raise ImportError(
+                    f"Failed to import {module_path}. "
+                    f"Make sure sqlframe is installed with the '{_backend}' extra: "
+                    f"pip install 'sqlframe[{_backend}]'"
+                ) from e
+
+        return getattr(_module, name)
+
+
+# Lazy proxy instance that can be imported as `from datacompose.functions import functions`
+functions = _LazyFunctionsProxy()
+
+
 def set_backend(name: str) -> None:
     """Set the active backend for SQL functions.
 
@@ -57,7 +95,8 @@ def __getattr__(name: str):
 
     # Don't intercept dunder attributes or the module's own public API
     if name.startswith('_') or name in ('set_backend', 'get_backend', 'SUPPORTED_BACKENDS',
-                                         'UnsupportedBackendError', 'BackendNotInitializedError'):
+                                         'UnsupportedBackendError', 'BackendNotInitializedError',
+                                         'functions'):
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
     if _backend is None:

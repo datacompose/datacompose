@@ -9,12 +9,17 @@ import warnings
 import pytest
 from pyspark.sql import SparkSession
 
+from datacompose.functions import set_backend
+
 
 @pytest.fixture(scope="session")
 def spark():
     """Create a single Spark session for all tests."""
     # Suppress all warnings
     warnings.filterwarnings("ignore")
+
+    # Set the datacompose backend for pyspark functions
+    set_backend("pyspark")
 
     # Suppress Spark logging
     logging.getLogger("py4j").setLevel(logging.ERROR)
