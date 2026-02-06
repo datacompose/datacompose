@@ -55,6 +55,11 @@ def __getattr__(name: str):
     """Lazy-load and delegate attribute access to the backend's functions module."""
     global _module
 
+    # Don't intercept dunder attributes or the module's own public API
+    if name.startswith('_') or name in ('set_backend', 'get_backend', 'SUPPORTED_BACKENDS',
+                                         'UnsupportedBackendError', 'BackendNotInitializedError'):
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
     if _backend is None:
         raise BackendNotInitializedError(
             "Backend not initialized. Call set_backend() before using functions. "
