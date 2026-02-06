@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 try:
     from pyspark.sql import Column
-    from pyspark.sql import functions as F
+
+    from datacompose.functions import functions as F
 except ImportError:
     logging.debug("PySpark not available")
 

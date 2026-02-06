@@ -56,12 +56,15 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 if TYPE_CHECKING:
     # For type checkers only - these imports are always available during type checking
     from pyspark.sql import Column
-    from pyspark.sql import functions as F
+
+    from datacompose.functions import functions as F
 else:
     # At runtime, handle missing PySpark gracefully
     try:
         from pyspark.sql import Column
-        from pyspark.sql import functions as F
+
+        from datacompose.functions import functions as F
+
     except ImportError:
         # PySpark is not installed - functions will fail at runtime if called
         pass
