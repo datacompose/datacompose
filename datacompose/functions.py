@@ -17,11 +17,13 @@ _module = None
 
 class UnsupportedBackendError(Exception):
     """Raised when an unsupported backend is specified."""
+
     pass
 
 
 class BackendNotInitializedError(Exception):
     """Raised when functions are used before set_backend() is called."""
+
     pass
 
 
@@ -94,9 +96,14 @@ def __getattr__(name: str):
     global _module
 
     # Don't intercept dunder attributes or the module's own public API
-    if name.startswith('_') or name in ('set_backend', 'get_backend', 'SUPPORTED_BACKENDS',
-                                         'UnsupportedBackendError', 'BackendNotInitializedError',
-                                         'functions'):
+    if name.startswith("_") or name in (
+        "set_backend",
+        "get_backend",
+        "SUPPORTED_BACKENDS",
+        "UnsupportedBackendError",
+        "BackendNotInitializedError",
+        "functions",
+    ):
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
     if _backend is None:
@@ -110,7 +117,7 @@ def __getattr__(name: str):
             "duckdb": "sqlframe.duckdb.functions",
             "bigquery": "sqlframe.bigquery.functions",
             "snowflake": "sqlframe.snowflake.functions",
-            "spark": "sqlframe.spark.functions",
+            "pyspark": "sqlframe.spark.functions",
             "postgres": "sqlframe.postgres.functions",
         }
 

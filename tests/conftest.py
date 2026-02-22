@@ -12,8 +12,15 @@ from pyspark.sql import SparkSession
 from datacompose.functions import set_backend
 
 
+@pytest.fixture(scope="session", autouse=True)
+def duckdb_backend():
+    """Set the duckdb backend for SQLFrame functions."""
+    set_backend("duckdb")
+    yield
+
+
 @pytest.fixture(scope="session")
-def spark():
+def spark(duckdb_backend):
     """Create a single Spark session for all tests."""
     # Suppress all warnings
     warnings.filterwarnings("ignore")

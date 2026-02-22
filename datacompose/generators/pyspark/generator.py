@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..base import BaseGenerator
 
+
 class SparkPandasUDFGenerator(BaseGenerator):
     """Generator for Apache Spark pandas UDFs."""
 
@@ -36,7 +37,8 @@ class SparkPandasUDFGenerator(BaseGenerator):
             f"No {self.PRIMITIVES_FILENAME} template found in {transformer_dir} or {Path(__file__).parent}"
         )
 
-    def _get_output_filename(self, transformer_name: str) -> str:
+    @staticmethod
+    def _get_output_filename(transformer_name: str) -> str:
         """Get the output filename for PySpark primitives."""
         # Use the transformer name directly as the filename
         # emails -> emails.py
