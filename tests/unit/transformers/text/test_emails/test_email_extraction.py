@@ -12,7 +12,7 @@ from datacompose.transformers.text.emails.pyspark.pyspark_primitives import emai
 class TestEmailExtraction:
     """Test email extraction functions."""
 
-    def test_extract_email(self, spark):
+    def test_extract_email(self, create_session):
         """Test extraction of first email from text."""
         test_data = [
             ("Contact us at john@example.com for info", "john@example.com"),
@@ -24,7 +24,7 @@ class TestEmailExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["text", "expected"])
+        df = create_session.createDataFrame(test_data, ["text", "expected"])
         result_df = df.withColumn("email", emails.extract_email(F.col("text")))
 
         results = result_df.collect()
@@ -33,7 +33,7 @@ class TestEmailExtraction:
                 row["email"] == row["expected"]
             ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['email']}'"
 
-    def test_extract_all_emails(self, spark):
+    def test_extract_all_emails(self, create_session):
         """Test extraction of all emails from text."""
         test_data = [
             (
@@ -50,7 +50,7 @@ class TestEmailExtraction:
             (None, []),
         ]
 
-        df = spark.createDataFrame(test_data, ["text", "expected"])
+        df = create_session.createDataFrame(test_data, ["text", "expected"])
         result_df = df.withColumn("emails", emails.extract_all_emails(F.col("text")))
 
         results = result_df.collect()
@@ -64,7 +64,7 @@ class TestEmailExtraction:
                 row_emails == row["expected"]
             ), f"Failed for '{row['text']}': expected {row['expected']}, got {row_emails}"
 
-    def test_extract_username(self, spark):
+    def test_extract_username(self, create_session):
         """Test extraction of username from email."""
         test_data = [
             ("john.doe@example.com", "john.doe"),
@@ -76,7 +76,7 @@ class TestEmailExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("username", emails.extract_username(F.col("email")))
 
         results = result_df.collect()
@@ -85,7 +85,7 @@ class TestEmailExtraction:
                 row["username"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['username']}'"
 
-    def test_extract_domain(self, spark):
+    def test_extract_domain(self, create_session):
         """Test extraction of domain from email."""
         test_data = [
             ("john@example.com", "example.com"),
@@ -97,7 +97,7 @@ class TestEmailExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("domain", emails.extract_domain(F.col("email")))
 
         results = result_df.collect()
@@ -106,7 +106,7 @@ class TestEmailExtraction:
                 row["domain"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain']}'"
 
-    def test_extract_domain_name(self, spark):
+    def test_extract_domain_name(self, create_session):
         """Test extraction of domain name without TLD."""
         test_data = [
             ("user@gmail.com", "gmail"),
@@ -118,7 +118,7 @@ class TestEmailExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "domain_name", emails.extract_domain_name(F.col("email"))
         )
@@ -129,7 +129,7 @@ class TestEmailExtraction:
                 row["domain_name"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_name']}'"
 
-    def test_extract_tld(self, spark):
+    def test_extract_tld(self, create_session):
         """Test extraction of top-level domain."""
         test_data = [
             ("user@example.com", "com"),
@@ -142,7 +142,7 @@ class TestEmailExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("tld", emails.extract_tld(F.col("email")))
 
         results = result_df.collect()
@@ -156,7 +156,7 @@ class TestEmailExtraction:
 class TestEmailValidation:
     """Test email validation functions."""
 
-    def test_is_valid_email(self, spark):
+    def test_is_valid_email(self, create_session):
         """Test email format validation."""
         test_data = [
             ("john@example.com", True),
@@ -174,7 +174,7 @@ class TestEmailValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("is_valid", emails.is_valid_email(F.col("email")))
 
         results = result_df.collect()
@@ -183,7 +183,7 @@ class TestEmailValidation:
                 row["is_valid"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_is_valid_username(self, spark):
+    def test_is_valid_username(self, create_session):
         """Test username validation."""
         test_data = [
             ("john@example.com", True),
@@ -197,7 +197,7 @@ class TestEmailValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "valid_username", emails.is_valid_username(F.col("email"))
         )
@@ -208,7 +208,7 @@ class TestEmailValidation:
                 row["valid_username"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_username']}"
 
-    def test_is_valid_domain(self, spark):
+    def test_is_valid_domain(self, create_session):
         """Test domain validation."""
         test_data = [
             ("user@example.com", True),
@@ -223,7 +223,7 @@ class TestEmailValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "valid_domain", emails.is_valid_domain(F.col("email"))
         )
@@ -234,7 +234,7 @@ class TestEmailValidation:
                 row["valid_domain"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['valid_domain']}"
 
-    def test_has_plus_addressing(self, spark):
+    def test_has_plus_addressing(self, create_session):
         """Test detection of plus addressing."""
         test_data = [
             ("user+tag@gmail.com", True),
@@ -247,7 +247,7 @@ class TestEmailValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "has_plus", emails.has_plus_addressing(F.col("email"))
         )
@@ -258,7 +258,7 @@ class TestEmailValidation:
                 row["has_plus"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['has_plus']}"
 
-    def test_is_disposable_email(self, spark):
+    def test_is_disposable_email(self, create_session):
         """Test detection of disposable email addresses."""
         test_data = [
             ("user@10minutemail.com", True),
@@ -270,7 +270,7 @@ class TestEmailValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "is_disposable", emails.is_disposable_email(F.col("email"))
         )
@@ -281,7 +281,7 @@ class TestEmailValidation:
                 row["is_disposable"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['is_disposable']}"
 
-    def test_is_corporate_email(self, spark):
+    def test_is_corporate_email(self, create_session):
         """Test detection of corporate email addresses."""
         test_data = [
             ("john@company.com", True),
@@ -295,7 +295,7 @@ class TestEmailValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "is_corporate", emails.is_corporate_email(F.col("email"))
         )
@@ -311,7 +311,7 @@ class TestEmailValidation:
 class TestEmailCleaning:
     """Test email cleaning functions."""
 
-    def test_remove_whitespace(self, spark):
+    def test_remove_whitespace(self, create_session):
         """Test whitespace removal from emails."""
         test_data = [
             ("  john@example.com  ", "john@example.com"),
@@ -322,7 +322,7 @@ class TestEmailCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("cleaned", emails.remove_whitespace(F.col("email")))
 
         results = result_df.collect()
@@ -331,7 +331,7 @@ class TestEmailCleaning:
                 row["cleaned"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['cleaned']}'"
 
-    def test_lowercase_email(self, spark):
+    def test_lowercase_email(self, create_session):
         """Test email lowercasing."""
         test_data = [
             ("John.Doe@Example.COM", "john.doe@example.com"),
@@ -342,7 +342,7 @@ class TestEmailCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("lowercased", emails.lowercase_email(F.col("email")))
 
         results = result_df.collect()
@@ -351,7 +351,7 @@ class TestEmailCleaning:
                 row["lowercased"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['lowercased']}'"
 
-    def test_lowercase_domain(self, spark):
+    def test_lowercase_domain(self, create_session):
         """Test lowercasing only domain part."""
         test_data = [
             ("John.Doe@Example.COM", "John.Doe@example.com"),
@@ -362,7 +362,7 @@ class TestEmailCleaning:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "domain_lower", emails.lowercase_domain(F.col("email"))
         )
@@ -373,7 +373,7 @@ class TestEmailCleaning:
                 row["domain_lower"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['domain_lower']}'"
 
-    def test_remove_plus_addressing(self, spark):
+    def test_remove_plus_addressing(self, create_session):
         """Test removal of plus addressing."""
         test_data = [
             ("user+tag@gmail.com", "user@gmail.com"),
@@ -384,7 +384,7 @@ class TestEmailCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "no_plus", emails.remove_plus_addressing(F.col("email"))
         )
@@ -395,7 +395,7 @@ class TestEmailCleaning:
                 row["no_plus"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_plus']}'"
 
-    def test_remove_dots_from_gmail(self, spark):
+    def test_remove_dots_from_gmail(self, create_session):
         """Test removal of dots from Gmail addresses."""
         test_data = [
             ("john.doe@gmail.com", "johndoe@gmail.com"),
@@ -407,7 +407,7 @@ class TestEmailCleaning:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "no_dots", emails.remove_dots_from_gmail(F.col("email"))
         )
@@ -418,7 +418,7 @@ class TestEmailCleaning:
                 row["no_dots"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['no_dots']}'"
 
-    def test_fix_common_typos(self, spark):
+    def test_fix_common_typos(self, create_session):
         """Test fixing common email domain typos."""
         test_data = [
             # Gmail typos
@@ -441,7 +441,7 @@ class TestEmailCleaning:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("fixed", emails.fix_common_typos(F.col("email")))
 
         results = result_df.collect()
@@ -453,7 +453,7 @@ class TestEmailCleaning:
     @pytest.mark.skip(
         reason="SmartPrimitive doesn't handle multiple parameters correctly"
     )
-    def test_fix_common_typos_with_custom(self, spark):
+    def test_fix_common_typos_with_custom(self, create_session):
         """Test fixing typos with custom mappings."""
         # This would require direct function call without the namespace wrapper
         # test_data = [
@@ -466,7 +466,7 @@ class TestEmailCleaning:
         #    "oldname.com": "newname.com",
         # }
 
-        # df = spark.createDataFrame(test_data, ["email", "expected"])
+        # df = create_session.createDataFrame(test_data, ["email", "expected"])
         # Direct function call would work but not through namespace
         # result_df = df.withColumn(
         #     "fixed", fix_common_typos(F.col("email"), custom_mappings)
@@ -479,7 +479,7 @@ class TestEmailStandardization:
     """Test email standardization functions."""
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
-    def test_standardize_email(self, spark):
+    def test_standardize_email(self, create_session):
         """Test complete email standardization."""
         test_data = [
             ("  John.Doe@Gmail.COM  ", "johndoe@gmail.com"),
@@ -491,7 +491,7 @@ class TestEmailStandardization:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "standardized",
             emails.standardize_email(
@@ -510,7 +510,7 @@ class TestEmailStandardization:
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['standardized']}'"
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
-    def test_normalize_gmail(self, spark):
+    def test_normalize_gmail(self, create_session):
         """Test Gmail-specific normalization."""
         test_data = [
             ("John.Doe+work@Gmail.com", "johndoe@gmail.com"),
@@ -521,7 +521,7 @@ class TestEmailStandardization:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("normalized", emails.normalize_gmail(F.col("email")))
 
         results = result_df.collect()
@@ -531,7 +531,7 @@ class TestEmailStandardization:
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['normalized']}'"
 
     @pytest.mark.skip(reason="Complex expression tree causes memory issues in Spark")
-    def test_get_canonical_email(self, spark):
+    def test_get_canonical_email(self, create_session):
         """Test canonical email form for deduplication."""
         test_data = [
             ("  John.Doe+work@Gmail.COM  ", "johndoe@gmail.com"),
@@ -542,7 +542,7 @@ class TestEmailStandardization:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "canonical", emails.get_canonical_email(F.col("email"))
         )
@@ -558,7 +558,7 @@ class TestEmailStandardization:
 class TestEmailInformation:
     """Test email information extraction functions."""
 
-    def test_extract_name_from_email(self, spark):
+    def test_extract_name_from_email(self, create_session):
         """Test extracting person's name from email."""
         test_data = [
             ("john.smith@example.com", "John Smith"),
@@ -572,7 +572,7 @@ class TestEmailInformation:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "name", emails.extract_name_from_email(F.col("email"))
         )
@@ -583,7 +583,7 @@ class TestEmailInformation:
                 row["name"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['name']}'"
 
-    def test_get_email_provider(self, spark):
+    def test_get_email_provider(self, create_session):
         """Test getting email provider name."""
         test_data = [
             ("user@gmail.com", "Gmail"),
@@ -601,7 +601,7 @@ class TestEmailInformation:
             (None, "Other"),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("provider", emails.get_email_provider(F.col("email")))
 
         results = result_df.collect()
@@ -610,7 +610,7 @@ class TestEmailInformation:
                 row["provider"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['provider']}'"
 
-    def test_mask_email(self, spark):
+    def test_mask_email(self, create_session):
         """Test email masking for privacy."""
         test_data = [
             ("john.doe@example.com", "joh***@exa***.com"),
@@ -622,7 +622,7 @@ class TestEmailInformation:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn("masked", emails.mask_email(F.col("email")))
 
         results = result_df.collect()
@@ -636,7 +636,7 @@ class TestEmailInformation:
 class TestEmailFiltering:
     """Test email filtering functions."""
 
-    def test_filter_valid_emails(self, spark):
+    def test_filter_valid_emails(self, create_session):
         """Test filtering to keep only valid emails."""
         test_data = [
             ("john@example.com", "john@example.com"),
@@ -648,7 +648,7 @@ class TestEmailFiltering:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "filtered", emails.filter_valid_emails(F.col("email"))
         )
@@ -659,7 +659,7 @@ class TestEmailFiltering:
                 row["filtered"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
 
-    def test_filter_corporate_emails(self, spark):
+    def test_filter_corporate_emails(self, create_session):
         """Test filtering to keep only corporate emails."""
         test_data = [
             ("john@company.com", "john@company.com"),
@@ -670,7 +670,7 @@ class TestEmailFiltering:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "filtered", emails.filter_corporate_emails(F.col("email"))
         )
@@ -681,7 +681,7 @@ class TestEmailFiltering:
                 row["filtered"] == row["expected"]
             ), f"Failed for '{row['email']}': expected {row['expected']}, got {row['filtered']}"
 
-    def test_filter_non_disposable_emails(self, spark):
+    def test_filter_non_disposable_emails(self, create_session):
         """Test filtering to exclude disposable emails."""
         test_data = [
             ("john@gmail.com", "john@gmail.com"),
@@ -692,7 +692,7 @@ class TestEmailFiltering:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
         result_df = df.withColumn(
             "filtered", emails.filter_non_disposable_emails(F.col("email"))
         )
@@ -708,7 +708,7 @@ class TestEmailFiltering:
 class TestEmailEdgeCases:
     """Test edge cases and complex scenarios."""
 
-    def test_null_and_empty_handling(self, spark):
+    def test_null_and_empty_handling(self, create_session):
         """Test handling of null and empty values."""
         test_data = [
             (None,),
@@ -717,7 +717,7 @@ class TestEmailEdgeCases:
             ("\t\n",),
         ]
 
-        df = spark.createDataFrame(test_data, ["email"])
+        df = create_session.createDataFrame(test_data, ["email"])
 
         # Test without standardize_email to avoid memory issues
         result_df = df.select(
@@ -742,7 +742,7 @@ class TestEmailEdgeCases:
             else:
                 assert row["lowercased"] == row["email"].lower()
 
-    def test_international_domains(self, spark):
+    def test_international_domains(self, create_session):
         """Test handling of international domain names."""
         test_data = [
             ("user@münchen.de", True),
@@ -751,7 +751,7 @@ class TestEmailEdgeCases:
             ("user@example.中国", True),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["email", "expected_valid"])
         result_df = df.withColumn("domain", emails.extract_domain(F.col("email")))
 
         results = result_df.collect()
@@ -761,7 +761,7 @@ class TestEmailEdgeCases:
                 row["domain"] != ""
             ), f"Failed to extract domain from '{row['email']}'"
 
-    def test_very_long_emails(self, spark):
+    def test_very_long_emails(self, create_session):
         """Test handling of very long email addresses."""
         # Create a very long but valid email
         long_username = "a" * 64  # Max username length
@@ -774,7 +774,7 @@ class TestEmailEdgeCases:
             ("user@" + "a" * 300 + ".com", False),  # Domain too long
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["email", "expected_valid"])
         result_df = df.withColumn("is_valid", emails.is_valid_email(F.col("email")))
 
         results = result_df.collect()
@@ -783,7 +783,7 @@ class TestEmailEdgeCases:
                 row["is_valid"] == row["expected_valid"]
             ), f"Failed for long email: expected {row['expected_valid']}, got {row['is_valid']}"
 
-    def test_special_characters(self, spark):
+    def test_special_characters(self, create_session):
         """Test handling of special characters in emails."""
         test_data = [
             ("user!#$%@example.com", "user!#$%"),  # Special chars in username
@@ -792,7 +792,7 @@ class TestEmailEdgeCases:
             ("user@[192.168.1.1]", "[192.168.1.1]"),  # IP address domain
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected_part"])
+        df = create_session.createDataFrame(test_data, ["email", "expected_part"])
         result_df = df.select(
             F.col("email"),
             emails.extract_username(F.col("email")).alias("username"),
@@ -806,7 +806,7 @@ class TestEmailEdgeCases:
                 row["username"] != "" or row["domain"] != ""
             ), f"Failed to extract from '{row['email']}'"
 
-    def test_hash_email_sha256_basic(self, spark):
+    def test_hash_email_sha256_basic(self, create_session):
         """Test basic SHA256 hashing functionality for emails."""
         from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
             hash_email_sha256,
@@ -822,7 +822,7 @@ class TestEmailEdgeCases:
             (None,),
         ]
 
-        df = spark.createDataFrame(test_data, ["email"])
+        df = create_session.createDataFrame(test_data, ["email"])
 
         # Test hashing without standardization to avoid memory issues
         result_df = df.select(
@@ -841,7 +841,7 @@ class TestEmailEdgeCases:
         assert results[2]["hashed_email"] is None  # Invalid format
         assert results[3]["hashed_email"] is None  # Null input
 
-    def test_hash_email_sha256_with_salt(self, spark):
+    def test_hash_email_sha256_with_salt(self, create_session):
         """Test SHA256 hashing with salt parameter for emails."""
         from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
             hash_email_sha256,
@@ -852,7 +852,7 @@ class TestEmailEdgeCases:
             ("test@domain.org",),
         ]
 
-        df = spark.createDataFrame(test_data, ["email"])
+        df = create_session.createDataFrame(test_data, ["email"])
 
         # Test with different salts
         result_df = df.select(
@@ -870,7 +870,7 @@ class TestEmailEdgeCases:
                 assert len(result["no_salt"]) == 64
                 assert len(result["with_salt"]) == 64
 
-    def test_hash_email_sha256_canonicalization(self, spark):
+    def test_hash_email_sha256_canonicalization(self, create_session):
         """Test that canonicalization produces consistent hashes for emails."""
         from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
             hash_email_sha256,
@@ -884,7 +884,7 @@ class TestEmailEdgeCases:
             ("user@Example.com",),
         ]
 
-        df = spark.createDataFrame(test_data, ["email"])
+        df = create_session.createDataFrame(test_data, ["email"])
 
         # Test without standardization to avoid memory issues
         result_df = df.select(
@@ -908,7 +908,7 @@ class TestEmailEdgeCases:
         assert len(set(raw_hashes)) > 1  # Should be different without canonicalization
         assert canonical_hashes == raw_hashes  # Both columns should be identical
 
-    def test_hash_email_sha256_consistency(self, spark):
+    def test_hash_email_sha256_consistency(self, create_session):
         """Test that the same email input always produces the same hash."""
         from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
             hash_email_sha256,
@@ -918,7 +918,7 @@ class TestEmailEdgeCases:
 
         # Create multiple rows with the same email
         test_data = [(test_email,)] * 3
-        df = spark.createDataFrame(test_data, ["email"])
+        df = create_session.createDataFrame(test_data, ["email"])
 
         result_df = df.select(
             hash_email_sha256(F.col("email"), standardize_first=False).alias("hash1"),

@@ -12,7 +12,7 @@ from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import d
 @pytest.mark.unit
 class TestDatetimeExtraction:
 
-    def test_extract_datetime_from_text(self, spark):
+    def test_extract_datetime_from_text(self, create_session):
         """Test extracting datetime mentions from free text."""
 
         test_data = [
@@ -67,7 +67,7 @@ class TestDatetimeExtraction:
             ("In Q3 2024", "Q3 2024"),  # Quarter notation
         ]
 
-        df = spark.createDataFrame(test_data, ["text", "expected"])
+        df = create_session.createDataFrame(test_data, ["text", "expected"])
 
         result_df = df.withColumn(
             "datetime", datetimes.extract_datetime_from_text(F.col("text"))
@@ -80,7 +80,7 @@ class TestDatetimeExtraction:
                 row["datetime"] == row["expected"]
             ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['datetime']}'"
 
-    def test_standardize_iso(self, spark):
+    def test_standardize_iso(self, create_session):
         """Test converting various date formats to ISO 8601."""
 
         test_data = [
@@ -115,7 +115,7 @@ class TestDatetimeExtraction:
             ("invalid date", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "iso_date", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -127,7 +127,7 @@ class TestDatetimeExtraction:
                 row["iso_date"] == row["expected"]
             ), f"Failed for '{row['date_str']}': expected '{row['expected']}', got '{row['iso_date']}'"
 
-    def test_extract_components(self, spark):
+    def test_extract_components(self, create_session):
         """Test extracting year, month, day from various date formats."""
 
         test_data = [
@@ -153,7 +153,7 @@ class TestDatetimeExtraction:
             ("", None, None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_year", "expected_month", "expected_day"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_year", "expected_month", "expected_day"])
         result_df = df.withColumn(
             "year", datetimes.extract_year(F.col("date_str"))
         ).withColumn(
@@ -169,7 +169,7 @@ class TestDatetimeExtraction:
             assert row["month"] == row["expected_month"], f"Month extraction failed for '{row['date_str']}'"
             assert row["day"] == row["expected_day"], f"Day extraction failed for '{row['date_str']}'"
 
-    def test_validate_dates(self, spark):
+    def test_validate_dates(self, create_session):
         """Test date validation."""
 
         test_data = [
@@ -198,7 +198,7 @@ class TestDatetimeExtraction:
             ("", False),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_valid"])
         result_df = df.withColumn(
             "is_valid", datetimes.is_valid_date(F.col("date_str"))
         )
@@ -210,7 +210,7 @@ class TestDatetimeExtraction:
                 row["is_valid"] == row["expected_valid"]
             ), f"Validation failed for '{row['date_str']}': expected {row['expected_valid']}, got {row['is_valid']}"
 
-    def test_natural_language_parsing(self, spark):
+    def test_natural_language_parsing(self, create_session):
         """Test parsing natural language date expressions."""
 
         # Note: These would typically use a reference date for testing
@@ -235,7 +235,7 @@ class TestDatetimeExtraction:
             ("not a date expression", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["expression", "expected_interpretation"])
+        df = create_session.createDataFrame(test_data, ["expression", "expected_interpretation"])
 
         # Use current_date as reference
         result_df = df.withColumn(
@@ -251,7 +251,7 @@ class TestDatetimeExtraction:
 class TestDatetimeParsing:
     """Test datetime parsing with various formats."""
 
-    def test_parse_ambiguous_dates(self, spark):
+    def test_parse_ambiguous_dates(self, create_session):
         """Test handling of ambiguous date formats like 01/02/03."""
 
         test_data = [
@@ -266,7 +266,7 @@ class TestDatetimeParsing:
             ("10/10/10", "M/d/yyyy"),  # Same day/month, less ambiguous
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_format"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_format"])
         result_df = df.withColumn(
             "detected_format", datetimes.detect_format(F.col("date_str"))
         )
@@ -278,7 +278,7 @@ class TestDatetimeParsing:
             assert row["detected_format"] != "unknown", \
                 f"Failed to detect format for '{row['date_str']}'"
 
-    def test_parse_incomplete_dates(self, spark):
+    def test_parse_incomplete_dates(self, create_session):
         """Test parsing of incomplete date information."""
 
         test_data = [
@@ -307,7 +307,7 @@ class TestDatetimeParsing:
             ("FY 2024-25", "2024-04-01"),  # Some fiscal years
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "parsed", datetimes.parse_flexible(F.col("date_str"))
         )
@@ -315,7 +315,7 @@ class TestDatetimeParsing:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_parse_datetime_with_timezone(self, spark):
+    def test_parse_datetime_with_timezone(self, create_session):
         """Test parsing datetime strings with timezone information."""
 
         test_data = [
@@ -336,7 +336,7 @@ class TestDatetimeParsing:
             ("2024-01-15 1430A", "2024-01-15 13:30:00 UTC"),  # Alpha = UTC+1
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_utc"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_utc"])
         result_df = df.withColumn(
             "utc_time", datetimes.normalize_timezone(F.col("date_str"), F.lit("UTC"))
         )
@@ -344,7 +344,7 @@ class TestDatetimeParsing:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_parse_relative_dates_comprehensive(self, spark):
+    def test_parse_relative_dates_comprehensive(self, create_session):
         """Test comprehensive relative date parsing."""
 
         test_data = [
@@ -389,7 +389,7 @@ class TestDatetimeParsing:
             ("last Easter", None),
         ]
 
-        df = spark.createDataFrame(test_data, ["expression", "days_offset"])
+        df = create_session.createDataFrame(test_data, ["expression", "days_offset"])
         result_df = df.withColumn(
             "parsed", datetimes.parse_natural_language(F.col("expression"))
         )
@@ -402,7 +402,7 @@ class TestDatetimeParsing:
 class TestDatetimeValidation:
     """Test datetime validation edge cases."""
 
-    def test_leap_year_validation(self, spark):
+    def test_leap_year_validation(self, create_session):
         """Test leap year date validation."""
 
         test_data = [
@@ -423,7 +423,7 @@ class TestDatetimeValidation:
             ("2024-02-30", False),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_valid"])
         result_df = df.withColumn(
             "is_valid", datetimes.is_valid_date(F.col("date_str"))
         )
@@ -433,7 +433,7 @@ class TestDatetimeValidation:
             assert row["is_valid"] == row["expected_valid"], \
                 f"Leap year validation failed for {row['date_str']}"
 
-    def test_month_day_validation(self, spark):
+    def test_month_day_validation(self, create_session):
         """Test validation of days in different months."""
 
         test_data = [
@@ -463,7 +463,7 @@ class TestDatetimeValidation:
             ("2024-00-15", False),  # Invalid month
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_valid"])
         result_df = df.withColumn(
             "is_valid", datetimes.is_valid_date(F.col("date_str"))
         )
@@ -473,7 +473,7 @@ class TestDatetimeValidation:
             assert row["is_valid"] == row["expected_valid"], \
                 f"Month/day validation failed for {row['date_str']}"
 
-    def test_historical_date_validation(self, spark):
+    def test_historical_date_validation(self, create_session):
         """Test validation of historical and future dates."""
 
         test_data = [
@@ -498,7 +498,7 @@ class TestDatetimeValidation:
             ("1582-10-10", False),  # Doesn't exist (calendar transition)
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_valid"])
         result_df = df.withColumn(
             "is_valid", datetimes.is_valid_date(F.col("date_str"))
         )
@@ -511,7 +511,7 @@ class TestDatetimeValidation:
 class TestDatetimeArithmetic:
     """Test date arithmetic operations."""
 
-    def test_add_subtract_days(self, spark):
+    def test_add_subtract_days(self, create_session):
         """Test adding and subtracting days from dates."""
 
         test_data = [
@@ -534,7 +534,7 @@ class TestDatetimeArithmetic:
             ("2023-02-28", 1, "2023-03-01"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "days", "expected"])
+        df = create_session.createDataFrame(test_data, ["date", "days", "expected"])
         result_df = df.withColumn(
             "result", datetimes.add_days(F.col("date"), F.col("days"))
         )
@@ -542,7 +542,7 @@ class TestDatetimeArithmetic:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_add_subtract_months(self, spark):
+    def test_add_subtract_months(self, create_session):
         """Test adding and subtracting months from dates."""
 
         test_data = [
@@ -561,7 +561,7 @@ class TestDatetimeArithmetic:
             ("2024-01-15", -1, "2023-12-15"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "months", "expected"])
+        df = create_session.createDataFrame(test_data, ["date", "months", "expected"])
         result_df = df.withColumn(
             "result", datetimes.add_months(F.col("date"), F.col("months"))
         )
@@ -569,7 +569,7 @@ class TestDatetimeArithmetic:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_date_differences(self, spark):
+    def test_date_differences(self, create_session):
         """Test calculating differences between dates."""
 
         # Test days
@@ -578,7 +578,7 @@ class TestDatetimeArithmetic:
             ("2024-01-15", "2024-01-20", -5),
             ("2024-01-15", "2024-01-15", 0),
         ]
-        df = spark.createDataFrame(days_data, ["date1", "date2", "expected"])
+        df = create_session.createDataFrame(days_data, ["date1", "date2", "expected"])
         result_df = df.withColumn(
             "diff", datetimes.date_diff_days(F.col("date1"), F.col("date2"))
         )
@@ -591,7 +591,7 @@ class TestDatetimeArithmetic:
             ("2024-03-15", "2024-01-15", 2),
             ("2025-01-15", "2024-01-15", 12),
         ]
-        df = spark.createDataFrame(months_data, ["date1", "date2", "expected"])
+        df = create_session.createDataFrame(months_data, ["date1", "date2", "expected"])
         result_df = df.withColumn(
             "diff", datetimes.date_diff_months(F.col("date1"), F.col("date2"))
         )
@@ -604,7 +604,7 @@ class TestDatetimeArithmetic:
             ("2025-01-15", "2024-01-15", 1),
             ("2024-01-15", "2020-01-15", 4),
         ]
-        df = spark.createDataFrame(years_data, ["date1", "date2", "expected"])
+        df = create_session.createDataFrame(years_data, ["date1", "date2", "expected"])
         result_df = df.withColumn(
             "diff", datetimes.date_diff_years(F.col("date1"), F.col("date2"))
         )
@@ -616,7 +616,7 @@ class TestDatetimeArithmetic:
         hours_data = [
             ("2024-01-15 14:30:00", "2024-01-15 12:30:00", 2),
         ]
-        df = spark.createDataFrame(hours_data, ["date1", "date2", "expected"])
+        df = create_session.createDataFrame(hours_data, ["date1", "date2", "expected"])
         result_df = df.withColumn(
             "diff", datetimes.date_diff_hours(F.col("date1"), F.col("date2"))
         )
@@ -628,7 +628,7 @@ class TestDatetimeArithmetic:
         minutes_data = [
             ("2024-01-15 14:30:00", "2024-01-15 14:00:00", 30),
         ]
-        df = spark.createDataFrame(minutes_data, ["date1", "date2", "expected"])
+        df = create_session.createDataFrame(minutes_data, ["date1", "date2", "expected"])
         result_df = df.withColumn(
             "diff", datetimes.date_diff_minutes(F.col("date1"), F.col("date2"))
         )
@@ -640,7 +640,7 @@ class TestDatetimeArithmetic:
         seconds_data = [
             ("2024-01-15 14:30:30", "2024-01-15 14:30:00", 30),
         ]
-        df = spark.createDataFrame(seconds_data, ["date1", "date2", "expected"])
+        df = create_session.createDataFrame(seconds_data, ["date1", "date2", "expected"])
         result_df = df.withColumn(
             "diff", datetimes.date_diff_seconds(F.col("date1"), F.col("date2"))
         )
@@ -648,7 +648,7 @@ class TestDatetimeArithmetic:
             assert row["diff"] == row["expected"], \
                 f"Seconds diff failed: {row['date1']} - {row['date2']} = {row['diff']}, expected {row['expected']}"
 
-    def test_business_days_calculation(self, spark):
+    def test_business_days_calculation(self, create_session):
         """Test business days calculations."""
 
         test_data = [
@@ -670,7 +670,7 @@ class TestDatetimeArithmetic:
             ("2024-01-13", "2024-01-14", 0),  # Sat to Sun
         ]
 
-        df = spark.createDataFrame(test_data, ["start_date", "end_date", "expected_days"])
+        df = create_session.createDataFrame(test_data, ["start_date", "end_date", "expected_days"])
         result_df = df.withColumn(
             "business_days", datetimes.business_days_between(F.col("start_date"), F.col("end_date"))
         )
@@ -683,7 +683,7 @@ class TestDatetimeArithmetic:
 class TestDatetimeFormatting:
     """Test datetime formatting functions."""
 
-    def test_format_custom_patterns(self, spark):
+    def test_format_custom_patterns(self, create_session):
         """Test custom date formatting patterns."""
 
         test_date = "2024-01-15 14:30:45"
@@ -703,7 +703,7 @@ class TestDatetimeFormatting:
         ]
 
         for format_pattern, expected in test_cases:
-            df = spark.createDataFrame([(test_date,)], ["date"])
+            df = create_session.createDataFrame([(test_date,)], ["date"])
             result_df = df.withColumn(
                 "formatted", datetimes.format_date(F.col("date"), format=format_pattern)
             )
@@ -711,7 +711,7 @@ class TestDatetimeFormatting:
             assert result["formatted"] == expected, \
                 f"Format '{format_pattern}' failed: expected '{expected}', got '{result['formatted']}'"
 
-    def test_duration_formatting(self, spark):
+    def test_duration_formatting(self, create_session):
         """Test formatting durations in human-readable format."""
 
         test_data = [
@@ -750,7 +750,7 @@ class TestDatetimeFormatting:
             (-60, "-1 minute"),  # Negative duration
         ]
 
-        df = spark.createDataFrame(test_data, ["seconds", "expected"])
+        df = create_session.createDataFrame(test_data, ["seconds", "expected"])
         result_df = df.withColumn(
             "formatted", datetimes.format_duration(F.col("seconds"))
         )
@@ -763,7 +763,7 @@ class TestDatetimeFormatting:
 class TestDatetimeSpecialFunctions:
     """Test special datetime functions."""
 
-    def test_fiscal_periods(self, spark):
+    def test_fiscal_periods(self, create_session):
         """Test fiscal year and quarter calculations."""
 
         test_data = [
@@ -783,7 +783,7 @@ class TestDatetimeSpecialFunctions:
             ("2024-12-31", 1, 2024),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "fiscal_start_month", "expected_fy"])
+        df = create_session.createDataFrame(test_data, ["date", "fiscal_start_month", "expected_fy"])
         result_df = df.withColumn(
             "fiscal_year", datetimes.fiscal_year(F.col("date"), F.col("fiscal_start_month"))
         )
@@ -791,7 +791,7 @@ class TestDatetimeSpecialFunctions:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_quarter_operations(self, spark):
+    def test_quarter_operations(self, create_session):
         """Test quarter-related operations."""
 
         test_data = [
@@ -816,7 +816,7 @@ class TestDatetimeSpecialFunctions:
             ("2024-12-31", 4, "2024-10-01", "2024-12-31"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "expected_quarter", "expected_start", "expected_end"])
+        df = create_session.createDataFrame(test_data, ["date", "expected_quarter", "expected_start", "expected_end"])
         result_df = df.withColumn(
             "quarter", datetimes.extract_quarter(F.col("date"))
         ).withColumn(
@@ -828,7 +828,7 @@ class TestDatetimeSpecialFunctions:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_age_calculation(self, spark):
+    def test_age_calculation(self, create_session):
         """Test age calculation from birthdate."""
 
         # Using a fixed reference date for testing
@@ -848,7 +848,7 @@ class TestDatetimeSpecialFunctions:
             ("2000-02-29", "2024-03-01", 24),  # Birthday passed
         ]
 
-        df = spark.createDataFrame(test_data, ["birthdate", "reference", "expected_age"])
+        df = create_session.createDataFrame(test_data, ["birthdate", "reference", "expected_age"])
         result_df = df.withColumn(
             "age", datetimes.calculate_age(F.col("birthdate"), F.col("reference"))
         )
@@ -856,7 +856,7 @@ class TestDatetimeSpecialFunctions:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_week_operations(self, spark):
+    def test_week_operations(self, create_session):
         """Test week-related operations."""
 
         test_data = [
@@ -877,7 +877,7 @@ class TestDatetimeSpecialFunctions:
             ("2024-07-04", 27, "Thursday"),  # US Independence Day
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "expected_week", "expected_day"])
+        df = create_session.createDataFrame(test_data, ["date", "expected_week", "expected_day"])
         result_df = df.withColumn(
             "week_of_year", datetimes.extract_week_of_year(F.col("date"))
         ).withColumn(
@@ -892,7 +892,7 @@ class TestDatetimeSpecialFunctions:
 class TestDatetimeEdgeCases:
     """Test edge cases and error handling."""
 
-    def test_invalid_input_handling(self, spark):
+    def test_invalid_input_handling(self, create_session):
         """Test handling of invalid inputs."""
 
         test_data = [
@@ -908,7 +908,7 @@ class TestDatetimeEdgeCases:
             ("February 30, 2024",),
         ]
 
-        df = spark.createDataFrame(test_data, ["input"])
+        df = create_session.createDataFrame(test_data, ["input"])
 
         # Test multiple functions with invalid input
         result_df = df.select(
@@ -925,7 +925,7 @@ class TestDatetimeEdgeCases:
             assert not row["is_valid"]
             # Other columns should handle gracefully (return None or empty)
 
-    def test_extreme_dates(self, spark):
+    def test_extreme_dates(self, create_session):
         """Test handling of extreme past and future dates."""
 
         test_data = [
@@ -944,7 +944,7 @@ class TestDatetimeEdgeCases:
             ("-1000-01-01", False),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "should_be_valid"])
+        df = create_session.createDataFrame(test_data, ["date", "should_be_valid"])
         result_df = df.withColumn(
             "is_valid", datetimes.is_valid_date(F.col("date"))
         )
@@ -952,7 +952,7 @@ class TestDatetimeEdgeCases:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_daylight_saving_transitions(self, spark):
+    def test_daylight_saving_transitions(self, create_session):
         """Test handling of daylight saving time transitions."""
 
         test_data = [
@@ -967,7 +967,7 @@ class TestDatetimeEdgeCases:
             ("2024-12-15 12:00:00", "2024-12-15 12:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime", "expected"])
+        df = create_session.createDataFrame(test_data, ["datetime", "expected"])
         result_df = df.withColumn(
             "adjusted", datetimes.standardize_iso(F.col("datetime"))
         )
@@ -975,7 +975,7 @@ class TestDatetimeEdgeCases:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_unicode_and_special_characters(self, spark):
+    def test_unicode_and_special_characters(self, create_session):
         """Test handling of unicode and special characters in date strings."""
 
         test_data = [
@@ -988,7 +988,7 @@ class TestDatetimeEdgeCases:
             ("2024 01 15", "2024-01-15"),  # Space separator
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "parsed", datetimes.parse_flexible(F.col("date_str"))
         )

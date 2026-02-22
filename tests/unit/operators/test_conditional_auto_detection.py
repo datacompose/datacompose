@@ -10,7 +10,7 @@ from datacompose.operators.primitives import PrimitiveRegistry
 class TestConditionalAutoDetection:
     """Test automatic detection of conditional operators"""
 
-    def test_auto_detection_with_common_prefixes(self, spark):
+    def test_auto_detection_with_common_prefixes(self, create_session):
         """Test that common conditional prefixes are auto-detected"""
         ns = PrimitiveRegistry("auto_detect")
         
@@ -66,7 +66,7 @@ class TestConditionalAutoDetection:
         assert "is_valid" not in ns._primitives
         assert "has_value" not in ns._primitives
 
-    def test_non_conditional_functions(self, spark):
+    def test_non_conditional_functions(self, create_session):
         """Test that non-conditional functions are registered as transforms"""
         ns = PrimitiveRegistry("transforms")
         
@@ -97,7 +97,7 @@ class TestConditionalAutoDetection:
         assert "clean" not in ns._conditionals
         assert "transform" not in ns._conditionals
 
-    def test_explicit_conditional_override(self, spark):
+    def test_explicit_conditional_override(self, create_session):
         """Test explicit is_conditional flag overrides auto-detection"""
         ns = PrimitiveRegistry("override")
         
@@ -119,7 +119,7 @@ class TestConditionalAutoDetection:
         assert "is_uppercase_transform" in ns._primitives
         assert "is_uppercase_transform" not in ns._conditionals
 
-    def test_conditional_in_pipeline(self, spark):
+    def test_conditional_in_pipeline(self, create_session):
         """Test that auto-detected conditionals work in pipelines"""
         ns = PrimitiveRegistry("pipeline_test")
         
@@ -148,7 +148,7 @@ class TestConditionalAutoDetection:
         
         # Test with sample data
         data = [("hello",), ("WORLD",), ("",), (None,)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
         
         result = df.withColumn("processed", process_text(f.col("text")))
         collected = result.collect()
@@ -159,7 +159,7 @@ class TestConditionalAutoDetection:
         assert collected[2]["processed"] == ""  # empty string returns empty
         assert collected[3]["processed"] is None  # null, not valid
 
-    def test_all_conditional_patterns(self, spark):
+    def test_all_conditional_patterns(self, create_session):
         """Test all supported conditional naming patterns"""
         ns = PrimitiveRegistry("all_patterns")
         

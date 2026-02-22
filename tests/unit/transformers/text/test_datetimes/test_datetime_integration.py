@@ -14,7 +14,7 @@ from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import d
 class TestDatetimePipelineScenarios:
     """Test realistic data pipeline scenarios."""
 
-    def test_user_registration_pipeline(self, spark):
+    def test_user_registration_pipeline(self, create_session):
         """Test cleaning user registration dates from multiple sources."""
 
         # Simulate data from different systems with different formats
@@ -29,7 +29,7 @@ class TestDatetimePipelineScenarios:
             ("user_008", "invalid date", "csv_import"),          # Invalid data
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["user_id", "registration_date", "source_system"]
         )
 
@@ -61,7 +61,7 @@ class TestDatetimePipelineScenarios:
         valid_results = [r for r in results if r["clean_date"] is not None]
         assert len(valid_results) >= 5
 
-    def test_event_log_analysis_pipeline(self, spark):
+    def test_event_log_analysis_pipeline(self, create_session):
         """Test analyzing event logs with timestamps."""
 
         test_data = [
@@ -72,7 +72,7 @@ class TestDatetimePipelineScenarios:
             ("event_005", "2024-01-16 14:30:00", "session_start"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["event_id", "timestamp", "event_type"]
         )
 
@@ -94,7 +94,7 @@ class TestDatetimePipelineScenarios:
         results = result_df.collect()
         assert len(results) == 5
 
-    def test_financial_data_pipeline(self, spark):
+    def test_financial_data_pipeline(self, create_session):
         """Test processing financial transaction dates."""
 
         test_data = [
@@ -105,7 +105,7 @@ class TestDatetimePipelineScenarios:
             ("txn_005", "2024-04-01", 1000.00, "invoice"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["transaction_id", "date", "amount", "type"]
         )
 
@@ -128,7 +128,7 @@ class TestDatetimePipelineScenarios:
         results = result_df.collect()
         assert len(results) == 5
 
-    def test_customer_age_calculation_pipeline(self, spark):
+    def test_customer_age_calculation_pipeline(self, create_session):
         """Test calculating customer ages and segments."""
 
         test_data = [
@@ -139,7 +139,7 @@ class TestDatetimePipelineScenarios:
             ("cust_005", "1975-09-22", "Charlie Brown"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["customer_id", "birth_date", "name"]
         )
 
@@ -168,7 +168,7 @@ class TestDatetimePipelineScenarios:
 class TestDatetimeDataQualityPipeline:
     """Test data quality workflows for datetime data."""
 
-    def test_date_validation_and_flagging(self, spark):
+    def test_date_validation_and_flagging(self, create_session):
         """Test pipeline that validates and flags date issues."""
 
         test_data = [
@@ -181,7 +181,7 @@ class TestDatetimeDataQualityPipeline:
             ("rec_007", "2024-12-31", "valid"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["record_id", "date_field", "expected_issue"]
         )
 
@@ -211,7 +211,7 @@ class TestDatetimeDataQualityPipeline:
         assert "OK" in quality_flags
         assert "INVALID" in quality_flags or "NULL" in quality_flags
 
-    def test_date_range_validation(self, spark):
+    def test_date_range_validation(self, create_session):
         """Test validating dates are within acceptable ranges."""
 
         test_data = [
@@ -222,7 +222,7 @@ class TestDatetimeDataQualityPipeline:
             ("rec_005", "2024-12-31", True),   # Valid future
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["record_id", "date_field", "expected_in_range"]
         )
 
@@ -244,7 +244,7 @@ class TestDatetimeDataQualityPipeline:
         results = result_df.collect()
         assert len(results) == 5
 
-    def test_duplicate_detection_pipeline(self, spark):
+    def test_duplicate_detection_pipeline(self, create_session):
         """Test detecting and handling duplicate dates."""
 
         test_data = [
@@ -255,7 +255,7 @@ class TestDatetimeDataQualityPipeline:
             ("user_005", "January 15, 2024"),  # Same date again
         ]
 
-        df = spark.createDataFrame(test_data, ["user_id", "signup_date"])
+        df = create_session.createDataFrame(test_data, ["user_id", "signup_date"])
 
         # Dedupe pipeline
         result_df = df.withColumn(
@@ -278,7 +278,7 @@ class TestDatetimeDataQualityPipeline:
 class TestDatetimeTransformationChains:
     """Test chaining multiple datetime transformations."""
 
-    def test_parse_standardize_extract_chain(self, spark):
+    def test_parse_standardize_extract_chain(self, create_session):
         """Test chain: parse -> standardize -> extract components."""
 
         test_data = [
@@ -287,7 +287,7 @@ class TestDatetimeTransformationChains:
             ("January 15, 2024",),
         ]
 
-        df = spark.createDataFrame(test_data, ["original_date"])
+        df = create_session.createDataFrame(test_data, ["original_date"])
 
         # Transformation chain
         result_df = df.withColumn(
@@ -310,7 +310,7 @@ class TestDatetimeTransformationChains:
         results = result_df.collect()
         assert len(results) == 3
 
-    def test_date_arithmetic_chain(self, spark):
+    def test_date_arithmetic_chain(self, create_session):
         """Test chain of date arithmetic operations."""
 
         test_data = [
@@ -319,7 +319,7 @@ class TestDatetimeTransformationChains:
             ("2024-12-31",),
         ]
 
-        df = spark.createDataFrame(test_data, ["start_date"])
+        df = create_session.createDataFrame(test_data, ["start_date"])
 
         # Arithmetic chain
         result_df = df.withColumn(
@@ -337,7 +337,7 @@ class TestDatetimeTransformationChains:
         results = result_df.collect()
         assert len(results) == 3
 
-    def test_timezone_conversion_chain(self, spark):
+    def test_timezone_conversion_chain(self, create_session):
         """Test chain of timezone operations."""
 
         test_data = [
@@ -345,7 +345,7 @@ class TestDatetimeTransformationChains:
             ("2024-01-15 09:30:00",),    # Naive
         ]
 
-        df = spark.createDataFrame(test_data, ["timestamp"])
+        df = create_session.createDataFrame(test_data, ["timestamp"])
 
         # Timezone chain
         result_df = df.withColumn(
@@ -370,7 +370,7 @@ class TestDatetimeTransformationChains:
 class TestDatetimeEnrichmentPipeline:
     """Test pipelines that enrich data with datetime-derived fields."""
 
-    def test_add_calendar_dimensions(self, spark):
+    def test_add_calendar_dimensions(self, create_session):
         """Test adding calendar dimension fields for analytics."""
 
         test_data = [
@@ -379,7 +379,7 @@ class TestDatetimeEnrichmentPipeline:
             ("txn_003", "2024-12-25"),
         ]
 
-        df = spark.createDataFrame(test_data, ["transaction_id", "date"])
+        df = create_session.createDataFrame(test_data, ["transaction_id", "date"])
 
         # Enrichment pipeline
         result_df = df.withColumn(
@@ -404,7 +404,7 @@ class TestDatetimeEnrichmentPipeline:
         results = result_df.collect()
         assert len(results) == 3
 
-    def test_add_derived_dates(self, spark):
+    def test_add_derived_dates(self, create_session):
         """Test adding derived date fields."""
 
         test_data = [
@@ -412,7 +412,7 @@ class TestDatetimeEnrichmentPipeline:
             ("event_002", "2024-06-30"),
         ]
 
-        df = spark.createDataFrame(test_data, ["event_id", "event_date"])
+        df = create_session.createDataFrame(test_data, ["event_id", "event_date"])
 
         # Add derived dates
         result_df = df.withColumn(
@@ -437,7 +437,7 @@ class TestDatetimeEnrichmentPipeline:
         results = result_df.collect()
         assert len(results) == 2
 
-    def test_business_metrics_enrichment(self, spark):
+    def test_business_metrics_enrichment(self, create_session):
         """Test enriching with business-relevant datetime metrics."""
 
         test_data = [
@@ -445,7 +445,7 @@ class TestDatetimeEnrichmentPipeline:
             ("cust_002", "2024-02-10", "2024-04-15"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["customer_id", "signup_date", "first_purchase_date"]
         )
 

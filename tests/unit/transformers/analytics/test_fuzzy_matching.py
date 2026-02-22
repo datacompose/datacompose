@@ -9,7 +9,7 @@ from datacompose.transformers.analytics.fuzzy_matching.pyspark.pyspark_primitive
 
 
 @pytest.fixture
-def sample_df(spark):
+def sample_df(create_session):
     """Create a sample DataFrame for fuzzy matching tests."""
     data = [
         ("john", "jon"),
@@ -19,11 +19,11 @@ def sample_df(spark):
         ("", ""),
         (None, "test"),
     ]
-    return spark.createDataFrame(data, ["col_a", "col_b"])
+    return create_session.createDataFrame(data, ["col_a", "col_b"])
 
 
 @pytest.fixture
-def token_df(spark):
+def token_df(create_session):
     """Create a sample DataFrame for token-based tests."""
     data = [
         ("john smith", "smith john"),
@@ -31,7 +31,7 @@ def token_df(spark):
         ("hello world", "hello world"),
         ("a b c", "x y z"),
     ]
-    return spark.createDataFrame(data, ["col_a", "col_b"])
+    return create_session.createDataFrame(data, ["col_a", "col_b"])
 
 
 @pytest.mark.unit
@@ -69,9 +69,9 @@ class TestLevenshtein:
         # hello vs hello -> identical = 1.0
         assert result[2]["similarity"] == 1.0
 
-    def test_levenshtein_normalized_empty_strings(self, spark):
+    def test_levenshtein_normalized_empty_strings(self, create_session):
         """Test normalized Levenshtein with empty strings."""
-        df = spark.createDataFrame([("", "")], ["a", "b"])
+        df = create_session.createDataFrame([("", "")], ["a", "b"])
         result = df.select(
             fuzzy.levenshtein_normalized(F.col("a"), F.col("b")).alias("sim")
         ).collect()
@@ -127,9 +127,9 @@ class TestLevenshtein:
 class TestSoundex:
     """Test Soundex phonetic functions."""
 
-    def test_soundex_basic(self, spark):
+    def test_soundex_basic(self, create_session):
         """Test basic Soundex encoding."""
-        df = spark.createDataFrame([("Robert",), ("Rupert",)], ["name"])
+        df = create_session.createDataFrame([("Robert",), ("Rupert",)], ["name"])
         result = df.select(
             F.col("name"), fuzzy.soundex(F.col("name")).alias("code")
         ).collect()
@@ -137,9 +137,9 @@ class TestSoundex:
         # Robert and Rupert should have same Soundex code (R163)
         assert result[0]["code"] == result[1]["code"]
 
-    def test_soundex_match(self, spark):
+    def test_soundex_match(self, create_session):
         """Test Soundex matching between two columns."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("Smith", "Smyth"),
                 ("Robert", "Richard"),
@@ -185,9 +185,9 @@ class TestTokenBased:
         # "a b c" vs "x y z" -> no overlap = 0.0
         assert result[3]["jaccard"] == 0.0
 
-    def test_jaccard_similarity_partial_overlap(self, spark):
+    def test_jaccard_similarity_partial_overlap(self, create_session):
         """Test Jaccard with partial token overlap."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("a b c", "a b d"),  # 2 shared out of 4 unique = 0.5
             ],
@@ -219,9 +219,9 @@ class TestTokenBased:
 class TestUtilityFunctions:
     """Test utility matching functions."""
 
-    def test_exact_match_case_insensitive(self, spark):
+    def test_exact_match_case_insensitive(self, create_session):
         """Test exact match with case insensitivity."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("Hello", "hello"),
                 ("World", "WORLD"),
@@ -238,9 +238,9 @@ class TestUtilityFunctions:
         assert result[1]["match"] is True
         assert result[2]["match"] is False
 
-    def test_exact_match_case_sensitive(self, spark):
+    def test_exact_match_case_sensitive(self, create_session):
         """Test exact match with case sensitivity."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("Hello", "hello"),
                 ("Hello", "Hello"),
@@ -255,9 +255,9 @@ class TestUtilityFunctions:
         assert result[0]["match"] is False  # Different case
         assert result[1]["match"] is True  # Exact match
 
-    def test_contains_match(self, spark):
+    def test_contains_match(self, create_session):
         """Test contains match."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("hello world", "world"),
                 ("test", "testing"),
@@ -274,9 +274,9 @@ class TestUtilityFunctions:
         assert result[1]["contains"] is True  # "test" in "testing"
         assert result[2]["contains"] is False  # no containment
 
-    def test_prefix_match(self, spark):
+    def test_prefix_match(self, create_session):
         """Test prefix matching."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("Johnson", "Johnston"),
                 ("Smith", "Smyth"),
@@ -303,9 +303,9 @@ class TestUtilityFunctions:
 class TestConfiguredPrimitives:
     """Test pre-configured primitive usage."""
 
-    def test_configured_levenshtein_threshold(self, spark):
+    def test_configured_levenshtein_threshold(self, create_session):
         """Test using pre-configured Levenshtein threshold."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("hello", "hallo"),
                 ("abc", "xyz"),
@@ -328,9 +328,9 @@ class TestConfiguredPrimitives:
         assert strict_result[0]["match"] is False
         assert lenient_result[0]["match"] is True
 
-    def test_configured_jaccard_with_delimiter(self, spark):
+    def test_configured_jaccard_with_delimiter(self, create_session):
         """Test Jaccard with custom delimiter."""
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [
                 ("a,b,c", "a,b,d"),
             ],
@@ -350,34 +350,34 @@ class TestConfiguredPrimitives:
 class TestNgramSimilarity:
     """Test N-gram similarity functions."""
 
-    def test_ngram_similarity_identical(self, spark):
+    def test_ngram_similarity_identical(self, create_session):
         """Test N-gram similarity with identical strings."""
-        df = spark.createDataFrame([("hello", "hello")], ["a", "b"])
+        df = create_session.createDataFrame([("hello", "hello")], ["a", "b"])
         result = df.select(
             fuzzy.ngram_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()
         assert result[0]["sim"] == 1.0
 
-    def test_ngram_similarity_different(self, spark):
+    def test_ngram_similarity_different(self, create_session):
         """Test N-gram similarity with different strings."""
-        df = spark.createDataFrame([("abc", "xyz")], ["a", "b"])
+        df = create_session.createDataFrame([("abc", "xyz")], ["a", "b"])
         result = df.select(
             fuzzy.ngram_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()
         assert result[0]["sim"] == 0.0
 
-    def test_ngram_similarity_partial(self, spark):
+    def test_ngram_similarity_partial(self, create_session):
         """Test N-gram similarity with partial overlap."""
-        df = spark.createDataFrame([("hello", "hallo")], ["a", "b"])
+        df = create_session.createDataFrame([("hello", "hallo")], ["a", "b"])
         result = df.select(
             fuzzy.ngram_similarity(F.col("a"), F.col("b"), n=2).alias("sim")
         ).collect()
         # Should have some overlap but not perfect
         assert 0.0 < result[0]["sim"] < 1.0
 
-    def test_ngram_distance(self, spark):
+    def test_ngram_distance(self, create_session):
         """Test N-gram distance calculation."""
-        df = spark.createDataFrame([("hello", "hello")], ["a", "b"])
+        df = create_session.createDataFrame([("hello", "hello")], ["a", "b"])
         result = df.select(
             fuzzy.ngram_distance(F.col("a"), F.col("b")).alias("dist")
         ).collect()
@@ -388,26 +388,26 @@ class TestNgramSimilarity:
 class TestCosineSimilarity:
     """Test Cosine similarity function."""
 
-    def test_cosine_similarity_identical(self, spark):
+    def test_cosine_similarity_identical(self, create_session):
         """Test Cosine similarity with identical strings."""
-        df = spark.createDataFrame([("hello world", "hello world")], ["a", "b"])
+        df = create_session.createDataFrame([("hello world", "hello world")], ["a", "b"])
         result = df.select(
             fuzzy.cosine_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()
         # Use tolerance for floating point comparison
         assert abs(result[0]["sim"] - 1.0) < 0.0001
 
-    def test_cosine_similarity_no_overlap(self, spark):
+    def test_cosine_similarity_no_overlap(self, create_session):
         """Test Cosine similarity with no common tokens."""
-        df = spark.createDataFrame([("hello world", "foo bar")], ["a", "b"])
+        df = create_session.createDataFrame([("hello world", "foo bar")], ["a", "b"])
         result = df.select(
             fuzzy.cosine_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()
         assert result[0]["sim"] == 0.0
 
-    def test_cosine_similarity_partial(self, spark):
+    def test_cosine_similarity_partial(self, create_session):
         """Test Cosine similarity with partial overlap."""
-        df = spark.createDataFrame([("hello world", "hello there")], ["a", "b"])
+        df = create_session.createDataFrame([("hello world", "hello there")], ["a", "b"])
         result = df.select(
             fuzzy.cosine_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()

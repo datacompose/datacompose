@@ -19,11 +19,11 @@ from datacompose.operators.primitives import (  # noqa: E402
     _fallback_compose,
 )
 
-# Fixtures removed - using root conftest.py spark fixture
+# Fixtures removed - using root conftest.py create_session fixture
 
 
 @pytest.fixture
-def sample_df(spark):
+def sample_df(create_session):
     """Create a sample DataFrame for testing."""
     data = [
         ("  Hello World  ", 123, True),
@@ -31,14 +31,14 @@ def sample_df(spark):
         ("  Spark  ", 789, True),
         (None, 0, None),
     ]
-    return spark.createDataFrame(data, ["text", "number", "flag"])
+    return create_session.createDataFrame(data, ["text", "number", "flag"])
 
 
 @pytest.mark.unit
 class TestSmartPrimitive:
     """Test SmartPrimitive class functionality."""
 
-    def test_smart_primitive_direct_call(self, spark):
+    def test_smart_primitive_direct_call(self, create_session):
         """Test calling SmartPrimitive directly with a column."""
 
         def trim_func(col, chars=" "):
@@ -47,11 +47,11 @@ class TestSmartPrimitive:
         primitive = SmartPrimitive(trim_func, "trim")
 
         # Test direct call with column
-        df = spark.createDataFrame([("  test  ",)], ["text"])
+        df = create_session.createDataFrame([("  test  ",)], ["text"])
         result = df.select(primitive(F.col("text"))).collect()
         assert result[0][0] == "test"
 
-    def test_smart_primitive_configured_call(self, spark):
+    def test_smart_primitive_configured_call(self, create_session):
         """Test creating configured version of SmartPrimitive."""
 
         def replace_func(col, old=" ", new="_"):
@@ -65,7 +65,7 @@ class TestSmartPrimitive:
         assert "old= " in replace_spaces.__name__ or "old=" in replace_spaces.__name__
 
         # Test configured version
-        df = spark.createDataFrame([("hello world",)], ["text"])
+        df = create_session.createDataFrame([("hello world",)], ["text"])
         result = df.select(replace_spaces(F.col("text"))).collect()
         assert result[0][0] == "hello_world"
 
@@ -84,7 +84,7 @@ class TestSmartPrimitive:
         primitive2 = SmartPrimitive(test_func, "custom_name")
         assert primitive2.name == "custom_name"
 
-    def test_smart_primitive_multi_column_direct_call(self, spark):
+    def test_smart_primitive_multi_column_direct_call(self, create_session):
         """Test calling SmartPrimitive with multiple columns."""
 
         def compare_func(col1, col2):
@@ -93,11 +93,11 @@ class TestSmartPrimitive:
         primitive = SmartPrimitive(compare_func, "compare")
 
         # Test direct call with two columns
-        df = spark.createDataFrame([("hello", "hallo")], ["a", "b"])
+        df = create_session.createDataFrame([("hello", "hallo")], ["a", "b"])
         result = df.select(primitive(F.col("a"), F.col("b"))).collect()
         assert result[0][0] == 1  # Levenshtein distance of 1
 
-    def test_smart_primitive_multi_column_configured_call(self, spark):
+    def test_smart_primitive_multi_column_configured_call(self, create_session):
         """Test creating configured version of multi-column SmartPrimitive."""
 
         def compare_func(col1, col2, case_sensitive=True):
@@ -112,11 +112,11 @@ class TestSmartPrimitive:
         assert callable(case_insensitive)
 
         # Test configured version
-        df = spark.createDataFrame([("Hello", "hello")], ["a", "b"])
+        df = create_session.createDataFrame([("Hello", "hello")], ["a", "b"])
         result = df.select(case_insensitive(F.col("a"), F.col("b"))).collect()
         assert result[0][0] is True
 
-    def test_smart_primitive_multi_column_with_kwarg(self, spark):
+    def test_smart_primitive_multi_column_with_kwarg(self, create_session):
         """Test SmartPrimitive with two columns and a keyword arg in same call."""
 
         def compare_func(col1, col2, threshold=0.5):
@@ -130,7 +130,7 @@ class TestSmartPrimitive:
 
         primitive = SmartPrimitive(compare_func, "compare")
 
-        df = spark.createDataFrame([("hello", "hallo")], ["a", "b"])
+        df = create_session.createDataFrame([("hello", "hallo")], ["a", "b"])
 
         # Two columns + kwarg in same call
         result = df.select(primitive(F.col("a"), F.col("b"), threshold=0.7)).collect()
@@ -139,7 +139,7 @@ class TestSmartPrimitive:
         result = df.select(primitive(F.col("a"), F.col("b"), threshold=0.9)).collect()
         assert result[0][0] is False  # similarity ~0.8 < 0.9
 
-    def test_smart_primitive_multi_column_three_args(self, spark):
+    def test_smart_primitive_multi_column_three_args(self, create_session):
         """Test SmartPrimitive with three columns."""
 
         def concat_three(col1, col2, col3, sep=" "):
@@ -147,7 +147,7 @@ class TestSmartPrimitive:
 
         primitive = SmartPrimitive(concat_three, "concat_three")
 
-        df = spark.createDataFrame([("a", "b", "c")], ["x", "y", "z"])
+        df = create_session.createDataFrame([("a", "b", "c")], ["x", "y", "z"])
         result = df.select(primitive(F.col("x"), F.col("y"), F.col("z"))).collect()
         assert result[0][0] == "a b c"
 
@@ -222,7 +222,7 @@ class TestPrimitiveRegistry:
 class TestCompose:
     """Test compose decorator functionality."""
 
-    def test_compose_basic_pipeline(self, spark):
+    def test_compose_basic_pipeline(self, create_session):
         """Test basic compose pipeline."""
         registry = PrimitiveRegistry("test")
 
@@ -242,11 +242,11 @@ class TestCompose:
             test.trim()
             test.lower()
 
-        df = spark.createDataFrame([("  HELLO  ",)], ["text"])
+        df = create_session.createDataFrame([("  HELLO  ",)], ["text"])
         result = df.select(clean_text(F.col("text"))).collect()
         assert result[0][0] == "hello"
 
-    def test_compose_with_debug(self, spark, caplog):
+    def test_compose_with_debug(self, create_session, caplog):
         """Test compose with debug mode."""
         registry = PrimitiveRegistry("test")
 
@@ -262,13 +262,13 @@ class TestCompose:
             def make_upper():
                 test.upper()
 
-            df = spark.createDataFrame([("hello",)], ["text"])
+            df = create_session.createDataFrame([("hello",)], ["text"])
             result = df.select(make_upper(F.col("text"))).collect()
             assert result[0][0] == "HELLO"
             # Debug mode should log steps
             # Note: Debug logging might not be captured in all cases
 
-    def test_compose_with_steps(self, spark):
+    def test_compose_with_steps(self, create_session):
         """Test compose with pre-configured steps."""
         registry = PrimitiveRegistry("test")
 
@@ -283,11 +283,11 @@ class TestCompose:
         def pipeline():
             pass  # Body is ignored when steps are provided
 
-        df = spark.createDataFrame([("  hello  ",)], ["text"])
+        df = create_session.createDataFrame([("  hello  ",)], ["text"])
         result = df.select(pipeline(F.col("text"))).collect()
         assert result[0][0] == "HELLO"
 
-    def test_compose_inside_function_without_decorator_args(self, spark):
+    def test_compose_inside_function_without_decorator_args(self, create_session):
         """Test compose without arguments - fallback mode."""
         # Create global registry
         registry = PrimitiveRegistry("test")
@@ -303,7 +303,7 @@ class TestCompose:
         def reverse_text():
             test.reverse()
 
-        df = spark.createDataFrame([("hello",)], ["text"])
+        df = create_session.createDataFrame([("hello",)], ["text"])
         result = df.select(reverse_text(F.col("text"))).collect()
         # In fallback mode with no source, it returns identity function
         assert result[0][0] == "olleh"  # Not reversed
@@ -313,7 +313,7 @@ class TestCompose:
 class TestFallbackCompose:
     """Test _fallback_compose function."""
 
-    def test_fallback_compose_basic(self, spark):
+    def test_fallback_compose_basic(self, create_session):
         """Test fallback compose extracts sequential calls."""
         registry = PrimitiveRegistry("test")
 
@@ -329,11 +329,11 @@ class TestFallbackCompose:
         # Mock to force fallback
         pipeline = _fallback_compose(pipeline_func, {"test": registry}, False)
 
-        df = spark.createDataFrame([("  hello  ",)], ["text"])
+        df = create_session.createDataFrame([("  hello  ",)], ["text"])
         result = df.select(pipeline(F.col("text"))).collect()
         assert result[0][0] == "hello"
 
-    def test_fallback_compose_with_kwargs(self, spark):
+    def test_fallback_compose_with_kwargs(self, create_session):
         """Test fallback compose with keyword arguments."""
         registry = PrimitiveRegistry("test")
 
@@ -348,11 +348,11 @@ class TestFallbackCompose:
 
         pipeline = _fallback_compose(pipeline_func, {"test": registry}, False)
 
-        df = spark.createDataFrame([("hello world",)], ["text"])
+        df = create_session.createDataFrame([("hello world",)], ["text"])
         result = df.select(pipeline(F.col("text"))).collect()
         assert result[0][0] == "hello-world"
 
-    def test_fallback_compose_error_handling(self, spark):
+    def test_fallback_compose_error_handling(self, create_session):
         """Test fallback compose error handling returns identity."""
 
         def bad_func():
@@ -364,7 +364,7 @@ class TestFallbackCompose:
             pipeline = _fallback_compose(bad_func, {}, False)
 
         # Should return identity function
-        df = spark.createDataFrame([("test",)], ["text"])
+        df = create_session.createDataFrame([("test",)], ["text"])
         result = df.select(pipeline(F.col("text"))).collect()
         assert result[0][0] == "test"  # Unchanged
         assert "Failed to compile" in pipeline.__doc__

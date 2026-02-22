@@ -14,7 +14,7 @@ from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
 class TestApartmentExtraction:
     """Test apartment/unit number extraction."""
 
-    def test_extract_apartment_number(self, spark):
+    def test_extract_apartment_number(self, create_session):
         """Test extraction of apartment numbers in various formats."""
         test_data = [
             ("123 Main St Apt 5B", "5B"),
@@ -30,7 +30,7 @@ class TestApartmentExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -41,7 +41,7 @@ class TestApartmentExtraction:
                 row["apt_number"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
 
-    def test_extract_unit_type(self, spark):
+    def test_extract_unit_type(self, create_session):
         """Test extraction of unit type."""
         test_data = [
             ("123 Main St Apt 5B", "Apt"),
@@ -55,7 +55,7 @@ class TestApartmentExtraction:
             ("123 Main St", ""),  # No unit type
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "unit_type", addresses.extract_unit_type(F.col("address"))
         )
@@ -68,7 +68,7 @@ class TestApartmentExtraction:
                 or row["unit_type"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['unit_type']}'"
 
-    def test_extract_secondary_address(self, spark):
+    def test_extract_secondary_address(self, create_session):
         """Test extraction of complete secondary address."""
         test_data = [
             ("123 Main St Apt 5B", "Apt 5B"),
@@ -80,7 +80,7 @@ class TestApartmentExtraction:
             ("456 Oak Ave", ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected_extract"])
+        df = create_session.createDataFrame(test_data, ["address", "expected_extract"])
         result_df = df.withColumn(
             "secondary", addresses.extract_secondary_address(F.col("address"))
         )
@@ -97,7 +97,7 @@ class TestApartmentExtraction:
                     row["secondary"] == ""
                 ), f"Failed for '{row['address']}': expected empty, got '{row['secondary']}'"
 
-    def test_has_apartment(self, spark):
+    def test_has_apartment(self, create_session):
         """Test detection of apartment/unit presence."""
         test_data = [
             ("123 Main St Apt 5B", True),
@@ -109,7 +109,7 @@ class TestApartmentExtraction:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("has_apt", addresses.has_apartment(F.col("address")))
 
         results = result_df.collect()
@@ -118,7 +118,7 @@ class TestApartmentExtraction:
                 row["has_apt"] == row["expected"]
             ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_apt']}"
 
-    def test_remove_secondary_address(self, spark):
+    def test_remove_secondary_address(self, create_session):
         """Test removal of secondary address components."""
         test_data = [
             ("123 Main St Apt 5B", "123 Main St"),
@@ -130,7 +130,7 @@ class TestApartmentExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "cleaned", addresses.remove_secondary_address(F.col("address"))
         )
@@ -146,7 +146,7 @@ class TestApartmentExtraction:
 class TestFloorExtraction:
     """Test floor extraction functionality."""
 
-    def test_extract_floor(self, spark):
+    def test_extract_floor(self, create_session):
         """Test extraction of floor numbers."""
         test_data = [
             ("123 Main St, 5th Floor", "5"),
@@ -162,7 +162,7 @@ class TestFloorExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("floor", addresses.extract_floor(F.col("address")))
 
         results = result_df.collect()
@@ -171,7 +171,7 @@ class TestFloorExtraction:
                 row["floor"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
 
-    def test_floor_variations(self, spark):
+    def test_floor_variations(self, create_session):
         """Test various floor format variations."""
         test_data = [
             ("Ground Floor", ""),  # Not a numbered floor
@@ -182,7 +182,7 @@ class TestFloorExtraction:
             ("Floor 15, Room 1501", "15"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("floor", addresses.extract_floor(F.col("address")))
 
         results = result_df.collect()
@@ -196,7 +196,7 @@ class TestFloorExtraction:
 class TestBuildingExtraction:
     """Test building extraction functionality."""
 
-    def test_extract_building(self, spark):
+    def test_extract_building(self, create_session):
         """Test extraction of building identifiers."""
         test_data = [
             ("123 Main St, Building A", "A"),
@@ -212,7 +212,7 @@ class TestBuildingExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "building", addresses.extract_building(F.col("address"))
         )
@@ -228,7 +228,7 @@ class TestBuildingExtraction:
 class TestUnitStandardization:
     """Test unit type standardization."""
 
-    def test_standardize_unit_type(self, spark):
+    def test_standardize_unit_type(self, create_session):
         """Test standardization of unit types."""
         test_data = [
             ("Apartment", "Apt"),
@@ -251,7 +251,7 @@ class TestUnitStandardization:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
         result_df = df.withColumn(
             "standardized", addresses.standardize_unit_type(F.col("input"))
         )
@@ -262,7 +262,7 @@ class TestUnitStandardization:
                 row["standardized"] == row["expected"]
             ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_standardize_with_custom_mappings(self, spark):
+    def test_standardize_with_custom_mappings(self, create_session):
         """Test standardization with custom mappings."""
         custom_mappings = {
             "OFFICE": "Off",
@@ -277,7 +277,7 @@ class TestUnitStandardization:
             ("Suite",),  # Should use standard mapping
         ]
 
-        df = spark.createDataFrame(test_data, ["input"])
+        df = create_session.createDataFrame(test_data, ["input"])
         result_df = df.select(
             F.col("input"),
             addresses.standardize_unit_type(
@@ -292,7 +292,7 @@ class TestUnitStandardization:
         assert results[2]["custom"] == "B"
         assert results[3]["custom"] == "Ste"  # Standard mapping
 
-    def test_format_secondary_address(self, spark):
+    def test_format_secondary_address(self, create_session):
         """Test formatting of secondary addresses."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             format_secondary_address,
@@ -308,7 +308,7 @@ class TestUnitStandardization:
             (None, None, ""),  # Nulls
         ]
 
-        df = spark.createDataFrame(test_data, ["type", "number", "expected"])
+        df = create_session.createDataFrame(test_data, ["type", "number", "expected"])
         result_df = df.withColumn(
             "formatted",
             format_secondary_address(F.col("type"), F.col("number")),
@@ -325,7 +325,7 @@ class TestUnitStandardization:
 class TestComplexAddresses:
     """Test complex addresses with multiple components."""
 
-    def test_extract_all_components(self, spark):
+    def test_extract_all_components(self, create_session):
         """Test extracting all building/unit components from complex addresses."""
         test_data = [
             # Complex address with everything
@@ -364,7 +364,7 @@ class TestComplexAddresses:
         ]
 
         for address, expected in test_data:
-            df = spark.createDataFrame([(address,)], ["address"])
+            df = create_session.createDataFrame([(address,)], ["address"])
 
             result_df = df.select(
                 F.col("address"),
@@ -400,7 +400,7 @@ class TestComplexAddresses:
                     result["secondary"].lower() == expected["secondary"].lower()
                 ), f"Secondary address mismatch for '{address}'"
 
-    def test_edge_cases(self, spark):
+    def test_edge_cases(self, create_session):
         """Test edge cases for building/unit extraction."""
         test_data = [
             # Hyphenated apartment numbers
@@ -417,7 +417,7 @@ class TestComplexAddresses:
             ("111 First St Suite 1234567890", "1234567890"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -428,7 +428,7 @@ class TestComplexAddresses:
                 row["apt_number"].upper() == row["expected"].upper()
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
 
-    def test_null_and_empty_handling(self, spark):
+    def test_null_and_empty_handling(self, create_session):
         """Test handling of null and empty values."""
         test_data = [
             (None,),
@@ -437,7 +437,7 @@ class TestComplexAddresses:
             ("\t\n",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -462,7 +462,7 @@ class TestComplexAddresses:
 class TestAdditionalEdgeCases:
     """Test additional edge cases for building/unit extraction."""
 
-    def test_unconventional_formats(self, spark):
+    def test_unconventional_formats(self, create_session):
         """Test unconventional apartment/unit formats."""
         test_data = [
             # Fractional apartment numbers
@@ -486,7 +486,7 @@ class TestAdditionalEdgeCases:
             ("666 Sixth Ave Unit (B)", "(B)"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -497,7 +497,7 @@ class TestAdditionalEdgeCases:
                 row["apt_number"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
 
-    def test_international_formats(self, spark):
+    def test_international_formats(self, create_session):
         """Test international address formats."""
         test_data = [
             # British English
@@ -515,7 +515,7 @@ class TestAdditionalEdgeCases:
             ("222 Second Ave Étage 3", "3"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -526,7 +526,7 @@ class TestAdditionalEdgeCases:
             # This test documents expected behavior
             pass  # We'll check what actually gets extracted
 
-    def test_ambiguous_numbers(self, spark):
+    def test_ambiguous_numbers(self, create_session):
         """Test addresses with ambiguous number placements."""
         test_data = [
             # Number could be part of street or apartment
@@ -543,7 +543,7 @@ class TestAdditionalEdgeCases:
             ("321 Pine Rd Tower 1 Unit 2B", "2B"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -554,7 +554,7 @@ class TestAdditionalEdgeCases:
                 row["apt_number"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['apt_number']}'"
 
-    def test_special_characters(self, spark):
+    def test_special_characters(self, create_session):
         """Test addresses with special characters."""
         test_data = [
             # Various special characters
@@ -570,7 +570,7 @@ class TestAdditionalEdgeCases:
             ('222 Second Ave Unit "3A"', '"3A"'),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -580,7 +580,7 @@ class TestAdditionalEdgeCases:
             # Some special characters might be stripped or not recognized
             pass  # Document actual behavior
 
-    def test_floor_edge_cases(self, spark):
+    def test_floor_edge_cases(self, create_session):
         """Test edge cases for floor extraction."""
         test_data = [
             # Ordinal variations
@@ -600,7 +600,7 @@ class TestAdditionalEdgeCases:
             ("555 Fifth St, Floor 3 Front", "3"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("floor", addresses.extract_floor(F.col("address")))
 
         results = result_df.collect()
@@ -609,7 +609,7 @@ class TestAdditionalEdgeCases:
                 row["floor"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['floor']}'"
 
-    def test_building_edge_cases(self, spark):
+    def test_building_edge_cases(self, create_session):
         """Test edge cases for building extraction."""
         test_data = [
             # Numbers as building identifiers
@@ -629,7 +629,7 @@ class TestAdditionalEdgeCases:
             ("444 Fourth Ave, building D", "D"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "building", addresses.extract_building(F.col("address"))
         )
@@ -640,7 +640,7 @@ class TestAdditionalEdgeCases:
                 row["building"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['building']}'"
 
-    def test_malformed_addresses(self, spark):
+    def test_malformed_addresses(self, create_session):
         """Test handling of malformed addresses."""
         test_data = [
             # Extra spaces
@@ -660,7 +660,7 @@ class TestAdditionalEdgeCases:
             ("444 Fourth Ave Unit # Flat", ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )
@@ -670,7 +670,7 @@ class TestAdditionalEdgeCases:
             # Some malformed addresses might not parse as expected
             pass  # Document actual behavior
 
-    def test_concatenated_components(self, spark):
+    def test_concatenated_components(self, create_session):
         """Test addresses where components run together."""
         test_data = [
             # No comma separation
@@ -703,7 +703,7 @@ class TestAdditionalEdgeCases:
         ]
 
         for address, expected in test_data:
-            df = spark.createDataFrame([(address,)], ["address"])
+            df = create_session.createDataFrame([(address,)], ["address"])
 
             result_df = df.select(
                 F.col("address"),
@@ -726,7 +726,7 @@ class TestAdditionalEdgeCases:
                 result["building"] == expected["building"]
             ), f"Building mismatch for '{address}'"
 
-    def test_duplicate_indicators(self, spark):
+    def test_duplicate_indicators(self, create_session):
         """Test addresses with duplicate unit indicators."""
         test_data = [
             # Multiple "Apt" indicators
@@ -739,7 +739,7 @@ class TestAdditionalEdgeCases:
             ("654 Maple Dr Apt (Suite 5)", "(Suite 5)"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "apt_number", addresses.extract_apartment_number(F.col("address"))
         )

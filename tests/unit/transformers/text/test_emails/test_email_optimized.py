@@ -11,14 +11,14 @@ from datacompose.transformers.text.emails.pyspark.pyspark_primitives import (
 )
 
 
-def fix_typos_optimized(spark, email_df, email_col="email"):
+def fix_typos_optimized(create_session, email_df, email_col="email"):
     """
     Fix email typos using broadcast join instead of nested when/otherwise.
     Much more efficient for large numbers of typo mappings.
     """
     # Create typo mapping DataFrame
     typo_data = [(k, v) for k, v in DOMAIN_TYPO_MAPPINGS.items()]
-    typo_df = spark.createDataFrame(typo_data, ["typo_domain", "correct_domain"])
+    typo_df = create_session.createDataFrame(typo_data, ["typo_domain", "correct_domain"])
 
     # Extract domain and join with typo mappings
     result_df = (
@@ -49,7 +49,7 @@ def fix_typos_optimized(spark, email_df, email_col="email"):
 class TestOptimizedEmailFunctions:
     """Test optimized email processing approaches."""
 
-    def test_fix_typos_with_broadcast_join(self, spark):
+    def test_fix_typos_with_broadcast_join(self, create_session):
         """Test typo fixing using broadcast join approach."""
         test_data = [
             ("user@gmai.com", "user@gmail.com"),
@@ -60,10 +60,10 @@ class TestOptimizedEmailFunctions:
         ]
 
         # Create test DataFrame
-        df = spark.createDataFrame([(row[0],) for row in test_data], ["email"])
+        df = create_session.createDataFrame([(row[0],) for row in test_data], ["email"])
 
         # Apply optimized typo fixing
-        result_df = fix_typos_optimized(spark, df)
+        result_df = fix_typos_optimized(create_session, df)
 
         # Collect results
         results = result_df.collect()
@@ -76,7 +76,7 @@ class TestOptimizedEmailFunctions:
                 result["fixed_email"] == expected
             ), f"Failed for '{original}': expected '{expected}', got '{result['fixed_email']}'"
 
-    def test_standardize_email_simplified(self, spark):
+    def test_standardize_email_simplified(self, create_session):
         """Test simplified email standardization without deep nesting."""
         test_data = [
             ("  user@gmail.com  ", "user@gmail.com"),
@@ -84,7 +84,7 @@ class TestOptimizedEmailFunctions:
             ("admin@HOTMAIL.COM", "admin@hotmail.com"),
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
 
         # Apply individual operations instead of complex standardize_email
         result_df = (
@@ -99,7 +99,7 @@ class TestOptimizedEmailFunctions:
                 row["result"] == row["expected"]
             ), f"Failed for '{row['email']}': expected '{row['expected']}', got '{row['result']}'"
 
-    def test_gmail_normalization_simplified(self, spark):
+    def test_gmail_normalization_simplified(self, create_session):
         """Test Gmail normalization using individual operations."""
         test_data = [
             ("john.doe+work@gmail.com", "johndoe@gmail.com"),
@@ -107,7 +107,7 @@ class TestOptimizedEmailFunctions:
             ("regular@yahoo.com", "regular@yahoo.com"),  # Not Gmail
         ]
 
-        df = spark.createDataFrame(test_data, ["email", "expected"])
+        df = create_session.createDataFrame(test_data, ["email", "expected"])
 
         # Check if Gmail and apply operations conditionally
         result_df = (
@@ -142,11 +142,11 @@ class TestOptimizedEmailFunctions:
 class TestBestPractices:
     """Test recommended usage patterns for email functions."""
 
-    def test_use_individual_functions(self, spark):
+    def test_use_individual_functions(self, create_session):
         """Demonstrate using individual functions instead of complex compositions."""
         email = "  John.Doe+work@Gmail.COM  "
 
-        df = spark.createDataFrame([(email,)], ["email"])
+        df = create_session.createDataFrame([(email,)], ["email"])
 
         # Step-by-step processing (recommended)
         result_df = (
@@ -172,7 +172,7 @@ class TestBestPractices:
         assert result["step3_no_plus"] == "john.doe@gmail.com"
         assert result["step4_no_dots"] == "johndoe@gmail.com"
 
-    def test_batch_processing_pattern(self, spark):
+    def test_batch_processing_pattern(self, create_session):
         """Test efficient batch processing pattern."""
         # Large batch of emails
         test_emails = [
@@ -183,7 +183,7 @@ class TestBestPractices:
             "user5@outlook.com",
         ] * 100  # Simulate 500 emails
 
-        df = spark.createDataFrame([(e,) for e in test_emails], ["email"])
+        df = create_session.createDataFrame([(e,) for e in test_emails], ["email"])
 
         # Process in batch with simple operations
         result_df = (

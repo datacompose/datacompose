@@ -21,7 +21,7 @@ from tests.unit.transformers.text.test_addresses.test_data_addresses import (
 class TestCityStateExtraction:
     """Test city and state extraction functionality."""
 
-    def test_extract_city(self, spark):
+    def test_extract_city(self, create_session):
         """Test city extraction from various address formats."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
@@ -30,7 +30,7 @@ class TestCityStateExtraction:
         # Use test data from test_data_addresses.py
         test_data = CITY_STATE_TEST_DATA[:10]  # Test first 10 cases
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [(d[0], d[1]) for d in test_data], ["address", "expected_city"]
         )
 
@@ -43,7 +43,7 @@ class TestCityStateExtraction:
                 row["extracted_city"].lower() == row["expected_city"].lower()
             ), f"City extraction failed for '{row['address']}': expected '{row['expected_city']}', got '{row['extracted_city']}'"
 
-    def test_extract_state(self, spark):
+    def test_extract_state(self, create_session):
         """Test state extraction and standardization."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_state,
@@ -52,7 +52,7 @@ class TestCityStateExtraction:
         # Use test data
         test_data = CITY_STATE_TEST_DATA[:15]  # Test various formats
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [(d[0], d[2]) for d in test_data], ["address", "expected_state"]
         )
 
@@ -64,7 +64,7 @@ class TestCityStateExtraction:
                 row["extracted_state"] == row["expected_state"]
             ), f"State extraction failed for '{row['address']}': expected '{row['expected_state']}', got '{row['extracted_state']}'"
 
-    def test_validate_state(self, spark):
+    def test_validate_state(self, create_session):
         """Test state validation."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_state,
@@ -73,7 +73,7 @@ class TestCityStateExtraction:
         # Use validation test data
         test_data = STATE_VALIDATION_DATA[:10]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             [(d[0], d[1]) for d in test_data], ["state", "expected_valid"]
         )
 
@@ -85,7 +85,7 @@ class TestCityStateExtraction:
                 row["is_valid"] == row["expected_valid"]
             ), f"State validation failed for '{row['state']}': expected {row['expected_valid']}, got {row['is_valid']}"
 
-    def test_standardize_state(self, spark):
+    def test_standardize_state(self, create_session):
         """Test state standardization."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             standardize_state,
@@ -104,7 +104,7 @@ class TestCityStateExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
         result_df = df.withColumn("standardized", standardize_state(F.col("input")))
 
         results = result_df.collect()
@@ -113,7 +113,7 @@ class TestCityStateExtraction:
                 row["standardized"] == row["expected"]
             ), f"Standardization failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_get_state_name(self, spark):
+    def test_get_state_name(self, create_session):
         """Test converting state abbreviation to full name."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             get_state_name,
@@ -131,7 +131,7 @@ class TestCityStateExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["abbrev", "expected"])
+        df = create_session.createDataFrame(test_data, ["abbrev", "expected"])
         result_df = df.withColumn("full_name", get_state_name(F.col("abbrev")))
 
         results = result_df.collect()
@@ -140,7 +140,7 @@ class TestCityStateExtraction:
                 row["full_name"] == row["expected"]
             ), f"State name lookup failed for '{row['abbrev']}': expected '{row['expected']}', got '{row['full_name']}'"
 
-    def test_city_extraction_edge_cases(self, spark):
+    def test_city_extraction_edge_cases(self, create_session):
         """Test city extraction with edge cases."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
@@ -160,7 +160,7 @@ class TestCityStateExtraction:
             # ("123 Main St, Suite 100, Boston, MA 02101", "Boston"),
         ]
 
-        df = spark.createDataFrame(edge_cases, ["address", "expected"])
+        df = create_session.createDataFrame(edge_cases, ["address", "expected"])
         result_df = df.withColumn("city", extract_city(F.col("address")))
 
         results = result_df.collect()
@@ -170,7 +170,7 @@ class TestCityStateExtraction:
                     row["city"].lower() == row["expected"].lower()
                 ), f"Edge case failed for '{row['address']}': expected '{row['expected']}', got '{row['city']}'"
 
-    def test_combined_city_state_extraction(self, spark):
+    def test_combined_city_state_extraction(self, create_session):
         """Test extracting both city and state together."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
@@ -184,7 +184,7 @@ class TestCityStateExtraction:
             ("123 Main St, Boston, MA 02134", "Boston", "MA"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_addresses, ["address", "expected_city", "expected_state"]
         )
 
@@ -201,7 +201,7 @@ class TestCityStateExtraction:
                 row["state"] == row["expected_state"]
             ), f"State extraction failed for '{row['address']}'"
 
-    def test_null_safety(self, spark):
+    def test_null_safety(self, create_session):
         """Test that all functions handle nulls safely."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
@@ -212,7 +212,7 @@ class TestCityStateExtraction:
         )
 
         # Create DataFrame with nulls
-        df = spark.createDataFrame([(None,), ("",), ("   ",)], ["text"])
+        df = create_session.createDataFrame([(None,), ("",), ("   ",)], ["text"])
 
         # Apply all functions - none should throw errors
         result_df = (
@@ -233,7 +233,7 @@ class TestCityStateExtraction:
             assert row["standardized"] == ""
             assert row["full_name"] == ""
 
-    def test_case_insensitive_extraction(self, spark):
+    def test_case_insensitive_extraction(self, create_session):
         """Test that extraction works regardless of case."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_city,
@@ -247,7 +247,7 @@ class TestCityStateExtraction:
             ("BOSTON, massachusetts 02134", "BOSTON", "MA"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_cases, ["address", "expected_city", "expected_state"]
         )
 
@@ -264,7 +264,7 @@ class TestCityStateExtraction:
                 row["state"] == row["expected_state"]
             ), f"Case-insensitive state extraction failed for '{row['address']}'"
 
-    def test_territories_support(self, spark):
+    def test_territories_support(self, create_session):
         """Test support for US territories."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_state,
@@ -280,7 +280,7 @@ class TestCityStateExtraction:
         ]
 
         for address, expected_abbrev, expected_name in territories:
-            df = spark.createDataFrame([(address,)], ["text"])
+            df = create_session.createDataFrame([(address,)], ["text"])
 
             result_df = (
                 df.withColumn("state", extract_state(F.col("text")))
@@ -305,7 +305,7 @@ class TestCityStateExtraction:
 class TestExtensibility:
     """Test custom cities and states functionality."""
 
-    def test_extract_city_with_custom_cities(self, spark):
+    def test_extract_city_with_custom_cities(self, create_session):
         """Test city extraction with custom city list."""
         # Create test data with ambiguous city names
         schema = StructType([StructField("address", StringType(), True)])
@@ -314,7 +314,7 @@ class TestExtensibility:
             ("456 Oak Ave, Mobile, AL 36601",),  # Could be confused with adjective
             ("789 Elm St, Worcester, MA 01601",),  # Regular city
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Test with custom cities
         custom_cities = ["Reading", "Mobile"]
@@ -329,14 +329,14 @@ class TestExtensibility:
         assert result[1].city == "Mobile"
         assert result[2].city == "Worcester"
 
-    def test_extract_city_preconfigured(self, spark):
+    def test_extract_city_preconfigured(self, create_session):
         """Test pre-configured city extractor."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
             ("123 Main St, Reading, PA 19601",),
             ("456 Oak Ave, Mobile, AL 36601",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Create pre-configured extractor
         extract_city_custom = addresses.extract_city(
@@ -350,7 +350,7 @@ class TestExtensibility:
         assert result[0].city == "Reading"
         assert result[1].city == "Mobile"
 
-    def test_extract_state_with_custom_states(self, spark):
+    def test_extract_state_with_custom_states(self, create_session):
         """Test state extraction with Canadian provinces."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -360,7 +360,7 @@ class TestExtensibility:
             ("321 Pine St, Calgary, Alberta T2P 1J9",),
             ("654 Maple St, New York, NY 10001",),  # US state for comparison
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Canadian provinces mapping
         canadian_provinces = {
@@ -392,14 +392,14 @@ class TestExtensibility:
         assert result[3].state == "AB"
         assert result[4].state == "NY"  # US state should still work
 
-    def test_extract_state_preconfigured(self, spark):
+    def test_extract_state_preconfigured(self, create_session):
         """Test pre-configured state extractor."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
             ("123 Main St, Toronto, ON M5V 3A8",),
             ("456 Oak Ave, Montreal, QC H3B 4W5",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Create pre-configured extractor for Canadian provinces
         canadian_provinces = {"ONTARIO": "ON", "QUEBEC": "QC", "BRITISH COLUMBIA": "BC"}
@@ -412,7 +412,7 @@ class TestExtensibility:
         assert result[0].state == "ON"
         assert result[1].state == "QC"
 
-    def test_mixed_us_and_custom_states(self, spark):
+    def test_mixed_us_and_custom_states(self, create_session):
         """Test that custom states work alongside US states."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -421,7 +421,7 @@ class TestExtensibility:
             ("789 Elm St, Vancouver, British Columbia",),
             ("321 Pine St, Los Angeles, California",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Add just a few Canadian provinces
         custom_states = {"ONTARIO": "ON", "BRITISH COLUMBIA": "BC"}
@@ -438,7 +438,7 @@ class TestExtensibility:
         assert result[2].state == "BC"  # Custom state
         assert result[3].state == "CA"  # US state
 
-    def test_case_insensitive_custom_cities(self, spark):
+    def test_case_insensitive_custom_cities(self, create_session):
         """Test that custom cities are case-insensitive."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -446,7 +446,7 @@ class TestExtensibility:
             ("456 Oak Ave, MOBILE, AL 36601",),  # uppercase
             ("789 Elm St, MoBiLe, AL 36601",),  # mixed case
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Custom cities in various cases
         custom_cities = ["READING", "mobile"]  # Different cases
@@ -463,13 +463,13 @@ class TestExtensibility:
         assert result[1].city in ["Mobile", "MOBILE", "mobile"]
         assert result[2].city in ["Mobile", "MoBiLe", "mobile"]
 
-    def test_empty_custom_lists(self, spark):
+    def test_empty_custom_lists(self, create_session):
         """Test that empty custom lists don't break functionality."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
             ("123 Main St, New York, NY 10001",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Test with empty custom cities
         result1 = df.select(
@@ -483,13 +483,13 @@ class TestExtensibility:
         ).collect()
         assert result2[0].state == "NY"
 
-    def test_none_custom_parameters(self, spark):
+    def test_none_custom_parameters(self, create_session):
         """Test that None custom parameters use defaults."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
             ("123 Main St, New York, NY 10001",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Test with None (default behavior)
         result1 = df.select(
@@ -502,7 +502,7 @@ class TestExtensibility:
         ).collect()
         assert result2[0].state == "NY"
 
-    def test_multiword_custom_cities(self, spark):
+    def test_multiword_custom_cities(self, create_session):
         """Test extraction of multi-word custom cities."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -511,7 +511,7 @@ class TestExtensibility:
             ("789 Elm St, Los Angeles, CA 90001",),
             ("321 Pine St, Saint Paul, MN 55101",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Test with multi-word custom cities
         custom_cities = ["Salt Lake City", "San Francisco", "Los Angeles", "Saint Paul"]
@@ -527,7 +527,7 @@ class TestExtensibility:
         assert result[2].city == "Los Angeles"
         assert result[3].city == "Saint Paul"
 
-    def test_overlapping_custom_cities(self, spark):
+    def test_overlapping_custom_cities(self, create_session):
         """Test when custom cities have overlapping names."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -537,7 +537,7 @@ class TestExtensibility:
                 "789 Elm St, Mexico, MO 65265",
             ),  # Should match "Mexico", not "New Mexico"
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Custom cities with potential overlaps
         custom_cities = ["York", "New York", "Mexico", "New Mexico"]
@@ -552,7 +552,7 @@ class TestExtensibility:
         assert result[1].city == "New York"
         assert result[2].city == "Mexico"
 
-    def test_custom_state_abbreviation_conflict(self, spark):
+    def test_custom_state_abbreviation_conflict(self, create_session):
         """Test custom states that might conflict with US states."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -560,7 +560,7 @@ class TestExtensibility:
             ("456 Oak Ave, Toronto, ON M5V 3A8",),  # Ontario (custom)
             ("789 Elm St, Boston, MA 02101",),  # US Massachusetts
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Add custom state that doesn't conflict
         custom_states = {"ONTARIO": "ON"}  # ON doesn't conflict with existing US states
@@ -576,7 +576,7 @@ class TestExtensibility:
         assert result[1].state == "ON"  # Custom state
         assert result[2].state == "MA"  # US state
 
-    def test_international_postal_codes(self, spark):
+    def test_international_postal_codes(self, create_session):
         """Test state extraction with international postal codes."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -586,7 +586,7 @@ class TestExtensibility:
             # UK-style (though we're treating as Canadian province)
             ("789 High St, London, Ontario N6A 1H3",),
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         canadian_provinces = {
             "ONTARIO": "ON",
@@ -605,7 +605,7 @@ class TestExtensibility:
         assert result[1].state == "BC"
         assert result[2].state == "ON"
 
-    def test_special_characters_in_custom_cities(self, spark):
+    def test_special_characters_in_custom_cities(self, create_session):
         """Test custom cities with special characters."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -613,7 +613,7 @@ class TestExtensibility:
             ("456 Oak Ave, Coeur d'Alene, ID 83814",),  # City with apostrophe
             ("789 Elm St, St. Louis, MO 63101",),  # City with period
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Custom cities with special characters
         custom_cities = ["L'Anse", "Coeur d'Alene", "St. Louis"]
@@ -630,7 +630,7 @@ class TestExtensibility:
         assert result[1].city in ["Coeur D'Alene", "Coeur d'Alene", "Coeur D'alene"]
         assert result[2].city in ["St. Louis", "St. louis"]
 
-    def test_whitespace_variations_custom_cities(self, spark):
+    def test_whitespace_variations_custom_cities(self, create_session):
         """Test custom cities with different whitespace."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
@@ -638,7 +638,7 @@ class TestExtensibility:
             ("456 Oak Ave ,  Los Angeles  , CA 90001",),  # Extra spaces
             ("789 Elm St,\tSan Francisco\t,\tCA 94102",),  # Tabs
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         custom_cities = ["New York", "Los Angeles", "San Francisco"]
         result = df.select(
@@ -652,7 +652,7 @@ class TestExtensibility:
         assert result[1].city.strip() == "Los Angeles"
         assert result[2].city.strip() == "San Francisco"
 
-    def test_validate_city(self, spark):
+    def test_validate_city(self, create_session):
         """Test city validation functionality."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             addresses,
@@ -673,7 +673,7 @@ class TestExtensibility:
             ("City@123",),  # Invalid - special characters
             ("New!York",),  # Invalid - exclamation
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Basic validation
         result = df.select(
@@ -706,7 +706,7 @@ class TestExtensibility:
         assert result2[1].is_valid  # Los Angeles - in list
         assert not result2[2].is_valid  # St. Louis - not in list
 
-    def test_standardize_city(self, spark):
+    def test_standardize_city(self, create_session):
         """Test city name standardization."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             addresses,
@@ -724,7 +724,7 @@ class TestExtensibility:
             (None,),  # Handle null
             ("",),  # Handle empty
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         # Basic standardization
         result = df.select(
@@ -755,7 +755,7 @@ class TestExtensibility:
             ("SF",),
             ("stlouis",),
         ]
-        df2 = spark.createDataFrame(data2, schema)
+        df2 = create_session.createDataFrame(data2, schema)
 
         result2 = df2.select(
             F.col("city"),
@@ -769,14 +769,14 @@ class TestExtensibility:
         assert result2[2].standardized == "San Francisco"
         assert result2[3].standardized == "St. Louis"
 
-    def test_numeric_in_custom_cities(self, spark):
+    def test_numeric_in_custom_cities(self, create_session):
         """Test custom cities with numbers in their names."""
         schema = StructType([StructField("address", StringType(), True)])
         data = [
             ("123 Main St, 29 Palms, CA 92277",),  # City starting with number
             ("456 Oak Ave, Twentynine Palms, CA 92277",),  # Spelled out number
         ]
-        df = spark.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, schema)
 
         custom_cities = ["29 Palms", "Twentynine Palms"]
         result = df.select(

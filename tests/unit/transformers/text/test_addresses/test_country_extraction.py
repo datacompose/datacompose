@@ -10,7 +10,7 @@ from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
 class TestCountryExtraction:
     """Test country extraction functionality."""
 
-    def test_extract_country(self, spark):
+    def test_extract_country(self, create_session):
         """Test extraction of country from addresses."""
         test_data = [
             # Common variations
@@ -33,7 +33,7 @@ class TestCountryExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "country", addresses.extract_country(F.col("address"))
         )
@@ -44,7 +44,7 @@ class TestCountryExtraction:
                 row["country"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['country']}'"
 
-    def test_has_country(self, spark):
+    def test_has_country(self, create_session):
         """Test detection of country in address."""
         test_data = [
             ("123 Main St, USA", True),
@@ -56,7 +56,7 @@ class TestCountryExtraction:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "has_country", addresses.has_country(F.col("address"))
         )
@@ -67,7 +67,7 @@ class TestCountryExtraction:
                 row["has_country"] == row["expected"]
             ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_country']}"
 
-    def test_remove_country(self, spark):
+    def test_remove_country(self, create_session):
         """Test removal of country from address."""
         test_data = [
             ("123 Main St, New York, USA", "123 Main St, New York"),
@@ -79,7 +79,7 @@ class TestCountryExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "without_country", addresses.remove_country(F.col("address"))
         )
@@ -90,7 +90,7 @@ class TestCountryExtraction:
                 row["without_country"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['without_country']}'"
 
-    def test_standardize_country(self, spark):
+    def test_standardize_country(self, create_session):
         """Test standardization of country names."""
         test_data = [
             # Abbreviations to standard
@@ -124,7 +124,7 @@ class TestCountryExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
         result_df = df.withColumn(
             "standardized", addresses.standardize_country(F.col("input"))
         )
@@ -135,7 +135,7 @@ class TestCountryExtraction:
                 row["standardized"] == row["expected"]
             ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_country_edge_cases(self, spark):
+    def test_country_edge_cases(self, create_session):
         """Test edge cases for country extraction."""
         test_data = [
             # Country without comma
@@ -162,7 +162,7 @@ class TestCountryExtraction:
             ("777 Seventh St, United Arab Emirates", "UAE"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "country", addresses.extract_country(F.col("address"))
         )
@@ -175,7 +175,7 @@ class TestCountryExtraction:
                     row["country"] == row["expected"]
                 ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['country']}'"
 
-    def test_custom_country_mappings(self, spark):
+    def test_custom_country_mappings(self, create_session):
         """Test custom country mappings."""
         custom_mappings = {
             "Czechia": "Czech Republic",
@@ -190,7 +190,7 @@ class TestCountryExtraction:
             ("Netherlands",),  # Should still work with standard mapping
         ]
 
-        df = spark.createDataFrame(test_data, ["input"])
+        df = create_session.createDataFrame(test_data, ["input"])
         result_df = df.select(
             F.col("input"),
             addresses.standardize_country(

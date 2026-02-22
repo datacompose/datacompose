@@ -91,3 +91,9 @@ markers = [
     "unit: unit tests that don't require external services",
     "integration: integration tests that may require external services"
 ]
+
+[dependency-groups]
+dev = [
+    "duckdb>=1.3.2",
+    "pyspark>=3.5.8",
+]

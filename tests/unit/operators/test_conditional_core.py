@@ -36,7 +36,7 @@ from datacompose.operators.primitives import PrimitiveRegistry
 
 
 @pytest.fixture
-def diverse_test_data(spark):
+def diverse_test_data(create_session):
     """Create diverse test dataset for conditional testing"""
     data = [
         ("A", 10, "small", 1, "short"),           # category A - short text
@@ -50,7 +50,7 @@ def diverse_test_data(spark):
         ("C", 90, "medium", 9, "simple_text"),    # category C
         (None, 100, "unknown", 10, None)          # NULL category for testing
     ]
-    return spark.createDataFrame(data, ["category", "value", "size", "id", "text"])
+    return create_session.createDataFrame(data, ["category", "value", "size", "id", "text"])
 
 
 # ============================================================================
@@ -61,7 +61,7 @@ def diverse_test_data(spark):
 class TestConditionalLogic:
     """Test complex conditional structures and logic"""
 
-    def test_deeply_nested_conditionals(self, spark):
+    def test_deeply_nested_conditionals(self, create_session):
         """Test 3+ levels of nested conditionals"""
         ns = PrimitiveRegistry("nested")
 
@@ -114,7 +114,7 @@ class TestConditionalLogic:
             ("123456",),  # First condition false
             ("longtext",),  # First two true, third false
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("processed", deep_nested(f.col("text")))
         collected = result.collect()
@@ -249,7 +249,7 @@ class TestConditionalLogic:
         for item in special_items:
             assert item["complexity"].startswith("COMPLEX:")
 
-    def test_conditional_without_else_branch(self, spark):
+    def test_conditional_without_else_branch(self, create_session):
         """Test if statement without else branch"""
         ns = PrimitiveRegistry("test")
 
@@ -268,7 +268,7 @@ class TestConditionalLogic:
 
         # Test with data
         data = [("hi",), ("hello world",), ("test",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("processed", process(f.col("text")))
         collected = result.collect()
@@ -280,7 +280,7 @@ class TestConditionalLogic:
         # Edge case: exactly at boundary
         assert collected[2]["processed"] == "TEST"
 
-    def test_multiple_sequential_conditionals(self, spark):
+    def test_multiple_sequential_conditionals(self, create_session):
         """Test multiple if statements in sequence"""
         ns = PrimitiveRegistry("multi")
 
@@ -312,7 +312,7 @@ class TestConditionalLogic:
                 ns.add_prefix(prefix="SPECIAL:")
 
         data = [("123",), ("abc",), ("!@#",), ("a1b2",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("classified", classify(f.col("text")))
         collected = result.collect()
@@ -360,7 +360,7 @@ class TestConditionalLogic:
         non_null_row = [r for r in collected if r["id"] == 1][0]
         assert non_null_row["processed"] == "SHORT"
 
-    def test_conditional_with_empty_branches(self, spark):
+    def test_conditional_with_empty_branches(self, create_session):
         """Test conditionals with empty branches (no operations)"""
         ns = PrimitiveRegistry("empty")
 
@@ -379,7 +379,7 @@ class TestConditionalLogic:
                 pass  # Empty branch
 
         data = [("test",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("processed", empty_pipeline(f.col("text")))
         collected = result.collect()
@@ -501,7 +501,7 @@ class TestConditionalLogic:
 class TestConditionalErrors:
     """Test error handling and edge cases in conditional compilation"""
 
-    def test_conditional_with_invalid_condition(self, spark):
+    def test_conditional_with_invalid_condition(self, create_session):
         """Test handling of invalid condition functions"""
         ns = PrimitiveRegistry("invalid")
 
@@ -522,7 +522,7 @@ class TestConditionalErrors:
             # The compiler should handle this gracefully
 
         data = [("TEST",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("processed", invalid_pipeline(f.col("text")))
         collected = result.collect()
@@ -530,7 +530,7 @@ class TestConditionalErrors:
         # Should at least apply the transform
         assert collected[0]["processed"] == "test"
 
-    def test_conditional_with_type_mismatch(self, spark):
+    def test_conditional_with_type_mismatch(self, create_session):
         """Test conditions that might return non-boolean values"""
         ns = PrimitiveRegistry("type")
 
@@ -548,7 +548,7 @@ class TestConditionalErrors:
                 ns.process()
 
         data = [("test",), (None,)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("processed", type_safe(f.col("text")))
         collected = result.collect()
@@ -565,7 +565,7 @@ class TestConditionalErrors:
 class TestConditionalParameters:
     """Test conditionals with parameters and closures"""
 
-    def test_conditional_with_parameters(self, spark):
+    def test_conditional_with_parameters(self, create_session):
         """Test passing parameters to conditional functions"""
         ns = PrimitiveRegistry("params")
 
@@ -593,7 +593,7 @@ class TestConditionalParameters:
                     ns.tag_length(tag="SHORT")
 
         data = [("hi",), ("hello",), ("hello world",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result = df.withColumn("tagged", flexible_pipeline(f.col("text")))
         collected = result.collect()
@@ -656,7 +656,7 @@ class TestConditionalParameters:
 class TestConditionalPerformance:
     """Test performance aspects of conditional compilation"""
 
-    def test_conditional_branch_skipping(self, spark):
+    def test_conditional_branch_skipping(self, create_session):
         """Verify untaken branches don't execute"""
         ns = PrimitiveRegistry("skip")
 
@@ -686,7 +686,7 @@ class TestConditionalPerformance:
                 ns.should_execute()
 
         data = [("Test",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         # Clear log
         execution_log.clear()
@@ -698,7 +698,7 @@ class TestConditionalPerformance:
         # Note: The function definitions are evaluated but not executed on data
         assert collected[0]["processed"] == "test"
 
-    def test_conditional_with_many_branches(self, spark):
+    def test_conditional_with_many_branches(self, create_session):
         """Test performance with 10+ if/elif branches"""
         ns = PrimitiveRegistry("many")
 
@@ -740,7 +740,7 @@ class TestConditionalPerformance:
 
         # Test with data
         data = [(i,) for i in range(10)]
-        df = spark.createDataFrame(data, ["value"])
+        df = create_session.createDataFrame(data, ["value"])
 
         result = df.withColumn("processed", many_branches(f.col("value")))
         collected = result.collect()

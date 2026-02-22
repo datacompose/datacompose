@@ -14,7 +14,7 @@ from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives impo
 class TestPhoneExtraction:
     """Test phone number extraction functions."""
 
-    def test_extract_phone_from_text(self, spark):
+    def test_extract_phone_from_text(self, create_session):
         """Test extraction of phone numbers from various text contexts."""
         test_data = [
             # Standard formats in text
@@ -45,7 +45,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["text", "expected"])
+        df = create_session.createDataFrame(test_data, ["text", "expected"])
         result_df = df.withColumn(
             "phone_digits", phone_numbers.extract_digits(F.col("text"))
         )
@@ -62,7 +62,7 @@ class TestPhoneExtraction:
                     row["phone_digits"] == row["expected"]
                 ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['phone_digits']}'"
 
-    def test_extract_first_valid_phone(self, spark):
+    def test_extract_first_valid_phone(self, create_session):
         """Test extracting the first valid phone number from text."""
         test_data = [
             # Clear phone numbers in text
@@ -82,7 +82,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["text", "expected"])
+        df = create_session.createDataFrame(test_data, ["text", "expected"])
 
         # Use our new extract_phone_numbers_from_text function
         result_df = df.withColumn(
@@ -111,7 +111,7 @@ class TestPhoneExtraction:
                     row["extracted_phone"] == ""
                 ), f"Should not extract from '{row['text']}': got '{row['extracted_phone']}'"
 
-    def test_extract_all_phone_numbers_from_text(self, spark):
+    def test_extract_all_phone_numbers_from_text(self, create_session):
         """Test extracting all phone numbers from text."""
         # Note: Due to Spark SQL limitations, this currently only extracts first phone
         # A full implementation would require a UDF
@@ -128,7 +128,7 @@ class TestPhoneExtraction:
             (None, []),
         ]
 
-        df = spark.createDataFrame(test_data, ["text", "expected"])
+        df = create_session.createDataFrame(test_data, ["text", "expected"])
 
         # Use our extract_all_phone_numbers_from_text function
         result_df = df.withColumn(
@@ -156,7 +156,7 @@ class TestPhoneExtraction:
                         extracted[i] != ""
                     ), f"Expected phone '{exp_phone}' but got empty string for text '{row['text']}'"
 
-    def test_extract_digits(self, spark):
+    def test_extract_digits(self, create_session):
         """Test extraction of digits from phone numbers."""
         test_data = [
             ("(555) 123-4567", "5551234567"),
@@ -167,7 +167,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "digits", phone_numbers.extract_digits(F.col("phone"))
         )
@@ -178,7 +178,7 @@ class TestPhoneExtraction:
                 row["digits"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['digits']}'"
 
-    def test_extract_extension(self, spark):
+    def test_extract_extension(self, create_session):
         """Test extraction of extension from phone numbers."""
         test_data = [
             ("555-123-4567 ext. 123", "123"),
@@ -189,7 +189,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "extension", phone_numbers.extract_extension(F.col("phone"))
         )
@@ -200,7 +200,7 @@ class TestPhoneExtraction:
                 row["extension"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['extension']}'"
 
-    def test_extract_country_code(self, spark):
+    def test_extract_country_code(self, create_session):
         """Test extraction of country code."""
         test_data = [
             ("+1-555-123-4567", "1"),
@@ -213,7 +213,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "country_code", phone_numbers.extract_country_code(F.col("phone"))
         )
@@ -224,7 +224,7 @@ class TestPhoneExtraction:
                 row["country_code"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['country_code']}'"
 
-    def test_extract_area_code(self, spark):
+    def test_extract_area_code(self, create_session):
         """Test extraction of area code from NANP numbers."""
         test_data = [
             ("(555) 123-4567", "555"),
@@ -237,7 +237,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "area_code", phone_numbers.extract_area_code(F.col("phone"))
         )
@@ -248,7 +248,7 @@ class TestPhoneExtraction:
                 row["area_code"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['area_code']}'"
 
-    def test_extract_exchange(self, spark):
+    def test_extract_exchange(self, create_session):
         """Test extraction of exchange from NANP numbers."""
         test_data = [
             ("(555) 123-4567", "123"),
@@ -260,7 +260,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "exchange", phone_numbers.extract_exchange(F.col("phone"))
         )
@@ -271,7 +271,7 @@ class TestPhoneExtraction:
                 row["exchange"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['exchange']}'"
 
-    def test_extract_subscriber(self, spark):
+    def test_extract_subscriber(self, create_session):
         """Test extraction of subscriber number from NANP numbers."""
         test_data = [
             ("(555) 123-4567", "4567"),
@@ -283,7 +283,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "subscriber", phone_numbers.extract_subscriber(F.col("phone"))
         )
@@ -294,7 +294,7 @@ class TestPhoneExtraction:
                 row["subscriber"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['subscriber']}'"
 
-    def test_extract_local_number(self, spark):
+    def test_extract_local_number(self, create_session):
         """Test extraction of local number (7 digits) from NANP numbers."""
         test_data = [
             ("(555) 123-4567", "1234567"),
@@ -307,7 +307,7 @@ class TestPhoneExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "local_number", phone_numbers.extract_local_number(F.col("phone"))
         )
@@ -323,7 +323,7 @@ class TestPhoneExtraction:
 class TestPhoneValidation:
     """Test phone number validation functions."""
 
-    def test_is_valid_nanp(self, spark):
+    def test_is_valid_nanp(self, create_session):
         """Test NANP validation."""
         test_data = [
             ("(555) 123-4567", True),
@@ -339,7 +339,7 @@ class TestPhoneValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "is_valid", phone_numbers.is_valid_nanp(F.col("phone"))
         )
@@ -350,7 +350,7 @@ class TestPhoneValidation:
                 row["is_valid"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_is_valid_international(self, spark):
+    def test_is_valid_international(self, create_session):
         """Test international phone validation."""
         test_data = [
             ("+44 20 7946 0958", True),  # UK
@@ -364,7 +364,7 @@ class TestPhoneValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "is_valid", phone_numbers.is_valid_international(F.col("phone"))
         )
@@ -375,7 +375,7 @@ class TestPhoneValidation:
                 row["is_valid"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_is_valid_phone(self, spark):
+    def test_is_valid_phone(self, create_session):
         """Test general phone validation (NANP or international)."""
         test_data = [
             ("(555) 123-4567", True),  # NANP
@@ -388,7 +388,7 @@ class TestPhoneValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "is_valid", phone_numbers.is_valid_phone_numbers(F.col("phone"))
         )
@@ -399,7 +399,7 @@ class TestPhoneValidation:
                 row["is_valid"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_is_toll_free(self, spark):
+    def test_is_toll_free(self, create_session):
         """Test toll-free number detection."""
         test_data = [
             ("1-800-555-1234", True),
@@ -415,7 +415,7 @@ class TestPhoneValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "is_toll_free", phone_numbers.is_toll_free(F.col("phone"))
         )
@@ -426,7 +426,7 @@ class TestPhoneValidation:
                 row["is_toll_free"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_toll_free']}"
 
-    def test_is_premium_rate(self, spark):
+    def test_is_premium_rate(self, create_session):
         """Test premium rate number detection."""
         test_data = [
             ("1-900-555-1234", True),
@@ -438,7 +438,7 @@ class TestPhoneValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "is_premium", phone_numbers.is_premium_rate(F.col("phone"))
         )
@@ -449,7 +449,7 @@ class TestPhoneValidation:
                 row["is_premium"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected {row['expected']}, got {row['is_premium']}"
 
-    def test_has_extension(self, spark):
+    def test_has_extension(self, create_session):
         """Test extension detection."""
         test_data = [
             ("555-123-4567 ext. 123", True),
@@ -460,7 +460,7 @@ class TestPhoneValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "has_ext", phone_numbers.has_extension(F.col("phone"))
         )
@@ -476,7 +476,7 @@ class TestPhoneValidation:
 class TestPhoneCleaning:
     """Test phone number cleaning functions."""
 
-    def test_convert_letters_to_numbers(self, spark):
+    def test_convert_letters_to_numbers(self, create_session):
         """Test conversion of letters to numbers."""
         test_data = [
             ("1-800-FLOWERS", "1-800-3569377"),
@@ -487,7 +487,7 @@ class TestPhoneCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "converted", phone_numbers.convert_letters_to_numbers(F.col("phone"))
         )
@@ -498,7 +498,7 @@ class TestPhoneCleaning:
                 row["converted"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['converted']}'"
 
-    def test_remove_extension(self, spark):
+    def test_remove_extension(self, create_session):
         """Test removal of extension."""
         test_data = [
             ("555-123-4567 ext. 123", "555-123-4567 "),
@@ -509,7 +509,7 @@ class TestPhoneCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "no_ext", phone_numbers.remove_extension(F.col("phone"))
         )
@@ -520,7 +520,7 @@ class TestPhoneCleaning:
                 row["no_ext"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['no_ext']}'"
 
-    def test_normalize_separators(self, spark):
+    def test_normalize_separators(self, create_session):
         """Test normalization of separators."""
         test_data = [
             ("(555) 123-4567", "555-123-4567"),
@@ -533,7 +533,7 @@ class TestPhoneCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "normalized", phone_numbers.normalize_separators(F.col("phone"))
         )
@@ -544,7 +544,7 @@ class TestPhoneCleaning:
                 row["normalized"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['normalized']}'"
 
-    def test_normalize_separators_edge_cases(self, spark):
+    def test_normalize_separators_edge_cases(self, create_session):
         """Test normalization edge cases."""
         test_data = [
             ("555---123---4567", "555-123-4567"),
@@ -554,7 +554,7 @@ class TestPhoneCleaning:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "normalized", phone_numbers.normalize_separators(F.col("phone"))
         )
@@ -565,7 +565,7 @@ class TestPhoneCleaning:
                 row["normalized"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['normalized']}'"
 
-    def test_add_country_code(self, spark):
+    def test_add_country_code(self, create_session):
         """Test adding country code to NANP numbers."""
         test_data = [
             ("5551234567", "15551234567"),  # Valid 10-digit NANP
@@ -577,7 +577,7 @@ class TestPhoneCleaning:
             (None, None),
         ]
 
-        df = spark.createDataFrame(test_data, ["phone", "expected"])
+        df = create_session.createDataFrame(test_data, ["phone", "expected"])
         result_df = df.withColumn(
             "with_country", phone_numbers.add_country_code(F.col("phone"))
         )
@@ -588,7 +588,7 @@ class TestPhoneCleaning:
                 row["with_country"] == row["expected"]
             ), f"Failed for '{row['phone']}': expected '{row['expected']}', got '{row['with_country']}'"
 
-    def test_hash_phone_numbers_sha256_basic(self, spark):
+    def test_hash_phone_numbers_sha256_basic(self, create_session):
         """Test basic SHA256 hashing functionality for phone numbers."""
         from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
             hash_phone_numbers_sha256,
@@ -605,7 +605,7 @@ class TestPhoneCleaning:
             (None,),  # Null input
         ]
         
-        df = spark.createDataFrame(test_data, ["phone"])
+        df = create_session.createDataFrame(test_data, ["phone"])
 
         # Test hashing without standardization to avoid memory issues
         result_df = df.select(
@@ -627,7 +627,7 @@ class TestPhoneCleaning:
         assert results[3]["hashed_phone"] is None  # Invalid format
         assert results[4]["hashed_phone"] is None  # Null input
 
-    def test_hash_phone_numbers_sha256_with_salt(self, spark):
+    def test_hash_phone_numbers_sha256_with_salt(self, create_session):
         """Test SHA256 hashing with salt parameter for phone numbers."""
         from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
             hash_phone_numbers_sha256,
@@ -638,7 +638,7 @@ class TestPhoneCleaning:
             ("15551235555",),
         ]
         
-        df = spark.createDataFrame(test_data, ["phone"])
+        df = create_session.createDataFrame(test_data, ["phone"])
 
         # Test with different salts
         result_df = df.select(
@@ -656,7 +656,7 @@ class TestPhoneCleaning:
                 assert len(result["no_salt"]) == 64
                 assert len(result["with_salt"]) == 64
 
-    def test_hash_phone_numbers_sha256_standardization(self, spark):
+    def test_hash_phone_numbers_sha256_standardization(self, create_session):
         """Test that E.164 standardization produces consistent hashes for phone numbers."""
         from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
             hash_phone_numbers_sha256,
@@ -671,7 +671,7 @@ class TestPhoneCleaning:
             ("+1 555 123 4567",),  # International format
         ]
         
-        df = spark.createDataFrame(test_data, ["phone"])
+        df = create_session.createDataFrame(test_data, ["phone"])
 
         # Test without standardization to avoid memory issues
         result_df = df.select(
@@ -691,7 +691,7 @@ class TestPhoneCleaning:
         # Without standardization, they should be different
         assert len(set(standardized_hashes)) > 1
 
-    def test_hash_phone_numbers_sha256_consistency(self, spark):
+    def test_hash_phone_numbers_sha256_consistency(self, create_session):
         """Test that the same phone input always produces the same hash."""
         from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
             hash_phone_numbers_sha256,
@@ -701,7 +701,7 @@ class TestPhoneCleaning:
         
         # Create multiple rows with the same phone
         test_data = [(test_phone,)] * 3
-        df = spark.createDataFrame(test_data, ["phone"])
+        df = create_session.createDataFrame(test_data, ["phone"])
 
         result_df = df.select(
             hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("hash1"),

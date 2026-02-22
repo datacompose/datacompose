@@ -21,7 +21,7 @@ from tests.unit.transformers.text.test_addresses.test_data_addresses import (
 
 
 @pytest.fixture
-def valid_zip_codes_df(spark):
+def valid_zip_codes_df(create_session):
     """Create DataFrame with valid ZIP code formats."""
     schema = StructType(
         [
@@ -29,11 +29,11 @@ def valid_zip_codes_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(VALID_ZIP_CODES, schema)
+    return create_session.createDataFrame(VALID_ZIP_CODES, schema)
 
 
 @pytest.fixture
-def invalid_zip_codes_df(spark):
+def invalid_zip_codes_df(create_session):
     """Create DataFrame with invalid ZIP code formats."""
     schema = StructType(
         [
@@ -41,11 +41,11 @@ def invalid_zip_codes_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(INVALID_ZIP_CODES, schema)
+    return create_session.createDataFrame(INVALID_ZIP_CODES, schema)
 
 
 @pytest.fixture
-def zip_codes_in_text_df(spark):
+def zip_codes_in_text_df(create_session):
     """Create DataFrame with ZIP codes embedded in text."""
     schema = StructType(
         [
@@ -53,11 +53,11 @@ def zip_codes_in_text_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(ZIP_CODES_IN_TEXT, schema)
+    return create_session.createDataFrame(ZIP_CODES_IN_TEXT, schema)
 
 
 @pytest.fixture
-def special_cases_df(spark):
+def special_cases_df(create_session):
     """Create DataFrame with special ZIP code cases."""
     schema = StructType(
         [
@@ -65,11 +65,11 @@ def special_cases_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(SPECIAL_CASES, schema)
+    return create_session.createDataFrame(SPECIAL_CASES, schema)
 
 
 @pytest.fixture
-def international_postal_codes_df(spark):
+def international_postal_codes_df(create_session):
     """Create DataFrame with international postal codes."""
     schema = StructType(
         [
@@ -77,11 +77,11 @@ def international_postal_codes_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(INTERNATIONAL_POSTAL_CODES, schema)
+    return create_session.createDataFrame(INTERNATIONAL_POSTAL_CODES, schema)
 
 
 @pytest.fixture
-def boundary_zip_codes_df(spark):
+def boundary_zip_codes_df(create_session):
     """Create DataFrame with boundary ZIP codes."""
     schema = StructType(
         [
@@ -89,11 +89,11 @@ def boundary_zip_codes_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(BOUNDARY_ZIP_CODES, schema)
+    return create_session.createDataFrame(BOUNDARY_ZIP_CODES, schema)
 
 
 @pytest.fixture
-def unicode_special_chars_df(spark):
+def unicode_special_chars_df(create_session):
     """Create DataFrame with Unicode and special characters."""
     schema = StructType(
         [
@@ -101,11 +101,11 @@ def unicode_special_chars_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(UNICODE_SPECIAL_CHARS, schema)
+    return create_session.createDataFrame(UNICODE_SPECIAL_CHARS, schema)
 
 
 @pytest.fixture
-def null_handling_df(spark):
+def null_handling_df(create_session):
     """Create DataFrame for null handling tests."""
     schema = StructType(
         [
@@ -113,16 +113,16 @@ def null_handling_df(spark):
             StructField("expected", StringType(), True),
         ]
     )
-    return spark.createDataFrame(NULL_HANDLING, schema)
+    return create_session.createDataFrame(NULL_HANDLING, schema)
 
 
 @pytest.fixture
-def performance_test_df(spark):
+def performance_test_df(create_session):
     """Create large DataFrame for performance testing."""
     schema = StructType(
         [StructField("id", StringType(), True), StructField("text", StringType(), True)]
     )
-    return spark.createDataFrame(generate_performance_test_data(10000), schema)
+    return create_session.createDataFrame(generate_performance_test_data(10000), schema)
 
 
 @pytest.mark.unit
@@ -267,7 +267,7 @@ class TestZipCodeExtraction:
         null_count = result_df.filter(F.col("extracted").isNull()).count()
         assert null_count == 0
 
-    def test_column_operations(self, spark, valid_zip_codes_df):
+    def test_column_operations(self, create_session, valid_zip_codes_df):
         """Test ZIP code extraction with various column operations."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -294,7 +294,7 @@ class TestZipCodeExtraction:
         first_row = result_df.first()
         assert first_row["secondary_zip"] == "54321"
 
-    def test_chained_transformations(self, spark, zip_codes_in_text_df):
+    def test_chained_transformations(self, create_session, zip_codes_in_text_df):
         """Test ZIP code extraction in combination with other transformations."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -346,7 +346,7 @@ class TestZipCodeExtraction:
         # Verify some results were extracted
         assert count > 0
 
-    def test_multiple_zip_extraction_precedence(self, spark):
+    def test_multiple_zip_extraction_precedence(self, create_session):
         """Test that first valid ZIP is extracted when multiple are present."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -360,7 +360,7 @@ class TestZipCodeExtraction:
             ("12345 90210 88888", "12345"),
         ]
 
-        df = spark.createDataFrame(data, ["text", "expected"])
+        df = create_session.createDataFrame(data, ["text", "expected"])
 
         result_df = df.withColumn("extracted", extract_zip_code(F.col("text")))
 
@@ -371,7 +371,7 @@ class TestZipCodeExtraction:
                 row["extracted"] == row["expected"]
             ), f"Failed for '{row['text']}': expected '{row['expected']}', got '{row['extracted']}'"
 
-    def test_zip_with_different_separators(self, spark):
+    def test_zip_with_different_separators(self, create_session):
         """Test ZIP codes with various separator characters."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -386,7 +386,7 @@ class TestZipCodeExtraction:
             ("12345⁃6789", "12345"),  # Hyphen bullet
         ]
 
-        df = spark.createDataFrame(data, ["input", "expected"])
+        df = create_session.createDataFrame(data, ["input", "expected"])
 
         result_df = df.withColumn("extracted", extract_zip_code(F.col("input")))
 
@@ -397,7 +397,7 @@ class TestZipCodeExtraction:
                 row["extracted"] == row["expected"]
             ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['extracted']}'"
 
-    def test_extreme_edge_cases(self, spark):
+    def test_extreme_edge_cases(self, create_session):
         """Test extreme edge cases that might break the regex."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -437,7 +437,7 @@ class TestZipCodeExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(extreme_cases, ["input", "expected"])
+        df = create_session.createDataFrame(extreme_cases, ["input", "expected"])
         result_df = df.withColumn("extracted", extract_zip_code(F.col("input")))
         results = result_df.collect()
 
@@ -446,7 +446,7 @@ class TestZipCodeExtraction:
                 row["extracted"] == row["expected"]
             ), f"Failed for edge case: expected '{row['expected']}', got '{row['extracted']}'"
 
-    def test_malformed_input_handling(self, spark):
+    def test_malformed_input_handling(self, create_session):
         """Test handling of malformed and malicious inputs."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -480,7 +480,7 @@ class TestZipCodeExtraction:
             ("\\x3132333435", ""),  # Escaped hex (not actual numbers)
         ]
 
-        df = spark.createDataFrame(malformed_cases, ["input", "expected"])
+        df = create_session.createDataFrame(malformed_cases, ["input", "expected"])
         result_df = df.withColumn("extracted", extract_zip_code(F.col("input")))
         results = result_df.collect()
 
@@ -489,7 +489,7 @@ class TestZipCodeExtraction:
                 row["extracted"] == row["expected"]
             ), f"Failed for malformed input: expected '{row['expected']}', got '{row['extracted']}'"
 
-    def test_consistency_across_runs(self, spark):
+    def test_consistency_across_runs(self, create_session):
         """Test that results are consistent across multiple runs."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -502,7 +502,7 @@ class TestZipCodeExtraction:
             ("No postal code", ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
 
         # Run multiple times
         results = []
@@ -515,7 +515,7 @@ class TestZipCodeExtraction:
         for i, result in enumerate(results[1:], 1):
             assert result == first_result, f"Run {i+1} produced different results"
 
-    def test_regex_performance_patterns(self, spark):
+    def test_regex_performance_patterns(self, create_session):
         """Test patterns that could cause regex performance issues."""
         import time
 
@@ -541,7 +541,7 @@ class TestZipCodeExtraction:
         ]
 
         for pattern, expected in performance_patterns:
-            df = spark.createDataFrame([(pattern,)], ["input"])
+            df = create_session.createDataFrame([(pattern,)], ["input"])
 
             start_time = time.time()
             result_df = df.withColumn("zip", extract_zip_code(F.col("input")))
@@ -552,7 +552,7 @@ class TestZipCodeExtraction:
             # Should handle even complex patterns quickly
             assert elapsed < 0.5, f"Pattern took too long: {elapsed:.3f}s"
 
-    def test_boundary_word_detection(self, spark):
+    def test_boundary_word_detection(self, create_session):
         """Test word boundary detection edge cases."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -593,7 +593,7 @@ class TestZipCodeExtraction:
             ("12345 12345", "12345"),  # Two valid ZIPs (gets first)
         ]
 
-        df = spark.createDataFrame(boundary_cases, ["input", "expected"])
+        df = create_session.createDataFrame(boundary_cases, ["input", "expected"])
         result_df = df.withColumn("extracted", extract_zip_code(F.col("input")))
         results = result_df.collect()
 
@@ -607,7 +607,7 @@ class TestZipCodeExtraction:
 class TestZipCodeValidation:
     """Test ZIP code validation and utility functions."""
 
-    def test_validate_zip_code_valid_formats(self, spark):
+    def test_validate_zip_code_valid_formats(self, create_session):
         """Test validation of valid ZIP code formats."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_zip_code,
@@ -624,7 +624,7 @@ class TestZipCodeValidation:
             ("12345-9999", True),  # ZIP+4 with max extension
         ]
 
-        df = spark.createDataFrame(valid_data, ["zip", "expected"])
+        df = create_session.createDataFrame(valid_data, ["zip", "expected"])
         result_df = df.withColumn("is_valid", validate_zip_code(F.col("zip")))
 
         results = result_df.collect()
@@ -633,7 +633,7 @@ class TestZipCodeValidation:
                 row["is_valid"] == row["expected"]
             ), f"Validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_validate_zip_code_invalid_formats(self, spark):
+    def test_validate_zip_code_invalid_formats(self, create_session):
         """Test validation of invalid ZIP code formats."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_zip_code,
@@ -657,7 +657,7 @@ class TestZipCodeValidation:
             ("12345 USA", False),  # Text after
         ]
 
-        df = spark.createDataFrame(invalid_data, ["zip", "expected"])
+        df = create_session.createDataFrame(invalid_data, ["zip", "expected"])
         result_df = df.withColumn("is_valid", validate_zip_code(F.col("zip")))
 
         results = result_df.collect()
@@ -666,7 +666,7 @@ class TestZipCodeValidation:
                 row["is_valid"] == row["expected"]
             ), f"Validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_is_valid_zip_code_alias(self, spark):
+    def test_is_valid_zip_code_alias(self, create_session):
         """Test that is_valid_zip_code is an alias for validate_zip_code."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             is_valid_zip_code,
@@ -680,7 +680,7 @@ class TestZipCodeValidation:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["zip", "expected"])
+        df = create_session.createDataFrame(test_data, ["zip", "expected"])
 
         # Both functions should return identical results
         result_df = df.withColumn(
@@ -693,7 +693,7 @@ class TestZipCodeValidation:
                 row["validate"] == row["is_valid"]
             ), f"Alias mismatch for '{row['zip']}': validate={row['validate']}, is_valid={row['is_valid']}"
 
-    def test_standardize_zip_code(self, spark):
+    def test_standardize_zip_code(self, create_session):
         """Test ZIP code standardization."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             standardize_zip_code,
@@ -714,7 +714,7 @@ class TestZipCodeValidation:
             ("no zip here", ""),  # No valid ZIP
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
         result_df = df.withColumn("standardized", standardize_zip_code(F.col("input")))
 
         results = result_df.collect()
@@ -723,7 +723,7 @@ class TestZipCodeValidation:
                 row["standardized"] == row["expected"]
             ), f"Standardization failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_get_zip_code_type(self, spark):
+    def test_get_zip_code_type(self, create_session):
         """Test ZIP code type detection."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             get_zip_code_type,
@@ -745,7 +745,7 @@ class TestZipCodeValidation:
             ("12345 6789", "invalid"),  # Space instead of dash
         ]
 
-        df = spark.createDataFrame(test_data, ["zip", "expected"])
+        df = create_session.createDataFrame(test_data, ["zip", "expected"])
         result_df = df.withColumn("type", get_zip_code_type(F.col("zip")))
 
         results = result_df.collect()
@@ -754,7 +754,7 @@ class TestZipCodeValidation:
                 row["type"] == row["expected"]
             ), f"Type detection failed for '{row['zip']}': expected '{row['expected']}', got '{row['type']}'"
 
-    def test_split_zip_code(self, spark):
+    def test_split_zip_code(self, create_session):
         """Test ZIP code splitting into base and extension."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             split_zip_code,
@@ -777,7 +777,7 @@ class TestZipCodeValidation:
             (None, None, None),  # Null
         ]
 
-        df = spark.createDataFrame(test_data, ["zip", "expected_base", "expected_ext"])
+        df = create_session.createDataFrame(test_data, ["zip", "expected_base", "expected_ext"])
         result_df = df.withColumn("split", split_zip_code(F.col("zip")))
 
         # Extract base and extension from struct
@@ -798,7 +798,7 @@ class TestZipCodeValidation:
                 row["actual_ext"] == row["expected_ext"]
             ), f"Extension extraction failed for '{row['zip']}': expected '{row['expected_ext']}', got '{row['actual_ext']}'"
 
-    def test_combined_workflow(self, spark):
+    def test_combined_workflow(self, create_session):
         """Test a combined workflow using multiple functions."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -818,7 +818,7 @@ class TestZipCodeValidation:
             (None,),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         # Apply full processing pipeline
         result_df = (
@@ -854,7 +854,7 @@ class TestZipCodeValidation:
         assert results[2]["standardized"] == ""
         assert results[2]["type"] == "empty"
 
-    def test_validation_edge_cases(self, spark):
+    def test_validation_edge_cases(self, create_session):
         """Test validation with edge cases."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             validate_zip_code,
@@ -879,7 +879,7 @@ class TestZipCodeValidation:
             ("12345\t6789", False),  # Tab separator
         ]
 
-        df = spark.createDataFrame(edge_cases, ["zip", "expected"])
+        df = create_session.createDataFrame(edge_cases, ["zip", "expected"])
         result_df = df.withColumn("is_valid", validate_zip_code(F.col("zip")))
 
         results = result_df.collect()
@@ -888,7 +888,7 @@ class TestZipCodeValidation:
                 row["is_valid"] == row["expected"]
             ), f"Edge case validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_null_safety_all_functions(self, spark):
+    def test_null_safety_all_functions(self, create_session):
         """Test that all functions handle nulls safely."""
         # Create DataFrame with nulls
         from pyspark.sql.types import StringType, StructField, StructType
@@ -901,7 +901,7 @@ class TestZipCodeValidation:
         )
 
         schema = StructType([StructField("zip", StringType(), True)])
-        df = spark.createDataFrame([(None,), (None,), (None,)], schema)
+        df = create_session.createDataFrame([(None,), (None,), (None,)], schema)
 
         # Apply all functions - none should throw errors
         result_df = (
@@ -922,7 +922,7 @@ class TestZipCodeValidation:
             assert row["split"]["base"] in ("", None)
             assert row["split"]["extension"] is None
 
-    def test_validation_with_extraction(self, spark):
+    def test_validation_with_extraction(self, create_session):
         """Test validation after extraction from text."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -937,7 +937,7 @@ class TestZipCodeValidation:
             ("Multiple: 12345 and 67890", "12345", True),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["text", "expected_zip", "expected_valid"]
         )
 
