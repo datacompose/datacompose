@@ -4,8 +4,7 @@ Covers hex conversion, base64, URL encoding, HTML entities, and escape sequences
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType, StructType, StructField
+from datacompose.functions import functions as F
 
 
 # =============================================================================
@@ -273,8 +272,8 @@ class TestHexTransformations:
         """Test hex string to text conversion."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.hex_to_text(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"hex_to_text({input_val!r}) = {result!r}, expected {expected!r}"
@@ -284,8 +283,8 @@ class TestHexTransformations:
         """Test text to hex string conversion."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.text_to_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"text_to_hex({input_val!r}) = {result!r}, expected {expected!r}"
@@ -295,8 +294,8 @@ class TestHexTransformations:
         """Test hex string cleaning."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"clean_hex({input_val!r}) = {result!r}, expected {expected!r}"
@@ -306,8 +305,8 @@ class TestHexTransformations:
         """Test hex extraction from mixed content."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.extract_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"extract_hex({input_val!r}) = {result!r}, expected {expected!r}"
@@ -322,8 +321,8 @@ class TestBase64Transformations:
         """Test base64 decoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.decode_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"decode_base64({input_val!r}) = {result!r}, expected {expected!r}"
@@ -333,8 +332,8 @@ class TestBase64Transformations:
         """Test base64 encoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.encode_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"encode_base64({input_val!r}) = {result!r}, expected {expected!r}"
@@ -344,8 +343,8 @@ class TestBase64Transformations:
         """Test base64 string cleaning."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"clean_base64({input_val!r}) = {result!r}, expected {expected!r}"
@@ -355,8 +354,8 @@ class TestBase64Transformations:
         """Test base64 extraction from mixed content."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.extract_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"extract_base64({input_val!r}) = {result!r}, expected {expected!r}"
@@ -371,8 +370,8 @@ class TestUrlEncodingTransformations:
         """Test URL decoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.decode_url(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"decode_url({input_val!r}) = {result!r}, expected {expected!r}"
@@ -382,8 +381,8 @@ class TestUrlEncodingTransformations:
         """Test URL encoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.encode_url(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"encode_url({input_val!r}) = {result!r}, expected {expected!r}"
@@ -398,8 +397,8 @@ class TestHtmlEntityTransformations:
         """Test HTML entity decoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.decode_html_entities(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"decode_html_entities({input_val!r}) = {result!r}, expected {expected!r}"
@@ -409,8 +408,8 @@ class TestHtmlEntityTransformations:
         """Test HTML entity encoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.encode_html_entities(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"encode_html_entities({input_val!r}) = {result!r}, expected {expected!r}"
@@ -425,8 +424,8 @@ class TestEscapeSequenceTransformations:
         """Test unescaping literal escape sequences."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.unescape_string(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"unescape_string({input_val!r}) = {result!r}, expected {expected!r}"
@@ -436,8 +435,8 @@ class TestEscapeSequenceTransformations:
         """Test escaping to literal escape sequences."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.escape_string(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"escape_string({input_val!r}) = {result!r}, expected {expected!r}"
@@ -452,8 +451,8 @@ class TestLineEndingTransformations:
         """Test line ending normalization."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.normalize_line_endings(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"normalize_line_endings({input_val!r}) = {result!r}, expected {expected!r}"
@@ -468,8 +467,8 @@ class TestUnicodeTransformations:
         """Test non-ASCII to ASCII transliteration."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.to_ascii(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"to_ascii({input_val!r}) = {result!r}, expected {expected!r}"
@@ -479,8 +478,8 @@ class TestUnicodeTransformations:
         """Test unicode to codepoint conversion."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.to_codepoints(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"to_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
@@ -490,8 +489,8 @@ class TestUnicodeTransformations:
         """Test codepoint to unicode conversion."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.from_codepoints(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"from_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
@@ -506,8 +505,8 @@ class TestStringManipulationTransformations:
         """Test string reversal."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.reverse_string(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"reverse_string({input_val!r}) = {result!r}, expected {expected!r}"
@@ -517,8 +516,8 @@ class TestStringManipulationTransformations:
         """Test string truncation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.truncate(F.col("input"), max_length=max_len))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"truncate({input_val!r}, {max_len}) = {result!r}, expected {expected!r}"
@@ -528,8 +527,8 @@ class TestStringManipulationTransformations:
         """Test left padding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.pad_left(F.col("input"), width=width, pad_char=char))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"pad_left({input_val!r}, {width}, {char!r}) = {result!r}, expected {expected!r}"
@@ -539,8 +538,8 @@ class TestStringManipulationTransformations:
         """Test right padding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.pad_right(F.col("input"), width=width, pad_char=char))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"pad_right({input_val!r}, {width}, {char!r}) = {result!r}, expected {expected!r}"

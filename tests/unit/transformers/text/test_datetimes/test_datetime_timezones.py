@@ -4,8 +4,7 @@ Tests timezone conversions, normalizations, and edge cases.
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, StringType
+from datacompose.functions import functions as F
 from datetime import datetime
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
@@ -120,7 +119,7 @@ class TestTimezoneDetection:
             # These should still parse, but document the assumption
         ]
 
-        schema = StructType([
+        
             StructField("datetime_str", StringType(), True),
             StructField("expected", StringType(), True)
         ])
@@ -403,7 +402,7 @@ class TestTimezoneEdgeCases:
             ("01/15/2024 2:30 PM", None),
         ]
 
-        schema = StructType([
+        
             StructField("datetime_str", StringType(), True),
             StructField("expected_tz", StringType(), True)
         ])

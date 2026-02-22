@@ -4,8 +4,7 @@ Tests realistic data pipeline scenarios combining multiple datetime operations.
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
 

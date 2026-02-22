@@ -1,6 +1,6 @@
 """Debug tests for long email validation."""
 
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.emails.pyspark.pyspark_primitives import emails
 

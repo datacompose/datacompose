@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent.parent

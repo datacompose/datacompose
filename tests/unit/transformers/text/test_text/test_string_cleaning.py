@@ -4,8 +4,7 @@ Covers control characters, zero-width chars, unicode normalization, and whitespa
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType, StructType, StructField
+from datacompose.functions import functions as F
 
 
 # =============================================================================
@@ -276,8 +275,8 @@ class TestControlCharacterCleaning:
         """Test removal of control characters while preserving tabs/newlines."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_control_characters(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_control_characters({input_val!r}) = {result!r}, expected {expected!r}"
@@ -287,8 +286,8 @@ class TestControlCharacterCleaning:
         """Test removal of non-printable characters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_non_printable(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_non_printable({input_val!r}) = {result!r}, expected {expected!r}"
@@ -298,8 +297,8 @@ class TestControlCharacterCleaning:
         """Test removal of ANSI escape codes."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_ansi_codes(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_ansi_codes({input_val!r}) = {result!r}, expected {expected!r}"
@@ -314,8 +313,8 @@ class TestInvisibleCharacterCleaning:
         """Test removal of zero-width characters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_zero_width_characters(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_zero_width_characters({input_val!r}) = {result!r}, expected {expected!r}"
@@ -325,8 +324,8 @@ class TestInvisibleCharacterCleaning:
         """Test comprehensive removal of all invisible characters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.strip_invisible(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"strip_invisible({input_val!r}) = {result!r}, expected {expected!r}"
@@ -336,8 +335,8 @@ class TestInvisibleCharacterCleaning:
         """Test removal of byte order mark."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_bom(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_bom({input_val!r}) = {result!r}, expected {expected!r}"
@@ -352,8 +351,8 @@ class TestUnicodeNormalizationCleaning:
         """Test unicode normalization (NFKC + common replacements)."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.normalize_unicode(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"normalize_unicode({input_val!r}) = {result!r}, expected {expected!r}"
@@ -363,8 +362,8 @@ class TestUnicodeNormalizationCleaning:
         """Test removal of accents/diacritics."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_accents(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_accents({input_val!r}) = {result!r}, expected {expected!r}"
@@ -379,8 +378,8 @@ class TestWhitespaceCleaning:
         """Test whitespace normalization (trim + collapse multiple)."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.normalize_whitespace(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"normalize_whitespace({input_val!r}) = {result!r}, expected {expected!r}"
@@ -395,8 +394,8 @@ class TestContentRemovalCleaning:
         """Test removal of HTML tags."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_html_tags(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_html_tags({input_val!r}) = {result!r}, expected {expected!r}"
@@ -406,8 +405,8 @@ class TestContentRemovalCleaning:
         """Test removal of URLs."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_urls(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_urls({input_val!r}) = {result!r}, expected {expected!r}"
@@ -417,8 +416,8 @@ class TestContentRemovalCleaning:
         """Test removal of emojis."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_emojis(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_emojis({input_val!r}) = {result!r}, expected {expected!r}"
@@ -433,8 +432,8 @@ class TestCharacterTypeCleaning:
         """Test removal of punctuation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_punctuation(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_punctuation({input_val!r}) = {result!r}, expected {expected!r}"
@@ -444,8 +443,8 @@ class TestCharacterTypeCleaning:
         """Test removal of digits."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_digits(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_digits({input_val!r}) = {result!r}, expected {expected!r}"
@@ -455,8 +454,8 @@ class TestCharacterTypeCleaning:
         """Test removal of letters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_letters(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_letters({input_val!r}) = {result!r}, expected {expected!r}"
@@ -466,8 +465,8 @@ class TestCharacterTypeCleaning:
         """Test removal of literal escape sequences."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_escape_sequences(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_escape_sequences({input_val!r}) = {result!r}, expected {expected!r}"
@@ -477,8 +476,8 @@ class TestCharacterTypeCleaning:
         """Test stripping to alphanumeric only."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.strip_to_alphanumeric(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"strip_to_alphanumeric({input_val!r}) = {result!r}, expected {expected!r}"
@@ -493,8 +492,8 @@ class TestComprehensiveCleaning:
         """Test comprehensive cleaning for string comparison."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_for_comparison(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"clean_for_comparison({input_val!r}) = {result!r}, expected {expected!r}"
@@ -504,8 +503,8 @@ class TestComprehensiveCleaning:
         """Test slugification."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.slugify(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"slugify({input_val!r}) = {result!r}, expected {expected!r}"
@@ -515,8 +514,8 @@ class TestComprehensiveCleaning:
         """Test collapsing repeated characters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.collapse_repeats(F.col("input"), max_repeat=max_repeat))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"collapse_repeats({input_val!r}, {max_repeat}) = {result!r}, expected {expected!r}"
@@ -526,8 +525,8 @@ class TestComprehensiveCleaning:
         """Test comprehensive string cleaning."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        schema = StructType([StructField("input", StringType(), True)])
-        df = create_session.createDataFrame([(input_val,)], schema)
+        
+        df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_string(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"clean_string({input_val!r}) = {result!r}, expected {expected!r}"

@@ -4,8 +4,7 @@ Tests handling of messy, malformed, and edge-case datetime data.
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, StringType
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
 
@@ -102,7 +101,7 @@ class TestDatetimeMessyData:
             ("Jan", None),
         ]
 
-        schema = StructType([
+        
             StructField("date_str", StringType(), True),
             StructField("expected", StringType(), True)
         ])
@@ -175,7 +174,7 @@ class TestDatetimeMessyData:
             ("`2024-01-15`", None),
         ]
 
-        schema = StructType([
+        
             StructField("date_str", StringType(), True),
             StructField("expected", StringType(), True)
         ])
@@ -469,7 +468,7 @@ class TestDatetimeDataCorruption:
             ("\x002024-01-15", None),
         ]
 
-        schema = StructType([
+        
             StructField("date_str", StringType(), True),
             StructField("expected", StringType(), True)
         ])

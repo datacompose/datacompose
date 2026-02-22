@@ -3,7 +3,7 @@ Comprehensive tests for datetime extraction, parsing, and manipulation functiona
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 from datetime import datetime, timedelta
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes

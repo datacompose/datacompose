@@ -4,8 +4,7 @@ Tests for specific bugs and edge cases discovered during development and product
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, StringType
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
 

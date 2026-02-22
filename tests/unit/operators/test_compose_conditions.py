@@ -5,7 +5,7 @@ Tests must have @compose decorated functions at module level for proper AST pars
 
 import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.operators.primitives import PrimitiveRegistry
 

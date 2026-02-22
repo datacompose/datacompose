@@ -1,7 +1,7 @@
 """Tests for fuzzy matching primitives."""
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.analytics.fuzzy_matching.pyspark.pyspark_primitives import (
     fuzzy,

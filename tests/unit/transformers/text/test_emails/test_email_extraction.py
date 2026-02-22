@@ -3,7 +3,7 @@ Comprehensive tests for email extraction and processing functionality.
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.emails.pyspark.pyspark_primitives import emails
 

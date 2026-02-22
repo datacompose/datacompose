@@ -3,8 +3,7 @@ Comprehensive tests for city and state extraction functionality.
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType, StructField, StructType
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,
@@ -308,7 +307,7 @@ class TestExtensibility:
     def test_extract_city_with_custom_cities(self, create_session):
         """Test city extraction with custom city list."""
         # Create test data with ambiguous city names
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Reading, PA 19601",),  # Could be confused with verb
             ("456 Oak Ave, Mobile, AL 36601",),  # Could be confused with adjective
@@ -331,7 +330,7 @@ class TestExtensibility:
 
     def test_extract_city_preconfigured(self, create_session):
         """Test pre-configured city extractor."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Reading, PA 19601",),
             ("456 Oak Ave, Mobile, AL 36601",),
@@ -352,7 +351,7 @@ class TestExtensibility:
 
     def test_extract_state_with_custom_states(self, create_session):
         """Test state extraction with Canadian provinces."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Toronto, Ontario M5V 3A8",),
             ("456 Oak Ave, Montreal, Quebec H3B 4W5",),
@@ -394,7 +393,7 @@ class TestExtensibility:
 
     def test_extract_state_preconfigured(self, create_session):
         """Test pre-configured state extractor."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Toronto, ON M5V 3A8",),
             ("456 Oak Ave, Montreal, QC H3B 4W5",),
@@ -414,7 +413,7 @@ class TestExtensibility:
 
     def test_mixed_us_and_custom_states(self, create_session):
         """Test that custom states work alongside US states."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Toronto, Ontario",),
             ("456 Oak Ave, New York, NY",),
@@ -440,7 +439,7 @@ class TestExtensibility:
 
     def test_case_insensitive_custom_cities(self, create_session):
         """Test that custom cities are case-insensitive."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, reading, PA 19601",),  # lowercase
             ("456 Oak Ave, MOBILE, AL 36601",),  # uppercase
@@ -465,7 +464,7 @@ class TestExtensibility:
 
     def test_empty_custom_lists(self, create_session):
         """Test that empty custom lists don't break functionality."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, New York, NY 10001",),
         ]
@@ -485,7 +484,7 @@ class TestExtensibility:
 
     def test_none_custom_parameters(self, create_session):
         """Test that None custom parameters use defaults."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, New York, NY 10001",),
         ]
@@ -504,7 +503,7 @@ class TestExtensibility:
 
     def test_multiword_custom_cities(self, create_session):
         """Test extraction of multi-word custom cities."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Salt Lake City, UT 84101",),
             ("456 Oak Ave, San Francisco, CA 94102",),
@@ -529,7 +528,7 @@ class TestExtensibility:
 
     def test_overlapping_custom_cities(self, create_session):
         """Test when custom cities have overlapping names."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, York, PA 17401",),  # Should match "York", not "New York"
             ("456 Oak Ave, New York, NY 10001",),  # Should match "New York"
@@ -554,7 +553,7 @@ class TestExtensibility:
 
     def test_custom_state_abbreviation_conflict(self, create_session):
         """Test custom states that might conflict with US states."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, Portland, OR 97201",),  # US Oregon
             ("456 Oak Ave, Toronto, ON M5V 3A8",),  # Ontario (custom)
@@ -578,7 +577,7 @@ class TestExtensibility:
 
     def test_international_postal_codes(self, create_session):
         """Test state extraction with international postal codes."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             # Canadian addresses with postal codes
             ("123 Main St, Toronto, Ontario M5V 3A8",),
@@ -607,7 +606,7 @@ class TestExtensibility:
 
     def test_special_characters_in_custom_cities(self, create_session):
         """Test custom cities with special characters."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, L'Anse, MI 49946",),  # City with apostrophe
             ("456 Oak Ave, Coeur d'Alene, ID 83814",),  # City with apostrophe
@@ -632,7 +631,7 @@ class TestExtensibility:
 
     def test_whitespace_variations_custom_cities(self, create_session):
         """Test custom cities with different whitespace."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St,New York,NY 10001",),  # No spaces after commas
             ("456 Oak Ave ,  Los Angeles  , CA 90001",),  # Extra spaces
@@ -658,7 +657,7 @@ class TestExtensibility:
             addresses,
         )
 
-        schema = StructType([StructField("city", StringType(), True)])
+        
         data = [
             ("New York",),  # Valid
             ("Los Angeles",),  # Valid
@@ -712,7 +711,7 @@ class TestExtensibility:
             addresses,
         )
 
-        schema = StructType([StructField("city", StringType(), True)])
+        
         data = [
             ("new york",),  # Needs title case
             ("  los angeles  ",),  # Needs trimming
@@ -771,7 +770,7 @@ class TestExtensibility:
 
     def test_numeric_in_custom_cities(self, create_session):
         """Test custom cities with numbers in their names."""
-        schema = StructType([StructField("address", StringType(), True)])
+        
         data = [
             ("123 Main St, 29 Palms, CA 92277",),  # City starting with number
             ("456 Oak Ave, Twentynine Palms, CA 92277",),  # Spelled out number

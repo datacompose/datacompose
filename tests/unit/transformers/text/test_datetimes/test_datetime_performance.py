@@ -4,7 +4,7 @@ Tests transformation speed and scalability with large datasets.
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 from datetime import datetime, timedelta
 import time
 

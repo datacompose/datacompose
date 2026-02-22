@@ -3,7 +3,7 @@ Tests for phone number formatting and standardization functions.
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.phone_numbers.pyspark.pyspark_primitives import (
     phone_numbers,

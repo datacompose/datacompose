@@ -51,7 +51,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import emails
 
 # Create Spark session
@@ -122,7 +122,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import phone_numbers
 
 create_session = SparkSession.builder.appName("phone_test").master("local[*]").getOrCreate()
@@ -186,7 +186,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import addresses
 
 create_session = SparkSession.builder.appName("address_test").master("local[*]").getOrCreate()
@@ -256,7 +256,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import emails
 import phone_numbers
 import addresses

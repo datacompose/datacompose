@@ -3,7 +3,7 @@ Comprehensive tests for building/unit extraction functionality.
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,

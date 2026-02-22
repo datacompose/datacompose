@@ -3,8 +3,7 @@ Comprehensive tests for ZIP code extraction functionality.
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType, StructField, StructType
+from datacompose.functions import functions as F
 
 # Import test data
 from tests.unit.transformers.text.test_addresses.test_data_addresses import (
@@ -23,7 +22,7 @@ from tests.unit.transformers.text.test_addresses.test_data_addresses import (
 @pytest.fixture
 def valid_zip_codes_df(create_session):
     """Create DataFrame with valid ZIP code formats."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -35,7 +34,7 @@ def valid_zip_codes_df(create_session):
 @pytest.fixture
 def invalid_zip_codes_df(create_session):
     """Create DataFrame with invalid ZIP code formats."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -47,7 +46,7 @@ def invalid_zip_codes_df(create_session):
 @pytest.fixture
 def zip_codes_in_text_df(create_session):
     """Create DataFrame with ZIP codes embedded in text."""
-    schema = StructType(
+    
         [
             StructField("text", StringType(), True),
             StructField("expected", StringType(), True),
@@ -59,7 +58,7 @@ def zip_codes_in_text_df(create_session):
 @pytest.fixture
 def special_cases_df(create_session):
     """Create DataFrame with special ZIP code cases."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -71,7 +70,7 @@ def special_cases_df(create_session):
 @pytest.fixture
 def international_postal_codes_df(create_session):
     """Create DataFrame with international postal codes."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -83,7 +82,7 @@ def international_postal_codes_df(create_session):
 @pytest.fixture
 def boundary_zip_codes_df(create_session):
     """Create DataFrame with boundary ZIP codes."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -95,7 +94,7 @@ def boundary_zip_codes_df(create_session):
 @pytest.fixture
 def unicode_special_chars_df(create_session):
     """Create DataFrame with Unicode and special characters."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -107,7 +106,7 @@ def unicode_special_chars_df(create_session):
 @pytest.fixture
 def null_handling_df(create_session):
     """Create DataFrame for null handling tests."""
-    schema = StructType(
+    
         [
             StructField("input", StringType(), True),
             StructField("expected", StringType(), True),
@@ -119,7 +118,7 @@ def null_handling_df(create_session):
 @pytest.fixture
 def performance_test_df(create_session):
     """Create large DataFrame for performance testing."""
-    schema = StructType(
+    
         [StructField("id", StringType(), True), StructField("text", StringType(), True)]
     )
     return create_session.createDataFrame(generate_performance_test_data(10000), schema)
@@ -891,7 +890,6 @@ class TestZipCodeValidation:
     def test_null_safety_all_functions(self, create_session):
         """Test that all functions handle nulls safely."""
         # Create DataFrame with nulls
-        from pyspark.sql.types import StringType, StructField, StructType
 
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             get_zip_code_type,
@@ -900,7 +898,7 @@ class TestZipCodeValidation:
             validate_zip_code,
         )
 
-        schema = StructType([StructField("zip", StringType(), True)])
+        
         df = create_session.createDataFrame([(None,), (None,), (None,)], schema)
 
         # Apply all functions - none should throw errors

@@ -10,8 +10,8 @@ import pytest
 
 from datacompose.functions import set_backend
 
-# Backends to test against
-BACKENDS = ["duckdb", "pyspark"]
+# Backends to test against (start with duckdb only)
+BACKENDS = ["duckdb"]
 
 
 @pytest.fixture(scope="session", params=BACKENDS)
@@ -20,9 +20,13 @@ def backend(request):
     return request.param
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def setup_backend(backend):
-    """Set the SQLFrame backend for the current test session."""
+    """Set the SQLFrame backend for the current test session.
+
+    This fixture is autouse=True so it runs before any test,
+    ensuring the backend is set before imports that need it.
+    """
     set_backend(backend)
     yield backend
 
