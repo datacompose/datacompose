@@ -25,9 +25,9 @@ def fix_typos_optimized(create_session, email_df, email_col="email"):
         email_df.withColumn("original_email", F.col(email_col))
         .withColumn("username", emails.extract_username(F.col(email_col)))
         .withColumn("domain", emails.extract_domain(F.col(email_col)))
-        # Left join with broadcast hint for small typo table
+        # Left join with typo table
         .join(
-            F.broadcast(typo_df),
+            typo_df,
             F.lower(F.col("domain")) == F.lower(F.col("typo_domain")),
             "left",
         )
@@ -65,16 +65,15 @@ class TestOptimizedEmailFunctions:
         # Apply optimized typo fixing
         result_df = fix_typos_optimized(create_session, df)
 
-        # Collect results
-        results = result_df.collect()
+        # Collect results - use dict lookup since join may reorder rows
+        results = {row["original_email"]: row["fixed_email"] for row in result_df.collect()}
 
         # Verify each result
-        for i, (original, expected) in enumerate(test_data):
-            result = results[i]
-            assert result["original_email"] == original
+        for original, expected in test_data:
+            assert original in results, f"Missing result for '{original}'"
             assert (
-                result["fixed_email"] == expected
-            ), f"Failed for '{original}': expected '{expected}', got '{result['fixed_email']}'"
+                results[original] == expected
+            ), f"Failed for '{original}': expected '{expected}', got '{results[original]}'"
 
     def test_standardize_email_simplified(self, create_session):
         """Test simplified email standardization without deep nesting."""

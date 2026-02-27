@@ -3,6 +3,7 @@ Tests for string validation primitives.
 Covers hexadecimal, base64, control characters, and unicode detection.
 """
 
+import pandas as pd
 import pytest
 from datacompose.functions import functions as F
 
@@ -248,8 +249,9 @@ class TestHexValidation:
         """Test hexadecimal string validation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        # Cast to string to handle NULL type inference in DuckDB
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.is_valid_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"is_valid_hex({input_val!r}) = {result}, expected {expected}"
@@ -266,6 +268,7 @@ class TestBase64Validation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.is_valid_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"is_valid_base64({input_val!r}) = {result}, expected {expected}"
@@ -282,6 +285,7 @@ class TestUrlEncodingValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_url_encoding(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_url_encoding({input_val!r}) = {result}, expected {expected}"
@@ -293,6 +297,7 @@ class TestUrlEncodingValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.is_valid_url_encoded(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"is_valid_url_encoded({input_val!r}) = {result}, expected {expected}"
@@ -309,6 +314,7 @@ class TestHtmlEntitiesValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_html_entities(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_html_entities({input_val!r}) = {result}, expected {expected}"
@@ -323,8 +329,13 @@ class TestControlCharacterValidation:
         """Test control character detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
-        df = create_session.createDataFrame([(input_val,)], ["input"])
+        if input_val is not None and "\x00" in input_val:
+            tbl = f"_ctrl_{id(input_val)}"
+            create_session._cur.register(tbl, pd.DataFrame({"input": [input_val]}))
+            df = create_session.sql(f"SELECT * FROM {tbl}")
+        else:
+            df = create_session.createDataFrame([(input_val,)], ["input"])
+            df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_control_characters(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_control_characters({input_val!r}) = {result}, expected {expected}"
@@ -334,8 +345,13 @@ class TestControlCharacterValidation:
         """Test non-printable character detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
-        df = create_session.createDataFrame([(input_val,)], ["input"])
+        if input_val is not None and "\x00" in input_val:
+            tbl = f"_np_{id(input_val)}"
+            create_session._cur.register(tbl, pd.DataFrame({"input": [input_val]}))
+            df = create_session.sql(f"SELECT * FROM {tbl}")
+        else:
+            df = create_session.createDataFrame([(input_val,)], ["input"])
+            df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_non_printable(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_non_printable({input_val!r}) = {result}, expected {expected}"
@@ -347,6 +363,7 @@ class TestControlCharacterValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_ansi_codes(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_ansi_codes({input_val!r}) = {result}, expected {expected}"
@@ -363,6 +380,7 @@ class TestInvisibleCharacterValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_zero_width_characters(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_zero_width_characters({input_val!r}) = {result}, expected {expected}"
@@ -379,6 +397,7 @@ class TestUnicodeValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_non_ascii(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_non_ascii({input_val!r}) = {result}, expected {expected}"
@@ -390,6 +409,7 @@ class TestUnicodeValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_accents(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_accents({input_val!r}) = {result}, expected {expected}"
@@ -401,6 +421,7 @@ class TestUnicodeValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_unicode_issues(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_unicode_issues({input_val!r}) = {result}, expected {expected}"
@@ -417,6 +438,7 @@ class TestEscapeSequenceValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_escape_sequences(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_escape_sequences({input_val!r}) = {result}, expected {expected}"
@@ -433,6 +455,7 @@ class TestWhitespaceValidation:
 
         
         df = create_session.createDataFrame([(input_val,)], ["input"])
+        df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_whitespace_issues(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"has_whitespace_issues({input_val!r}) = {result}, expected {expected}"

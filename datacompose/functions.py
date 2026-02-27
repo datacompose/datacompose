@@ -9,7 +9,7 @@ This module provides a unified interface to SQL functions across different backe
 import importlib
 from typing import Optional
 
-SUPPORTED_BACKENDS = ["duckdb", "bigquery", "snowflake", "pyspark", "postgres"]
+SUPPORTED_BACKENDS = ["duckdb", "pyspark", "postgres"]
 
 _backend: Optional[str] = None
 _module = None

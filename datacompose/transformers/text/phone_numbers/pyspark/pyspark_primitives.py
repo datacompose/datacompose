@@ -160,8 +160,10 @@ def extract_all_phone_numbers_from_text(col: Column) -> Column:
     first_phone_numbers = extract_phone_numbers_from_text(col)
 
     # Return array with single element or empty array
+    # Use array_remove to create a typed empty array (F.array() with no args fails in DuckDB)
+    empty_array = F.array_remove(F.array(F.lit("")), "")
     return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(
-        F.array()
+        empty_array
     )
 
 

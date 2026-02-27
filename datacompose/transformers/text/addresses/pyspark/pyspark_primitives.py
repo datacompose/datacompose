@@ -487,13 +487,10 @@ def extract_street_suffix(col: Column) -> Column:
 
     # Build pattern to match the LAST suffix in the string
     # This handles cases like "St. James Place" where we want "Place" not "St"
-    suffix_pattern = (
-        r"\b(" + "|".join(suffixes) + r")\b(?!.*\b(?:" + "|".join(suffixes) + r")\b)"
-    )
+    # Use greedy .* to skip to the last occurrence (avoids negative lookahead)
+    suffix_pattern = r"(?i).*\b(" + "|".join(suffixes) + r")\b"
 
-    # Extract the last matching suffix - case insensitive
-    suffix_pattern_ci = r"(?i)" + suffix_pattern
-    result = F.regexp_extract(col, suffix_pattern_ci, 1)
+    result = F.regexp_extract(col, suffix_pattern, 1)
     return F.when(result.isNull(), F.lit("")).otherwise(result)
 
 
@@ -1106,8 +1103,11 @@ def validate_zip_code(col: Column) -> Column:
     Returns:
         Column: Boolean column indicating if ZIP code is valid
     """
+    # Strip trailing newlines/carriage returns (but not spaces) for regex matching
+    cleaned = F.regexp_replace(col, r"[\r\n]+$", "")
+
     # Check if the column matches valid ZIP code pattern
-    is_valid_format = F.regexp_extract(col, r"^(\d{5}(?:-\d{4})?)$", 1) != ""
+    is_valid_format = F.regexp_extract(cleaned, r"^(\d{5}(?:-\d{4})?)$", 1) != ""
 
     # Additional validation: not empty/null
     is_not_empty = (col.isNotNull()) & (F.trim(col) != "")
@@ -1865,12 +1865,15 @@ def extract_po_box(col: Column) -> Column:
     col = F.when(col.isNull(), F.lit("")).otherwise(col)
 
     # Pattern to match various PO Box formats
-    # Matches: PO Box, P.O. Box, POB, Post Office Box, etc.
+    # Matches: PO Box, P.O. Box, Post Office Box, etc.
     # Captures the box number (numeric, alphanumeric, or with dashes and special chars)
-    # POB must be followed by space and start with number or #
-    po_box_pattern = r"(?i)(?:P\.?\s?O\.?\s?Box|POB(?=\s+[#0-9])|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)"
+    main_pattern = r"(?i)(?:P\.?\s?O\.?\s?Box|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)"
+    # POB handled separately - requires digit/# start to avoid false positives (e.g. "Pob Street")
+    pob_pattern = r"(?i)\bPOB\s+(#?\d[A-Z0-9\-/]*)"
 
-    result = F.regexp_extract(col, po_box_pattern, 1)
+    main_result = F.regexp_extract(col, main_pattern, 1)
+    pob_result = F.regexp_extract(col, pob_pattern, 1)
+    result = F.when(main_result != "", main_result).otherwise(pob_result)
     return F.when(result.isNull(), F.lit("")).otherwise(result)
 
 
@@ -1943,11 +1946,13 @@ def remove_po_box(col: Column) -> Column:
     # Handle nulls
     col = F.when(col.isNull(), F.lit("")).otherwise(col)
 
-    # Pattern to match various PO Box formats with optional comma
-    po_box_pattern = r"(?i),?\s*(?:P\.?\s?O\.?\s?Box|POB(?=\s+[#0-9])|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)\s*,?"
+    # Remove PO Box patterns - handle POB separately to avoid false positives
+    main_pattern = r"(?i),?\s*(?:P\.?\s?O\.?\s?Box|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)\s*,?"
+    pob_pattern = r"(?i),?\s*\bPOB\s+(#?\d[A-Z0-9\-/]*)\s*,?"
 
-    # Remove the PO Box
-    result = F.regexp_replace(col, po_box_pattern, ",")
+    # Remove both PO Box patterns
+    result = F.regexp_replace(col, main_pattern, ",")
+    result = F.regexp_replace(result, pob_pattern, ",")
 
     # Clean up any leading/trailing commas or spaces
     result = F.regexp_replace(result, r"^\s*,\s*", "")  # Leading comma
@@ -1984,11 +1989,14 @@ def standardize_po_box(col: Column) -> Column:
     box_number = extract_po_box(col)
 
     # If we found a PO Box, replace it with standard format
+    # Handle both main and POB patterns
+    main_pattern = r"(?i)(?:P\.?\s?O\.?\s?Box|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)"
+    pob_pattern = r"(?i)\bPOB\s+(#?\d[A-Z0-9\-/]*)"
     result = F.when(
         box_number != "",
         F.regexp_replace(
-            col,
-            r"(?i)(?:P\.?\s?O\.?\s?Box|POB(?=\s+[#0-9])|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)",
+            F.regexp_replace(col, main_pattern, F.concat(F.lit("PO Box "), box_number)),
+            pob_pattern,
             F.concat(F.lit("PO Box "), box_number),
         ),
     ).otherwise(col)

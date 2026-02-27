@@ -119,11 +119,7 @@ class TestTimezoneDetection:
             # These should still parse, but document the assumption
         ]
 
-        
-            StructField("datetime_str", StringType(), True),
-            StructField("expected", StringType(), True)
-        ])
-        df = create_session.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected"])
         result_df = df.withColumn(
             "normalized", datetimes.normalize_timezone(F.col("datetime_str"), F.lit("UTC"))
         )
@@ -402,11 +398,7 @@ class TestTimezoneEdgeCases:
             ("01/15/2024 2:30 PM", None),
         ]
 
-        
-            StructField("datetime_str", StringType(), True),
-            StructField("expected_tz", StringType(), True)
-        ])
-        df = create_session.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected_tz"])
 
         # Test adding timezone
         result_df = df.withColumn(

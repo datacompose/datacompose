@@ -56,16 +56,17 @@ text = PrimitiveRegistry("text")
 # Constants
 # =============================================================================
 
-# Zero-width character pattern
+# Zero-width character pattern - using actual Unicode chars for cross-backend compatibility
+# These are: ZWSP, ZWNJ, ZWJ, BOM, Word Joiner, Mongolian Vowel Separator
 ZERO_WIDTH_PATTERN = "[\u200b\u200c\u200d\ufeff\u2060\u180e]"
 
-# Control characters (excluding tab \x09, newline \x0a, carriage return \x0d)
-CONTROL_CHAR_PATTERN = "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
+# Control characters pattern - using hex escapes for cross-backend compatibility
+# Matches all C0 control chars (0x00-0x1F) plus DEL (0x7F)
+CONTROL_CHAR_PATTERN = "[\\x00-\\x1f\\x7f]"
 
-# ANSI escape code pattern
 # ANSI escape code pattern - ESC[ followed by params and command letter
-# The ESC char is \x1b (chr(27)) - we need to include it literally
-ANSI_PATTERN = "\x1b\\[[0-9;]*[a-zA-Z]"
+# ESC is 0x1B - using hex escape for cross-backend compatibility
+ANSI_PATTERN = "\\x1b\\[[0-9;]*[a-zA-Z]"
 
 # URL pattern
 URL_PATTERN = "https?://[^\\s]+|www\\.[^\\s]+|ftp://[^\\s]+"
@@ -137,10 +138,12 @@ def is_valid_url_encoded(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating if valid URL encoded
     """
+    # Remove all valid %XX sequences, then check if any bare % remains
+    cleaned = F.regexp_replace(col, "%[0-9A-Fa-f]{2}", "")
     return (
         F.when(col.isNull(), F.lit(False))
         .when(F.trim(col) == "", F.lit(True))
-        .otherwise(~col.rlike("%(?![0-9A-Fa-f]{2})"))
+        .otherwise(~cleaned.contains("%"))
     )
 
 
@@ -154,8 +157,10 @@ def has_control_characters(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of control characters
     """
+    # Strip allowed whitespace (tab, newline, CR), then check for remaining control chars
+    stripped = F.regexp_replace(col, "[\\t\\n\\r]", "")
     return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
-        col.rlike(CONTROL_CHAR_PATTERN)
+        stripped.rlike(CONTROL_CHAR_PATTERN)
     )
 
 
@@ -185,7 +190,7 @@ def has_non_ascii(col: "Column") -> "Column":
         Column with boolean indicating presence of non-ASCII characters
     """
     return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
-        col.rlike("[^\x00-\x7f]")
+        col.rlike("[^\\x00-\\x7f]")
     )
 
 
@@ -245,7 +250,7 @@ def has_ansi_codes(col: "Column") -> "Column":
         Column with boolean indicating presence of ANSI codes
     """
     return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
-        col.rlike("\x1b\\[[0-9;]*[a-zA-Z]")
+        col.rlike("\\x1b\\[[0-9;]*[a-zA-Z]")
     )
 
 
@@ -260,7 +265,7 @@ def has_non_printable(col: "Column") -> "Column":
         Column with boolean indicating presence of non-printable characters
     """
     return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
-        col.rlike("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+        col.rlike("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]")
     )
 
 

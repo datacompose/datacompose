@@ -3,6 +3,7 @@ Data quality tests for datetime transformations.
 Tests handling of messy, malformed, and edge-case datetime data.
 """
 
+import pandas as pd
 import pytest
 from datacompose.functions import functions as F
 
@@ -101,11 +102,7 @@ class TestDatetimeMessyData:
             ("Jan", None),
         ]
 
-        
-            StructField("date_str", StringType(), True),
-            StructField("expected", StringType(), True)
-        ])
-        df = create_session.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -174,11 +171,7 @@ class TestDatetimeMessyData:
             ("`2024-01-15`", None),
         ]
 
-        
-            StructField("date_str", StringType(), True),
-            StructField("expected", StringType(), True)
-        ])
-        df = create_session.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -427,7 +420,7 @@ class TestDatetimeDataCorruption:
 
         test_data = [
             # Truncated at various points
-            ("2024-01-1", None),  # Missing last digit
+            ("2024-01-1", "2024-01-01 00:00:00"),  # Single-digit day (valid)
             ("2024-01-", None),  # Missing day
             ("2024-01", None),  # Missing day
             ("2024-", None),  # Missing month and day
@@ -462,23 +455,29 @@ class TestDatetimeDataCorruption:
             # Multiple garbage characters
             ("xxx2024-01-15xxx", None),
             ("2024-01-15 garbage text", None),
-
-            # Control characters
-            ("2024-01-15\x00", None),
-            ("\x002024-01-15", None),
         ]
 
-        
-            StructField("date_str", StringType(), True),
-            StructField("expected", StringType(), True)
-        ])
-        df = create_session.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
 
         results = result_df.collect()
         for row in results:
+            pass  # Verify no crashes
+
+        # Control characters with null bytes - use pandas to bypass SQL literal limitation
+        nullbyte_data = [
+            ("2024-01-15\x00", None),
+            ("\x002024-01-15", None),
+        ]
+        tbl = f"_extra_chars_{id(nullbyte_data)}"
+        create_session._cur.register(tbl, pd.DataFrame(nullbyte_data, columns=["date_str", "expected"]))
+        df_nb = create_session.sql(f"SELECT * FROM {tbl}")
+        result_nb = df_nb.withColumn(
+            "standardized", datetimes.standardize_iso(F.col("date_str"))
+        )
+        for row in result_nb.collect():
             pass  # Verify no crashes
 
     def test_encoding_issues(self, create_session):

@@ -307,13 +307,12 @@ class TestExtensibility:
     def test_extract_city_with_custom_cities(self, create_session):
         """Test city extraction with custom city list."""
         # Create test data with ambiguous city names
-        
         data = [
             ("123 Main St, Reading, PA 19601",),  # Could be confused with verb
             ("456 Oak Ave, Mobile, AL 36601",),  # Could be confused with adjective
             ("789 Elm St, Worcester, MA 01601",),  # Regular city
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Test with custom cities
         custom_cities = ["Reading", "Mobile"]
@@ -330,12 +329,11 @@ class TestExtensibility:
 
     def test_extract_city_preconfigured(self, create_session):
         """Test pre-configured city extractor."""
-        
         data = [
             ("123 Main St, Reading, PA 19601",),
             ("456 Oak Ave, Mobile, AL 36601",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Create pre-configured extractor
         extract_city_custom = addresses.extract_city(
@@ -351,7 +349,6 @@ class TestExtensibility:
 
     def test_extract_state_with_custom_states(self, create_session):
         """Test state extraction with Canadian provinces."""
-        
         data = [
             ("123 Main St, Toronto, Ontario M5V 3A8",),
             ("456 Oak Ave, Montreal, Quebec H3B 4W5",),
@@ -359,7 +356,7 @@ class TestExtensibility:
             ("321 Pine St, Calgary, Alberta T2P 1J9",),
             ("654 Maple St, New York, NY 10001",),  # US state for comparison
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Canadian provinces mapping
         canadian_provinces = {
@@ -393,12 +390,11 @@ class TestExtensibility:
 
     def test_extract_state_preconfigured(self, create_session):
         """Test pre-configured state extractor."""
-        
         data = [
             ("123 Main St, Toronto, ON M5V 3A8",),
             ("456 Oak Ave, Montreal, QC H3B 4W5",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Create pre-configured extractor for Canadian provinces
         canadian_provinces = {"ONTARIO": "ON", "QUEBEC": "QC", "BRITISH COLUMBIA": "BC"}
@@ -413,14 +409,13 @@ class TestExtensibility:
 
     def test_mixed_us_and_custom_states(self, create_session):
         """Test that custom states work alongside US states."""
-        
         data = [
             ("123 Main St, Toronto, Ontario",),
             ("456 Oak Ave, New York, NY",),
             ("789 Elm St, Vancouver, British Columbia",),
             ("321 Pine St, Los Angeles, California",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Add just a few Canadian provinces
         custom_states = {"ONTARIO": "ON", "BRITISH COLUMBIA": "BC"}
@@ -439,13 +434,12 @@ class TestExtensibility:
 
     def test_case_insensitive_custom_cities(self, create_session):
         """Test that custom cities are case-insensitive."""
-        
         data = [
             ("123 Main St, reading, PA 19601",),  # lowercase
             ("456 Oak Ave, MOBILE, AL 36601",),  # uppercase
             ("789 Elm St, MoBiLe, AL 36601",),  # mixed case
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Custom cities in various cases
         custom_cities = ["READING", "mobile"]  # Different cases
@@ -464,11 +458,10 @@ class TestExtensibility:
 
     def test_empty_custom_lists(self, create_session):
         """Test that empty custom lists don't break functionality."""
-        
         data = [
             ("123 Main St, New York, NY 10001",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Test with empty custom cities
         result1 = df.select(
@@ -484,11 +477,10 @@ class TestExtensibility:
 
     def test_none_custom_parameters(self, create_session):
         """Test that None custom parameters use defaults."""
-        
         data = [
             ("123 Main St, New York, NY 10001",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Test with None (default behavior)
         result1 = df.select(
@@ -503,14 +495,13 @@ class TestExtensibility:
 
     def test_multiword_custom_cities(self, create_session):
         """Test extraction of multi-word custom cities."""
-        
         data = [
             ("123 Main St, Salt Lake City, UT 84101",),
             ("456 Oak Ave, San Francisco, CA 94102",),
             ("789 Elm St, Los Angeles, CA 90001",),
             ("321 Pine St, Saint Paul, MN 55101",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Test with multi-word custom cities
         custom_cities = ["Salt Lake City", "San Francisco", "Los Angeles", "Saint Paul"]
@@ -528,7 +519,6 @@ class TestExtensibility:
 
     def test_overlapping_custom_cities(self, create_session):
         """Test when custom cities have overlapping names."""
-        
         data = [
             ("123 Main St, York, PA 17401",),  # Should match "York", not "New York"
             ("456 Oak Ave, New York, NY 10001",),  # Should match "New York"
@@ -536,7 +526,7 @@ class TestExtensibility:
                 "789 Elm St, Mexico, MO 65265",
             ),  # Should match "Mexico", not "New Mexico"
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Custom cities with potential overlaps
         custom_cities = ["York", "New York", "Mexico", "New Mexico"]
@@ -553,13 +543,12 @@ class TestExtensibility:
 
     def test_custom_state_abbreviation_conflict(self, create_session):
         """Test custom states that might conflict with US states."""
-        
         data = [
             ("123 Main St, Portland, OR 97201",),  # US Oregon
             ("456 Oak Ave, Toronto, ON M5V 3A8",),  # Ontario (custom)
             ("789 Elm St, Boston, MA 02101",),  # US Massachusetts
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Add custom state that doesn't conflict
         custom_states = {"ONTARIO": "ON"}  # ON doesn't conflict with existing US states
@@ -577,7 +566,6 @@ class TestExtensibility:
 
     def test_international_postal_codes(self, create_session):
         """Test state extraction with international postal codes."""
-        
         data = [
             # Canadian addresses with postal codes
             ("123 Main St, Toronto, Ontario M5V 3A8",),
@@ -585,7 +573,7 @@ class TestExtensibility:
             # UK-style (though we're treating as Canadian province)
             ("789 High St, London, Ontario N6A 1H3",),
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         canadian_provinces = {
             "ONTARIO": "ON",
@@ -606,13 +594,12 @@ class TestExtensibility:
 
     def test_special_characters_in_custom_cities(self, create_session):
         """Test custom cities with special characters."""
-        
         data = [
             ("123 Main St, L'Anse, MI 49946",),  # City with apostrophe
             ("456 Oak Ave, Coeur d'Alene, ID 83814",),  # City with apostrophe
             ("789 Elm St, St. Louis, MO 63101",),  # City with period
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         # Custom cities with special characters
         custom_cities = ["L'Anse", "Coeur d'Alene", "St. Louis"]
@@ -631,13 +618,12 @@ class TestExtensibility:
 
     def test_whitespace_variations_custom_cities(self, create_session):
         """Test custom cities with different whitespace."""
-        
         data = [
             ("123 Main St,New York,NY 10001",),  # No spaces after commas
             ("456 Oak Ave ,  Los Angeles  , CA 90001",),  # Extra spaces
             ("789 Elm St,\tSan Francisco\t,\tCA 94102",),  # Tabs
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         custom_cities = ["New York", "Los Angeles", "San Francisco"]
         result = df.select(
@@ -657,7 +643,6 @@ class TestExtensibility:
             addresses,
         )
 
-        
         data = [
             ("New York",),  # Valid
             ("Los Angeles",),  # Valid
@@ -672,7 +657,7 @@ class TestExtensibility:
             ("City@123",),  # Invalid - special characters
             ("New!York",),  # Invalid - exclamation
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["city"])
 
         # Basic validation
         result = df.select(
@@ -711,7 +696,6 @@ class TestExtensibility:
             addresses,
         )
 
-        
         data = [
             ("new york",),  # Needs title case
             ("  los angeles  ",),  # Needs trimming
@@ -723,7 +707,7 @@ class TestExtensibility:
             (None,),  # Handle null
             ("",),  # Handle empty
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["city"])
 
         # Basic standardization
         result = df.select(
@@ -754,7 +738,7 @@ class TestExtensibility:
             ("SF",),
             ("stlouis",),
         ]
-        df2 = create_session.createDataFrame(data2, schema)
+        df2 = create_session.createDataFrame(data2, ["city"])
 
         result2 = df2.select(
             F.col("city"),
@@ -770,12 +754,11 @@ class TestExtensibility:
 
     def test_numeric_in_custom_cities(self, create_session):
         """Test custom cities with numbers in their names."""
-        
         data = [
             ("123 Main St, 29 Palms, CA 92277",),  # City starting with number
             ("456 Oak Ave, Twentynine Palms, CA 92277",),  # Spelled out number
         ]
-        df = create_session.createDataFrame(data, schema)
+        df = create_session.createDataFrame(data, ["address"])
 
         custom_cities = ["29 Palms", "Twentynine Palms"]
         result = df.select(

@@ -63,6 +63,8 @@ else:
     except ImportError:
         pass
 
+import re
+
 try:
     # Try local utils import first (for generated code)
     from utils.primitives import PrimitiveRegistry  # type: ignore
@@ -164,9 +166,9 @@ def extract_datetime_from_text(col: Column) -> Column:
     )
 
     # Just year: 2024 (but not part of a larger date)
-    # Use negative lookbehind/lookahead to avoid matching years in dates
+    # This is lowest priority in coalesce, so date-specific patterns catch dates first
     year_only = F.regexp_extract(
-        col, r"(?<![/\-\d])\b(20\d{2}|19\d{2})\b(?![/\-\dT])", 1
+        col, r"\b(20\d{2}|19\d{2})\b", 1
     )
 
     # Return first non-empty match using coalesce
@@ -215,11 +217,16 @@ def standardize_iso(col: Column) -> Column:
         # "2024-Jan-15" -> "2024-01-15 00:00:00"
         # "15-01-2024 14:30" -> "2024-01-15 14:30:00"
     """
+    # Cast to string to handle timestamp/date column inputs
+    str_col = col.cast("string")
     # Normalize whitespace:
     # 1. Trim leading/trailing whitespace (spaces, tabs, newlines)
     # 2. Collapse multiple internal whitespace characters into single spaces
-    trimmed = F.regexp_replace(col, r"^\s+|\s+$", "")
+    trimmed = F.regexp_replace(str_col, r"^\s+|\s+$", "")
     normalized = F.regexp_replace(trimmed, r"\s+", " ")
+    # Replace ISO 'T' separator and trailing 'Z' with space for cross-backend compatibility
+    normalized = F.regexp_replace(normalized, "(\\d)T(\\d)", "\\1 \\2")
+    normalized = F.regexp_replace(normalized, "Z$", "")
 
     # Try multiple formats in order using coalesce
     # try_to_timestamp returns null if format doesn't match or date is invalid
@@ -228,10 +235,7 @@ def standardize_iso(col: Column) -> Column:
 
     parsed = F.coalesce(
         # ISO formats (highest priority - unambiguous)
-        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm:ss'Z'")),
-        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm:ss")),
         F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd HH:mm:ss")),
-        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm")),
         F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd HH:mm")),
         F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd")),
         # ISO date with 12-hour time and AM/PM
@@ -268,6 +272,9 @@ def standardize_iso(col: Column) -> Column:
         F.try_to_timestamp(normalized, F.lit("dd.MM.yyyy")),
         F.try_to_timestamp(normalized, F.lit("d.M.yyyy")),
     )
+
+    # Reject dates with unreasonable years (e.g. truncated input "01/15/202" → year 202)
+    parsed = F.when(F.year(parsed).between(1000, 9999), parsed)
 
     # Format as ISO string "yyyy-MM-dd HH:mm:ss"
     # Returns null if parsed is null
@@ -1033,9 +1040,17 @@ def date_diff_years(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
+    # Compute year diff explicitly to avoid operator precedence issues
+    # with months_between expansion in some backends
+    year_diff = F.year(ts1) - F.year(ts2)
+    # Adjust if the anniversary date hasn't been reached yet
+    mmdd1 = F.month(ts1) * 100 + F.dayofmonth(ts1)
+    mmdd2 = F.month(ts2) * 100 + F.dayofmonth(ts2)
+    adjusted = F.when(mmdd1 < mmdd2, year_diff - 1).otherwise(year_diff)
+
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(),
-        F.floor(F.months_between(ts1, ts2) / 12).cast("long"),
+        adjusted.cast("long"),
     ).otherwise(None)
 
 
@@ -1061,7 +1076,7 @@ def date_diff_hours(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
-    seconds_diff = ts1.cast("long") - ts2.cast("long")
+    seconds_diff = F.unix_timestamp(ts1) - F.unix_timestamp(ts2)
 
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(),
@@ -1091,7 +1106,7 @@ def date_diff_minutes(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
-    seconds_diff = ts1.cast("long") - ts2.cast("long")
+    seconds_diff = F.unix_timestamp(ts1) - F.unix_timestamp(ts2)
 
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(),
@@ -1121,7 +1136,7 @@ def date_diff_seconds(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
-    seconds_diff = ts1.cast("long") - ts2.cast("long")
+    seconds_diff = F.unix_timestamp(ts1) - F.unix_timestamp(ts2)
 
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(), seconds_diff
@@ -1285,10 +1300,14 @@ def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
     # First standardize the date
     standardized = standardize_iso(col)
 
+    # Strip Java-style single-quote literal quoting (e.g. 'T' -> T)
+    # DuckDB/strftime treats unquoted characters as literals already
+    clean_format = re.sub(r"'([^']+)'", r"\1", format)
+
     # Convert to timestamp and format
     return F.when(
         standardized.isNotNull(),
-        F.date_format(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss"), format),
+        F.date_format(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss"), clean_format),
     ).otherwise(None)
 
 
