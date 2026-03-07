@@ -166,18 +166,9 @@ def extract_all_emails(col: Column) -> Column:
     Returns:
         Column with array of email addresses
     """
-    # Split by whitespace and common delimiters, then filter for email pattern
-    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-
-    # Split text and filter for email-like strings
-    return F.expr(
-        f"""
-        filter(
-            split(regexp_replace({col._jc}, '[,;\\s]+', ' '), ' '),
-            x -> x rlike '{email_pattern}'
-        )
-    """
-    )
+    # Extract all email addresses using cross-backend regex
+    email_pattern = r"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"
+    return F.regexp_extract_all(col, F.lit(email_pattern))
 
 
 @emails.register()
@@ -498,7 +489,7 @@ def remove_plus_addressing(col: Column) -> Column:
         Column with plus addressing removed
     """
     return F.when(col.isNull(), F.lit("")).otherwise(
-        F.regexp_replace(col, r"\+[^@]*(@)", "$1")
+        F.regexp_replace(col, r"\+[^@]*@", "@")
     )
 
 

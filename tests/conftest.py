@@ -11,7 +11,7 @@ import pytest
 from datacompose.functions import set_backend
 
 # Backends to test against (start with duckdb only)
-BACKENDS = ["duckdb"]
+BACKENDS = ["duckdb", "pyspark", "postgres"]
 
 
 @pytest.fixture(scope="session", params=BACKENDS)
@@ -62,12 +62,36 @@ def create_session(backend, setup_backend):
         )
 
     elif backend == "postgres":
+        import re as _re
+
+        import psycopg2
         from sqlframe.postgres import PostgresSession
 
-        conn_string = os.environ.get(
-            "POSTGRES_CONN", "postgresql://localhost:5432/test"
+        host = os.environ.get("POSTGRES_HOST", "localhost")
+        port = os.environ.get("POSTGRES_PORT", "5432")
+        db = os.environ.get("POSTGRES_DB", "datawarehouse")
+        user = os.environ.get("POSTGRES_USER", "postgres")
+        password = os.environ.get("POSTGRES_PASSWORD", "postgres123")
+        conn = psycopg2.connect(
+            host=host, port=port, dbname=db, user=user, password=password
         )
-        session = PostgresSession(conn_string)
+        conn.autocommit = True
+        session = PostgresSession(conn)
+
+        # Patch: PostgreSQL cannot determine the type of empty ARRAY().
+        # sqlframe generates ARRAY() for empty lists; rewrite to typed form.
+        _orig_execute = session._execute
+
+        def _patched_execute(sql):
+            sql = _re.sub(r"\bARRAY\[\](?!::)", "ARRAY[]::TEXT[]", sql)
+            sql = _re.sub(
+                r"CONTAINS\(([^,]+),\s*'([^']*)'\)",
+                r"\1 LIKE '%\2%'",
+                sql,
+            )
+            return _orig_execute(sql)
+
+        session._execute = _patched_execute
 
     elif backend == "bigquery":
         from sqlframe.bigquery import BigQuerySession
@@ -84,8 +108,11 @@ def create_session(backend, setup_backend):
 
     yield session
 
-    if hasattr(session, "stop"):
-        session.stop()
+    try:
+        if hasattr(session, "stop"):
+            session.stop()
+    except AttributeError:
+        pass
 
 
 # Alias for backwards compatibility

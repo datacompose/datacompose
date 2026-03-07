@@ -398,8 +398,9 @@ def extract_street_name(col: Column) -> Column:
     trimmed_col = F.trim(col)
     without_number = F.when(
         # If it's just a numbered street (e.g., "5th Avenue", "1st Street")
-        trimmed_col.rlike(
-            r"^(?i)\d+(?:st|nd|rd|th)\s+(?:" + "|".join(suffixes) + r")$"
+        F.regexp_like(
+            trimmed_col,
+            F.lit(r"^(?i)\d+(?:st|nd|rd|th)\s+(?:" + "|".join(suffixes) + r")$"),
         ),
         trimmed_col,  # Keep as is - it's a numbered street name
     ).otherwise(
@@ -1736,8 +1737,11 @@ def extract_country(col: Column) -> Column:
     for variation, standard in sorted_variations:
         # Check if the address ends with this country variation
         # Use word boundary to avoid partial matches
-        pattern = rf"(?:,\s*)?\b{re.escape(variation)}\.?\s*$"
-        result = F.when(F.upper(col).rlike(pattern), F.lit(standard)).otherwise(result)
+        escaped = re.escape(variation).replace("'", ".")
+        pattern = rf"(?:,\s*)?\b{escaped}\.?\s*$"
+        result = F.when(
+            F.regexp_like(F.upper(col), F.lit(pattern)), F.lit(standard)
+        ).otherwise(result)
 
     return result
 

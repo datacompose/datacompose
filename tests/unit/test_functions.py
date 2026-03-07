@@ -22,13 +22,15 @@ from datacompose.functions import (
 
 @pytest.fixture(autouse=True)
 def reset_functions_state():
-    """Reset the functions module state before each test."""
+    """Reset the functions module state before each test, then restore."""
+    prev_backend = functions._backend
+    prev_module = functions._module
     functions._backend = None
     functions._module = None
     yield
-    # Clean up after test
-    functions._backend = None
-    functions._module = None
+    # Restore previous state so session-scoped fixtures aren't broken
+    functions._backend = prev_backend
+    functions._module = prev_module
 
 
 @pytest.mark.unit
@@ -40,15 +42,15 @@ class TestSetBackend:
         set_backend("duckdb")
         assert get_backend() == "duckdb"
 
-    def test_set_backend_bigquery(self):
-        """Test setting backend to bigquery."""
-        set_backend("bigquery")
-        assert get_backend() == "bigquery"
+    def test_set_backend_unsupported_bigquery(self):
+        """Test that bigquery (not yet supported) raises error."""
+        with pytest.raises(UnsupportedBackendError):
+            set_backend("bigquery")
 
-    def test_set_backend_snowflake(self):
-        """Test setting backend to snowflake."""
-        set_backend("snowflake")
-        assert get_backend() == "snowflake"
+    def test_set_backend_unsupported_snowflake(self):
+        """Test that snowflake (not yet supported) raises error."""
+        with pytest.raises(UnsupportedBackendError):
+            set_backend("snowflake")
 
     def test_set_backend_pyspark(self):
         """Test setting backend to pyspark."""
@@ -84,7 +86,7 @@ class TestSetBackend:
         set_backend("duckdb")
         functions._module = MagicMock()  # Simulate cached module
 
-        set_backend("bigquery")
+        set_backend("pyspark")
         assert functions._module is None  # Should be reset
 
 
@@ -165,16 +167,14 @@ class TestFunctionsGetattr:
 class TestBackendModulePaths:
     """Tests to verify correct module paths for each backend."""
 
-    @pytest.mark.parametrize("backend,expected_path", [
+    @pytest.mark.parametrize("backend_name,expected_path", [
         ("duckdb", "sqlframe.duckdb.functions"),
-        ("bigquery", "sqlframe.bigquery.functions"),
-        ("snowflake", "sqlframe.snowflake.functions"),
         ("pyspark", "sqlframe.spark.functions"),
         ("postgres", "sqlframe.postgres.functions"),
     ])
-    def test_backend_module_path(self, backend, expected_path):
+    def test_backend_module_path(self, backend_name, expected_path):
         """Test that each backend maps to the correct module path."""
-        set_backend(backend)
+        set_backend(backend_name)
 
         with patch("datacompose.functions.importlib.import_module") as mock_import:
             mock_module = MagicMock()
@@ -192,7 +192,7 @@ class TestSupportedBackends:
 
     def test_supported_backends_contains_expected(self):
         """Test that SUPPORTED_BACKENDS contains all expected backends."""
-        expected = {"duckdb", "bigquery", "snowflake", "pyspark", "postgres"}
+        expected = {"duckdb", "pyspark", "postgres"}
         assert set(SUPPORTED_BACKENDS) == expected
 
     def test_supported_backends_is_list(self):

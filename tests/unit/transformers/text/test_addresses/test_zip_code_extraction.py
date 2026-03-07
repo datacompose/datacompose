@@ -701,8 +701,10 @@ class TestZipCodeValidation:
                 row["type"] == row["expected"]
             ), f"Type detection failed for '{row['zip']}': expected '{row['expected']}', got '{row['type']}'"
 
-    def test_split_zip_code(self, create_session):
+    def test_split_zip_code(self, create_session, backend):
         """Test ZIP code splitting into base and extension."""
+        if backend == "postgres":
+            pytest.skip("F.struct not supported on postgres backend")
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             split_zip_code,
         )
@@ -745,8 +747,10 @@ class TestZipCodeValidation:
                 row["actual_ext"] == row["expected_ext"]
             ), f"Extension extraction failed for '{row['zip']}': expected '{row['expected_ext']}', got '{row['actual_ext']}'"
 
-    def test_combined_workflow(self, create_session):
+    def test_combined_workflow(self, create_session, backend):
         """Test a combined workflow using multiple functions."""
+        if backend == "postgres":
+            pytest.skip("F.struct not supported on postgres backend")
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
             get_zip_code_type,
@@ -835,8 +839,10 @@ class TestZipCodeValidation:
                 row["is_valid"] == row["expected"]
             ), f"Edge case validation failed for '{row['zip']}': expected {row['expected']}, got {row['is_valid']}"
 
-    def test_null_safety_all_functions(self, create_session):
+    def test_null_safety_all_functions(self, create_session, backend):
         """Test that all functions handle nulls safely."""
+        if backend == "postgres":
+            pytest.skip("F.struct not supported on postgres backend")
         # Create DataFrame with nulls
 
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
