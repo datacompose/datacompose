@@ -78,17 +78,78 @@ def create_session(backend, setup_backend):
         conn.autocommit = True
         session = PostgresSession(conn)
 
-        # Patch: PostgreSQL cannot determine the type of empty ARRAY().
-        # sqlframe generates ARRAY() for empty lists; rewrite to typed form.
+        # Replace sqlframe's lenient try_to_timestamp with a strict version
+        # that rejects inputs where trailing content is silently ignored.
+        conn.cursor().execute("""
+            CREATE OR REPLACE FUNCTION pg_temp.try_to_timestamp(
+                input_text TEXT, format TEXT
+            ) RETURNS TIMESTAMP AS $$
+            DECLARE
+                result TIMESTAMP;
+                reformatted TEXT;
+                cleaned TEXT;
+            BEGIN
+                result := TO_TIMESTAMP(input_text, format);
+                reformatted := TO_CHAR(result, format);
+                -- Strip timezone suffix (e.g. +00) that postgres adds after
+                -- time portions (HH:MM:SS+00) before comparing lengths.
+                cleaned := REGEXP_REPLACE(TRIM(input_text),
+                    '(\\d{2}:\\d{2}(:\\d{2})?)[+-]\\d{2}(:\\d{2})?$', '\\1');
+                IF LENGTH(cleaned) <> LENGTH(TRIM(reformatted)) THEN
+                    RETURN NULL;
+                END IF;
+                RETURN result;
+            EXCEPTION WHEN OTHERS THEN
+                RETURN NULL;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+
+        # Patch _execute to fix sqlframe SQL compatibility issues.
         _orig_execute = session._execute
+
+        def _rewrite_contains(sql):
+            """Replace CONTAINS(expr, 'lit') with (expr LIKE '%lit%').
+
+            A simple regex can't handle nested expressions with commas
+            (e.g. CONTAINS(CASE WHEN REGEXP_REPLACE(x,'a','b') END, 'q'))
+            so we walk the string and count parentheses instead.
+            """
+            tag = "CONTAINS("
+            out = []
+            i = 0
+            while i < len(sql):
+                pos = sql.find(tag, i)
+                if pos == -1:
+                    out.append(sql[i:])
+                    break
+                out.append(sql[i:pos])
+                start = pos + len(tag)
+                depth = 1
+                j = start
+                while j < len(sql) and depth > 0:
+                    if sql[j] == "(":
+                        depth += 1
+                    elif sql[j] == ")":
+                        depth -= 1
+                    j += 1
+                inner = sql[start : j - 1]
+                m = _re.search(r",\s*'([^']*)'$", inner)
+                if m:
+                    expr = inner[: m.start()]
+                    lit = m.group(1)
+                    out.append(f"({expr} LIKE '%{lit}%')")
+                else:
+                    out.append(sql[pos:j])  # leave unchanged
+                i = j
+            return "".join(out)
 
         def _patched_execute(sql):
             sql = _re.sub(r"\bARRAY\[\](?!::)", "ARRAY[]::TEXT[]", sql)
-            sql = _re.sub(
-                r"CONTAINS\(([^,]+),\s*'([^']*)'\)",
-                r"\1 LIKE '%\2%'",
-                sql,
-            )
+            sql = _rewrite_contains(sql)
+            # sqlframe mistranslates Spark's AM/PM token 'a' to '%p';
+            # PostgreSQL uses 'AM' (or 'PM') as the format token.
+            sql = sql.replace("%p", "AM")
             return _orig_execute(sql)
 
         session._execute = _patched_execute
