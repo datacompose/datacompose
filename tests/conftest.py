@@ -137,7 +137,7 @@ def create_session(backend, setup_backend):
                 m = _re.search(r",\s*'([^']*)'$", inner)
                 if m:
                     expr = inner[: m.start()]
-                    lit = m.group(1)
+                    lit = m.group(1).replace("%", "\\%")  # escape % for LIKE
                     out.append(f"({expr} LIKE '%{lit}%')")
                 else:
                     out.append(sql[pos:j])  # leave unchanged

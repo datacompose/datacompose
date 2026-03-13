@@ -271,22 +271,26 @@ class TestControlCharacterCleaning:
     """Tests for control character cleaning functions."""
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_CONTROL_CHARS_DATA)
-    def test_remove_control_characters(self, create_session, input_val, expected):
+    def test_remove_control_characters(self, create_session, backend, input_val, expected):
         """Test removal of control characters while preserving tabs/newlines."""
+        if backend == "postgres" and input_val and "\x00" in input_val:
+            pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_control_characters(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"remove_control_characters({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_NON_PRINTABLE_DATA)
-    def test_remove_non_printable(self, create_session, input_val, expected):
+    def test_remove_non_printable(self, create_session, backend, input_val, expected):
         """Test removal of non-printable characters."""
+        if backend == "postgres":
+            pytest.skip("postgres regex pattern contains null byte literal")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_non_printable(F.col("input")))
         result = result_df.collect()[0]["result"]
@@ -320,11 +324,13 @@ class TestInvisibleCharacterCleaning:
         assert result == expected, f"remove_zero_width_characters({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", STRIP_INVISIBLE_DATA)
-    def test_strip_invisible(self, create_session, input_val, expected):
+    def test_strip_invisible(self, create_session, backend, input_val, expected):
         """Test comprehensive removal of all invisible characters."""
+        if backend == "postgres" and input_val and "\x00" in input_val:
+            pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.strip_invisible(F.col("input")))
         result = result_df.collect()[0]["result"]
@@ -521,11 +527,13 @@ class TestComprehensiveCleaning:
         assert result == expected, f"collapse_repeats({input_val!r}, {max_repeat}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", CLEAN_STRING_DATA)
-    def test_clean_string(self, create_session, input_val, expected):
+    def test_clean_string(self, create_session, backend, input_val, expected):
         """Test comprehensive string cleaning."""
+        if backend == "postgres" and input_val and "\x00" in input_val:
+            pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_string(F.col("input")))
         result = result_df.collect()[0]["result"]

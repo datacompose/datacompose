@@ -62,7 +62,7 @@ ZERO_WIDTH_PATTERN = "[\u200b\u200c\u200d\ufeff\u2060\u180e]"
 
 # Control characters pattern - using hex escapes for cross-backend compatibility
 # Matches all C0 control chars (0x00-0x1F) plus DEL (0x7F)
-CONTROL_CHAR_PATTERN = "[\\x00-\\x1f\\x7f]"
+CONTROL_CHAR_PATTERN = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]"
 
 # ANSI escape code pattern - ESC[ followed by params and command letter
 # ESC is 0x1B - using hex escape for cross-backend compatibility
@@ -497,7 +497,7 @@ def decode_url(col: "Column") -> "Column":
     """
     result = col
     # Common URL encodings - decode %2B to a placeholder first
-    result = F.regexp_replace(result, "%2[Bb]", "\x00PLUS\x00")
+    result = F.regexp_replace(result, "%2[Bb]", "\uf8ffPLUS\uf8ff")
     result = F.regexp_replace(result, "%20", " ")
     result = F.regexp_replace(result, "%21", "!")
     result = F.regexp_replace(result, "%22", '"')
@@ -532,7 +532,7 @@ def decode_url(col: "Column") -> "Column":
     # Plus sign as space (form encoding) - before restoring %2B
     result = F.regexp_replace(result, "\\+", " ")
     # Restore %2B encoded plus signs
-    result = F.regexp_replace(result, "\x00PLUS\x00", "+")
+    result = F.regexp_replace(result, "\uf8ffPLUS\uf8ff", "+")
     # UTF-8 sequences for common chars
     result = F.regexp_replace(result, "%[Cc]3%[Aa]9", "é")
     result = F.regexp_replace(result, "%[Cc]3%[Aa]0", "à")
@@ -659,7 +659,7 @@ def unescape_string(col: "Column") -> "Column":
     """
     result = col
     # First protect double backslashes with placeholder
-    result = F.regexp_replace(result, "\\\\\\\\", "\x00BACKSLASH\x00")
+    result = F.regexp_replace(result, "\\\\\\\\", "\uf8ffBACKSLASH\uf8ff")
     # Then unescape sequences
     result = F.regexp_replace(result, "\\\\n", "\n")
     result = F.regexp_replace(result, "\\\\t", "\t")
@@ -673,7 +673,7 @@ def unescape_string(col: "Column") -> "Column":
     result = F.regexp_replace(result, "\\\\u0041", "A")
     result = F.regexp_replace(result, "\\\\u0042", "B")
     # Finally restore backslashes
-    result = F.regexp_replace(result, "\x00BACKSLASH\x00", "\\\\")
+    result = F.regexp_replace(result, "\uf8ffBACKSLASH\uf8ff", "\\\\")
 
     return F.when(col.isNull(), F.lit("")).otherwise(result)
 

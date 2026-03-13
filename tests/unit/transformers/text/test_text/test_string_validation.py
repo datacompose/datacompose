@@ -325,8 +325,10 @@ class TestControlCharacterValidation:
     """Tests for control character and non-printable detection functions."""
 
     @pytest.mark.parametrize("input_val,expected", HAS_CONTROL_CHARS_DATA)
-    def test_has_control_characters(self, create_session, input_val, expected):
+    def test_has_control_characters(self, create_session, backend, input_val, expected):
         """Test control character detection."""
+        if backend == "postgres" and input_val is not None and "\x00" in input_val:
+            pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
         if input_val is not None and "\x00" in input_val:
@@ -341,8 +343,10 @@ class TestControlCharacterValidation:
         assert result == expected, f"has_control_characters({input_val!r}) = {result}, expected {expected}"
 
     @pytest.mark.parametrize("input_val,expected", HAS_NON_PRINTABLE_DATA)
-    def test_has_non_printable(self, create_session, input_val, expected):
+    def test_has_non_printable(self, create_session, backend, input_val, expected):
         """Test non-printable character detection."""
+        if backend == "postgres" and input_val is not None and "\x00" in input_val:
+            pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
         if input_val is not None and "\x00" in input_val:

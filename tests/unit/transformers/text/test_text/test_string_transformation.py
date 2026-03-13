@@ -268,44 +268,52 @@ class TestHexTransformations:
     """Tests for hexadecimal transformation functions."""
 
     @pytest.mark.parametrize("input_val,expected", HEX_TO_TEXT_DATA)
-    def test_hex_to_text(self, create_session, input_val, expected):
+    def test_hex_to_text(self, create_session, backend, input_val, expected):
         """Test hex string to text conversion."""
+        if backend == "postgres":
+            pytest.skip("sqlframe postgres has no unhex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.hex_to_text(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"hex_to_text({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", TEXT_TO_HEX_DATA)
-    def test_text_to_hex(self, create_session, input_val, expected):
+    def test_text_to_hex(self, create_session, backend, input_val, expected):
         """Test text to hex string conversion."""
+        if backend == "postgres":
+            pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.text_to_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"text_to_hex({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", CLEAN_HEX_DATA)
-    def test_clean_hex(self, create_session, input_val, expected):
+    def test_clean_hex(self, create_session, backend, input_val, expected):
         """Test hex string cleaning."""
+        if backend == "postgres":
+            pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"clean_hex({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", EXTRACT_HEX_DATA)
-    def test_extract_hex(self, create_session, input_val, expected):
+    def test_extract_hex(self, create_session, backend, input_val, expected):
         """Test hex extraction from mixed content."""
+        if backend == "postgres":
+            pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.extract_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
@@ -463,33 +471,39 @@ class TestUnicodeTransformations:
     """Tests for unicode transformation functions."""
 
     @pytest.mark.parametrize("input_val,expected", TO_ASCII_DATA)
-    def test_to_ascii(self, create_session, input_val, expected):
+    def test_to_ascii(self, create_session, backend, input_val, expected):
         """Test non-ASCII to ASCII transliteration."""
+        if backend == "postgres":
+            pytest.skip("postgres regex pattern with unicode char class unsupported")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.to_ascii(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"to_ascii({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", TO_CODEPOINTS_DATA)
-    def test_to_codepoints(self, create_session, input_val, expected):
+    def test_to_codepoints(self, create_session, backend, input_val, expected):
         """Test unicode to codepoint conversion."""
+        if backend == "postgres":
+            pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.to_codepoints(F.col("input")))
         result = result_df.collect()[0]["result"]
         assert result == expected, f"to_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", FROM_CODEPOINTS_DATA)
-    def test_from_codepoints(self, create_session, input_val, expected):
+    def test_from_codepoints(self, create_session, backend, input_val, expected):
         """Test codepoint to unicode conversion."""
+        if backend == "postgres":
+            pytest.skip("sqlframe postgres has no unhex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
+
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.from_codepoints(F.col("input")))
         result = result_df.collect()[0]["result"]
