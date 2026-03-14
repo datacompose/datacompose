@@ -126,6 +126,8 @@ def extract_phone_numbers_from_text(col: Column) -> Column:
     """
     Extract first phone number from text using regex patterns.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing text with potential phone numbers
 
@@ -147,6 +149,8 @@ def extract_phone_numbers_from_text(col: Column) -> Column:
 def extract_all_phone_numbers_from_text(col: Column) -> Column:
     """
     Extract all phone numbers from text as an array.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing text with potential phone numbers
@@ -172,6 +176,8 @@ def extract_digits(col: Column) -> Column:
     """
     Extract only digits from phone number string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -187,6 +193,8 @@ def extract_digits(col: Column) -> Column:
 def extract_extension(col: Column) -> Column:
     """
     Extract extension from phone number if present.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -205,6 +213,8 @@ def extract_extension(col: Column) -> Column:
 def extract_country_code(col: Column) -> Column:
     """
     Extract country code from phone number.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -237,6 +247,8 @@ def extract_area_code(col: Column) -> Column:
     """
     Extract area code from NANP phone number.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -256,6 +268,8 @@ def extract_area_code(col: Column) -> Column:
 def extract_exchange(col: Column) -> Column:
     """
     Extract exchange (first 3 digits of local number) from NANP phone number.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -277,6 +291,8 @@ def extract_subscriber(col: Column) -> Column:
     """
     Extract subscriber number (last 4 digits) from NANP phone number.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -296,6 +312,8 @@ def extract_subscriber(col: Column) -> Column:
 def extract_local_number(col: Column) -> Column:
     """
     Extract local number (exchange + subscriber) from NANP phone number.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -320,6 +338,8 @@ def extract_local_number(col: Column) -> Column:
 def is_valid_nanp(col: Column) -> Column:
     """
     Check if phone number is valid NANP format (North American Numbering Plan).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -356,6 +376,8 @@ def is_valid_international(
     """
     Check if phone number could be valid international format.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
         min_length (Optional): Minimum digits for international number (default 7)
@@ -378,6 +400,8 @@ def is_valid_phone_numbers(col: Column) -> Column:
     """
     Check if phone number is valid (NANP or international).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -391,6 +415,8 @@ def is_valid_phone_numbers(col: Column) -> Column:
 def is_toll_free(col: Column) -> Column:
     """
     Check if phone number is toll-free (800, 888, 877, 866, 855, 844, 833).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -410,6 +436,8 @@ def is_premium_rate(col: Column) -> Column:
     """
     Check if phone number is premium rate (900).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phophonene_numbers number
 
@@ -425,6 +453,8 @@ def is_premium_rate(col: Column) -> Column:
 def has_extension(col: Column) -> Column:
     """
     Check if phone number has an extension.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -445,6 +475,8 @@ def remove_non_digits(col: Column) -> Column:
     """
     Remove all non-digit characters from phone number.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -458,6 +490,8 @@ def remove_non_digits(col: Column) -> Column:
 def remove_extension(col: Column) -> Column:
     """
     Remove extension from phone number.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -474,6 +508,8 @@ def remove_extension(col: Column) -> Column:
 def convert_letters_to_numbers(col: Column) -> Column:
     """
     Convert phone letters to numbers (e.g., 1-800-FLOWERS to 1-800-3569377).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number with letters
@@ -496,6 +532,8 @@ def normalize_separators(col: Column) -> Column:
     """
     Normalize various separator styles to hyphens.
     Removes parentheses and replaces dots, spaces with hyphens.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -521,6 +559,8 @@ def add_country_code(col: Column) -> Column:
     """
     Add country code "1" if not present (for NANP numbers).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -545,6 +585,8 @@ def add_country_code(col: Column) -> Column:
 def format_nanp(col: Column) -> Column:
     """
     Format NANP phone number in standard hyphen format (XXX-XXX-XXXX).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -574,6 +616,8 @@ def format_nanp(col: Column) -> Column:
 def format_nanp_paren(col: Column) -> Column:
     """
     Format NANP phone number with parentheses ((XXX) XXX-XXXX).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -606,6 +650,8 @@ def format_nanp_dot(col: Column) -> Column:
     """
     Format NANP phone number with dots (XXX.XXX.XXXX).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -635,6 +681,8 @@ def format_nanp_space(col: Column) -> Column:
     """
     Format NANP phone number with spaces (XXX XXX XXXX).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -663,6 +711,8 @@ def format_nanp_space(col: Column) -> Column:
 def format_international(col: Column) -> Column:
     """
     Format international phone number with country code.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -695,6 +745,8 @@ def format_international(col: Column) -> Column:
 def format_e164(col: Column) -> Column:
     """
     Format phone number in E.164 format (+CCAAANNNNNNN) with default country code 1.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -740,6 +792,8 @@ def format_e164(col: Column) -> Column:
 def standardize_phone_numbers(col: Column) -> Column:
     """
     Standardize phone number with cleaning and NANP formatting.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -795,6 +849,8 @@ def standardize_phone_numbers_e164(col: Column) -> Column:
     """
     Standardize phone number with cleaning and E.164 formatting.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -816,6 +872,8 @@ def standardize_phone_numbers_digits(col: Column) -> Column:
     """
     Standardize phone number and return digits only.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -836,6 +894,8 @@ def standardize_phone_numbers_digits(col: Column) -> Column:
 def clean_phone_numbers(col: Column) -> Column:
     """
     Clean and validate phone number, returning null for invalid numbers.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -885,6 +945,8 @@ def get_phone_numbers_type(col: Column) -> Column:
     """
     Get phone number type (toll-free, premium, standard, international).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone_numbers number
 
@@ -904,6 +966,8 @@ def get_phone_numbers_type(col: Column) -> Column:
 def get_region_from_area_code(col: Column) -> Column:
     """
     Get geographic region from area code (simplified - would need lookup table).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -934,7 +998,10 @@ def get_region_from_area_code(col: Column) -> Column:
 def hash_phone_numbers_sha256(
     col: Column, salt: str = "", standardize_first: bool = True
 ) -> Column:
-    """Hash email with SHA256, with email-specific preprocessing."""
+    """Hash email with SHA256, with email-specific preprocessing.
+
+    Dialects: postgres, pyspark, duckdb
+    """
     if standardize_first:
         phone_number = standardize_phone_numbers_e164(col)
 
@@ -951,6 +1018,8 @@ def hash_phone_numbers_sha256(
 def mask_phone_numbers(col: Column) -> Column:
     """
     Mask phone number for privacy keeping last 4 digits (e.g., ***-***-1234).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number
@@ -979,6 +1048,8 @@ def filter_valid_phone_numbers_numbers(col: Column) -> Column:
     """
     Return phone_numbers number only if valid, otherwise return null.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -993,6 +1064,8 @@ def filter_nanp_phone_numbers_numbers(col: Column) -> Column:
     """
     Return phone_numbers number only if valid NANP, otherwise return null.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing phone number
 
@@ -1006,6 +1079,8 @@ def filter_nanp_phone_numbers_numbers(col: Column) -> Column:
 def filter_toll_free_phone_numbers_numbers(col: Column) -> Column:
     """
     Return phone number only if toll-free, otherwise return null.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing phone number

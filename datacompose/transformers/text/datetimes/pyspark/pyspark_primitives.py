@@ -84,6 +84,8 @@ datetimes = PrimitiveRegistry("datetimes")
 def extract_datetime_from_text(col: Column) -> Column:
     """Extract first datetime mention from free text.
 
+    Dialects: postgres, pyspark, duckdb
+
     Supports ISO, US, EU formats, named months, natural language, and more.
 
     Args:
@@ -203,6 +205,8 @@ def extract_datetime_from_text(col: Column) -> Column:
 def standardize_iso(col: Column) -> Column:
     """Convert datetime strings to ISO 8601 format (YYYY-MM-DD HH:MM:SS).
 
+    Dialects: postgres, pyspark, duckdb
+
     Attempts to parse common formats and standardize them.
 
     Args:
@@ -285,6 +289,8 @@ def standardize_iso(col: Column) -> Column:
 def standardize_date(col: Column) -> Column:
     """Extract and standardize just the date portion to YYYY-MM-DD format.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing datetime text
 
@@ -307,6 +313,8 @@ def standardize_date(col: Column) -> Column:
 @datetimes.register()
 def standardize_time(col: Column) -> Column:
     """Extract and standardize just the time portion to HH:MM:SS format.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing datetime text
@@ -335,6 +343,8 @@ def standardize_time(col: Column) -> Column:
 @datetimes.register()
 def detect_format(col: Column) -> Column:
     """Detect the datetime format of a string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Returns format string that can be used with to_timestamp().
 
@@ -402,6 +412,8 @@ def detect_format(col: Column) -> Column:
 @datetimes.register()
 def parse_flexible(col: Column) -> Column:
     """Parse datetime strings with multiple possible formats.
+
+    Dialects: postgres, pyspark, duckdb
 
     Handles ISO, US, EU, named months, quarters, fiscal years, and more.
 
@@ -524,6 +536,8 @@ def parse_natural_language(
 ) -> Column:
     """Parse natural language date expressions.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing natural language date text
         reference_date (Optional): Reference date for relative calculations
@@ -548,6 +562,8 @@ def parse_natural_language(
 @datetimes.register()
 def is_valid_date(col: Column) -> Column:
     """Check if a string represents a valid date.
+
+    Dialects: postgres, pyspark, duckdb
 
     Validates month (1-12), day (valid for month), and handles leap years.
 
@@ -574,6 +590,8 @@ def is_valid_date(col: Column) -> Column:
 def is_valid_datetimes(col: Column) -> Column:
     """Check if a string represents a valid datetime.
 
+    Dialects: postgres, pyspark, duckdb
+
     More comprehensive than is_valid_date, includes time validation.
 
     Args:
@@ -594,6 +612,8 @@ def is_valid_datetimes(col: Column) -> Column:
 @datetimes.register()
 def is_business_day(col: Column) -> Column:
     """Check if a date falls on a business day (Monday-Friday).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing date text
@@ -621,6 +641,8 @@ def is_business_day(col: Column) -> Column:
 def is_future_date(col: Column, reference_date: Optional[Column] = None) -> Column:
     """Check if a date is in the future.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing date text
         reference_date (Optional): Reference date column (defaults to current_date)
@@ -645,6 +667,8 @@ def is_future_date(col: Column, reference_date: Optional[Column] = None) -> Colu
 @datetimes.register()
 def is_past_date(col: Column, reference_date: Optional[Column] = None) -> Column:
     """Check if a date is in the past.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing date text
@@ -676,6 +700,8 @@ def is_past_date(col: Column, reference_date: Optional[Column] = None) -> Column
 def extract_year(col: Column) -> Column:
     """Extract year from datetime string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing datetime text
 
@@ -698,6 +724,8 @@ def extract_year(col: Column) -> Column:
 @datetimes.register()
 def extract_month(col: Column) -> Column:
     """Extract month from datetime string (1-12).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing datetime text
@@ -722,6 +750,8 @@ def extract_month(col: Column) -> Column:
 def extract_day(col: Column) -> Column:
     """Extract day from datetime string (1-31).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing datetime text
 
@@ -744,6 +774,8 @@ def extract_day(col: Column) -> Column:
 @datetimes.register()
 def extract_quarter(col: Column) -> Column:
     """Extract quarter from datetime string (1-4).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing datetime text
@@ -768,6 +800,8 @@ def extract_quarter(col: Column) -> Column:
 def extract_week_of_year(col: Column) -> Column:
     """Extract week number from datetime string (1-53).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing datetime text
 
@@ -790,6 +824,8 @@ def extract_week_of_year(col: Column) -> Column:
 @datetimes.register()
 def extract_day_of_week(col: Column) -> Column:
     """Extract day of week from datetime string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Returns string name (Monday, Tuesday, etc).
 
@@ -861,6 +897,8 @@ def add_timezone(col: Column, timezone: Column) -> Column:
 @datetimes.register()
 def remove_timezone(col: Column) -> Column:
     """Remove timezone information, keeping local time.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing timezone-aware datetime text
@@ -1283,6 +1321,8 @@ datetimes.business_days_between = business_days_between
 def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
     """Format date according to specified pattern.
 
+    Dialects: postgres, pyspark, duckdb
+
     Uses Java SimpleDateFormat patterns.
 
     Args:
@@ -1315,6 +1355,8 @@ def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
 def to_unix_timestamp(col: Column) -> Column:
     """Convert datetime to Unix timestamp (seconds since epoch).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing datetime text
 
@@ -1332,6 +1374,8 @@ def to_unix_timestamp(col: Column) -> Column:
 @datetimes.register()
 def from_unix_timestamp(col: Column) -> Column:
     """Convert Unix timestamp to datetime string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing Unix timestamp
@@ -1355,6 +1399,8 @@ def from_unix_timestamp(col: Column) -> Column:
 @datetimes.register()
 def start_of_month(col: Column) -> Column:
     """Get the first day of the month for a given date.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing date text
@@ -1381,6 +1427,8 @@ def start_of_month(col: Column) -> Column:
 @datetimes.register()
 def end_of_month(col: Column) -> Column:
     """Get the last day of the month for a given date.
+
+    Dialects: postgres, pyspark, duckdb
 
     Handles leap years correctly.
 
@@ -1410,6 +1458,8 @@ def end_of_month(col: Column) -> Column:
 @datetimes.register()
 def start_of_quarter(col: Column) -> Column:
     """Get the first day of the quarter for a given date.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing date text
@@ -1448,6 +1498,8 @@ def start_of_quarter(col: Column) -> Column:
 @datetimes.register()
 def end_of_quarter(col: Column) -> Column:
     """Get the last day of the quarter for a given date.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing date text
@@ -1568,6 +1620,8 @@ datetimes.calculate_age = calculate_age
 @datetimes.register()
 def format_duration(seconds_col: Column) -> Column:
     """Format duration in seconds to human-readable string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         seconds_col: Column containing duration in seconds
