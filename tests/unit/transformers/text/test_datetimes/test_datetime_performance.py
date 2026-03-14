@@ -4,7 +4,7 @@ Tests transformation speed and scalability with large datasets.
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 from datetime import datetime, timedelta
 import time
 
@@ -15,7 +15,7 @@ from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import d
 class TestDatetimePerformance:
     """Test datetime transformation performance with various dataset sizes."""
 
-    def test_standardize_iso_performance_small(self, spark):
+    def test_standardize_iso_performance_small(self, create_session):
         """Test standardize_iso with 1,000 records."""
 
         # Generate test data
@@ -27,7 +27,7 @@ class TestDatetimePerformance:
             ("01/15/2024 2:30 PM",),
         ] * 200  # 1,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -42,7 +42,7 @@ class TestDatetimePerformance:
         # Should complete in reasonable time (adjust threshold as needed)
         assert elapsed < 5.0, f"Small dataset took too long: {elapsed:.3f}s"
 
-    def test_standardize_iso_performance_medium(self, spark):
+    def test_standardize_iso_performance_medium(self, create_session):
         """Test standardize_iso with 100,000 records."""
 
         # Generate test data with variety
@@ -61,7 +61,7 @@ class TestDatetimePerformance:
 
         test_dates = base_dates * 10000  # 100,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -76,7 +76,7 @@ class TestDatetimePerformance:
         # Should complete in reasonable time
         assert elapsed < 30.0, f"Medium dataset took too long: {elapsed:.3f}s"
 
-    def test_standardize_iso_performance_large(self, spark):
+    def test_standardize_iso_performance_large(self, create_session):
         """Test standardize_iso with 1,000,000 records."""
 
         base_dates = [
@@ -89,7 +89,7 @@ class TestDatetimePerformance:
 
         test_dates = base_dates * 200000  # 1,000,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -104,7 +104,7 @@ class TestDatetimePerformance:
         # Large datasets may take longer
         assert elapsed < 60.0, f"Large dataset took too long: {elapsed:.3f}s"
 
-    def test_multiple_transformations_performance(self, spark):
+    def test_multiple_transformations_performance(self, create_session):
         """Test performance when chaining multiple datetime operations."""
 
         test_dates = [
@@ -113,7 +113,7 @@ class TestDatetimePerformance:
             ("January 15, 2024",),
         ] * 10000  # 30,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -135,7 +135,7 @@ class TestDatetimePerformance:
 
         assert elapsed < 30.0, f"Chained transformations took too long: {elapsed:.3f}s"
 
-    def test_null_heavy_dataset_performance(self, spark):
+    def test_null_heavy_dataset_performance(self, create_session):
         """Test performance with dataset containing many nulls."""
 
         # Create dataset with 50% nulls
@@ -148,7 +148,7 @@ class TestDatetimePerformance:
             (None,),
         ] * 10000  # 60,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -162,7 +162,7 @@ class TestDatetimePerformance:
 
         assert elapsed < 20.0, f"Null-heavy dataset took too long: {elapsed:.3f}s"
 
-    def test_invalid_data_performance(self, spark):
+    def test_invalid_data_performance(self, create_session):
         """Test performance with dataset containing mostly invalid dates."""
 
         # Create dataset with 80% invalid dates
@@ -174,7 +174,7 @@ class TestDatetimePerformance:
             ("01/15/2024",),  # Only 20% valid
         ] * 10000  # 50,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -191,7 +191,7 @@ class TestDatetimePerformance:
         # Invalid data shouldn't significantly slow down processing
         assert elapsed < 25.0, f"Invalid-heavy dataset took too long: {elapsed:.3f}s"
 
-    def test_wide_variety_formats_performance(self, spark):
+    def test_wide_variety_formats_performance(self, create_session):
         """Test performance with many different date formats."""
 
         # Create dataset with 20+ different date formats
@@ -218,7 +218,7 @@ class TestDatetimePerformance:
             ("01/15/24",),
         ] * 5000  # 100,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
         result_df = df.withColumn(
@@ -237,7 +237,7 @@ class TestDatetimePerformance:
 class TestDatetimeScalability:
     """Test scalability characteristics of datetime transformations."""
 
-    def test_linear_scalability(self, spark):
+    def test_linear_scalability(self, create_session):
         """Verify that performance scales linearly with dataset size."""
 
         base_dates = [
@@ -251,7 +251,7 @@ class TestDatetimeScalability:
         # Test with increasing dataset sizes
         for size in [1000, 10000, 100000]:
             test_dates = base_dates * (size // len(base_dates))
-            df = spark.createDataFrame(test_dates, ["date_str"])
+            df = create_session.createDataFrame(test_dates, ["date_str"])
 
             start_time = time.time()
             result_df = df.withColumn(
@@ -272,12 +272,12 @@ class TestDatetimeScalability:
             ratio_100k = timings[100000] / timings[10000]
             assert ratio_100k < 15, f"10x data took {ratio_100k}x time (should be ~10x)"
 
-    def test_memory_efficiency(self, spark):
+    def test_memory_efficiency(self, create_session):
         """Test that transformations don't cause excessive memory usage."""
 
         # Create large dataset
         test_dates = [("2024-01-15",)] * 100000
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         # Apply multiple transformations
         result_df = df.withColumn(
@@ -296,7 +296,7 @@ class TestDatetimeScalability:
         # Cleanup
         result_df.unpersist()
 
-    def test_partition_handling(self, spark):
+    def test_partition_handling(self, create_session):
         """Test performance with different partition counts."""
 
         test_dates = [
@@ -304,7 +304,7 @@ class TestDatetimeScalability:
             ("2024-01-15",),
         ] * 50000  # 100,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         timings = {}
 
@@ -330,11 +330,11 @@ class TestDatetimeScalability:
 class TestDatetimeCacheEfficiency:
     """Test caching behavior and efficiency."""
 
-    def test_repeated_transformations(self, spark):
+    def test_repeated_transformations(self, create_session):
         """Test performance when running same transformation multiple times."""
 
         test_dates = [("01/15/2024",)] * 10000
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         # First run (cold)
         start_time = time.time()
@@ -358,7 +358,7 @@ class TestDatetimeCacheEfficiency:
         assert first_run < 10.0
         assert second_run < 10.0
 
-    def test_cached_dataframe_performance(self, spark):
+    def test_cached_dataframe_performance(self, create_session):
         """Test performance improvement from caching intermediate results."""
 
         test_dates = [
@@ -366,7 +366,7 @@ class TestDatetimeCacheEfficiency:
             ("2024-01-15",),
         ] * 25000  # 50,000 records
 
-        df = spark.createDataFrame(test_dates, ["date_str"])
+        df = create_session.createDataFrame(test_dates, ["date_str"])
 
         # Without caching
         start_time = time.time()

@@ -9,7 +9,7 @@ from datacompose.operators.primitives import PrimitiveRegistry
 
 
 @pytest.fixture
-def diverse_test_data(spark):
+def diverse_test_data(create_session):
     """Create diverse test dataset for conditional testing"""
     data = [
         ("A", 10, "small", 1, "short"),           # category A - short text
@@ -27,7 +27,7 @@ def diverse_test_data(spark):
         ("G", 130, "large", 13, "ALPHA"),         # alpha text
         (None, 140, "unknown", 14, None)          # NULL category for testing
     ]
-    return spark.createDataFrame(data, ["category", "value", "size", "id", "text"])
+    return create_session.createDataFrame(data, ["category", "value", "size", "id", "text"])
 
 
 @pytest.mark.unit
@@ -148,7 +148,7 @@ class TestRealWorldScenarios:
         mixed_row = [r for r in collected if r["text"] == "mixed123ABC"][0]
         assert len(mixed_row["routed"]) == 32  # MD5 hash length
 
-    def test_validation_pipeline(self, spark):
+    def test_validation_pipeline(self, create_session):
         """Test validate -> process or quarantine pipeline"""
         ns = PrimitiveRegistry("validate")
 
@@ -192,7 +192,7 @@ class TestRealWorldScenarios:
             ("User@EXAMPLE.COM",),
             ("fake@fake.org",),
         ]
-        df = spark.createDataFrame(data, ["email"])
+        df = create_session.createDataFrame(data, ["email"])
 
         result = df.withColumn("validated", email_validator(f.col("email")))
         collected = result.collect()
@@ -204,7 +204,7 @@ class TestRealWorldScenarios:
         assert collected[3]["validated"] == "APPROVED:user@example.com"
         assert collected[4]["validated"] == "QUARANTINE:fake@fake.org"
 
-    def test_phone_number_processing_pipeline(self, spark):
+    def test_phone_number_processing_pipeline(self, create_session):
         """Test phone number validation and formatting pipeline"""
         ns = PrimitiveRegistry("phone")
 
@@ -320,7 +320,7 @@ class TestRealWorldScenarios:
             ("212-555-1234",),
             ("1800GOFEDEX",),
         ]
-        df = spark.createDataFrame(data, ["phone"])
+        df = create_session.createDataFrame(data, ["phone"])
 
         result = df.withColumn("formatted", process_phone_number(f.col("phone")))
         collected = result.collect()

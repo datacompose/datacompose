@@ -10,6 +10,8 @@ from datacompose.cli.colors import dim, error, highlight, info, success
 from datacompose.cli.config import ConfigLoader
 from datacompose.cli.validation import validate_platform, validate_type_for_platform
 from datacompose.transformers.discovery import TransformerDiscovery
+from datacompose.functions import set_backend as set_target
+
 
 
 # Completion functions for Click shell completion
@@ -127,7 +129,7 @@ def add(ctx, transformer, target, type, output, verbose):
             
         # Try to get default target from config
         target = ConfigLoader.get_default_target(config)
-        if target is None:
+        if not target:
             print(
                 error(
                     "Error: No target specified and no default target found in datacompose.json"
@@ -147,6 +149,13 @@ def add(ctx, transformer, target, type, output, verbose):
 
     # Validate platform first
     if not validate_platform(target, discovery):
+        ctx.exit(1)
+
+    # Set the backend for function imports
+    try:
+        set_target(target)
+    except Exception as e:
+        print(error(f"Error: {e}"))
         ctx.exit(1)
 
     # Validate type if specified
@@ -203,14 +212,14 @@ def _run_add(transformer, target, output, verbose) -> int:
     try:
         # Create generator instance
         # Note: template_dir is required by base class but not used by current generators
-        generator = generator_class(
+        Generator = generator_class( # This is a class
             template_dir=Path("."),  # Placeholder - not actually used
             output_dir=Path(output_dir),
             verbose=verbose,
         )
 
         # Generate the UDF
-        result = generator.generate(
+        result = Generator.generate(
             transformer_name, force=False, transformer_dir=transformer_dir
         )
 

@@ -4,11 +4,12 @@ Init command for initializing a Datacompose project configuration.
 
 import json
 import os
+import subprocess
 import sys
 import termios
 import tty
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import click
 

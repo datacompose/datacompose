@@ -5,7 +5,7 @@ Tests must have @compose decorated functions at module level for proper AST pars
 
 import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.operators.primitives import PrimitiveRegistry
 
@@ -170,13 +170,13 @@ class TestComposeConditions:
     """Test class for compose decorator with conditional logic."""
 
 
-    def test_simple_if_then(self, spark):
+    def test_simple_if_then(self, create_session):
         """Test simple if-then without else branch."""
         data = [
             ("short",),  # 5 chars - not long
             ("this is long",),  # > 5 chars - long
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn("processed", simple_if_then(F.col("text")))
         results = result_df.collect()
@@ -186,13 +186,13 @@ class TestComposeConditions:
         # Long text should be uppercased
         assert results[1]["processed"] == "THIS IS LONG"
 
-    def test_if_then_else(self, spark):
+    def test_if_then_else(self, create_session):
         """Test if-then-else conditional."""
         data = [
             ("short",),  # 5 chars - short
             ("this is long",),  # > 5 chars - long
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn("processed", if_then_else(F.col("text")))
         results = result_df.collect()
@@ -202,14 +202,14 @@ class TestComposeConditions:
         # Long text should be uppercased (then branch)
         assert results[1]["processed"] == "THIS IS LONG"
 
-    def test_nested_conditions(self, spark):
+    def test_nested_conditions(self, create_session):
         """Test nested if conditions."""
         data = [
             ("short",),  # Short - gets prefix
             ("ALREADY UPPER",),  # Long and uppercase - to lower
             ("long text",),  # Long and not uppercase - to upper
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn("processed", nested_conditions(F.col("text")))
         results = result_df.collect()
@@ -218,13 +218,13 @@ class TestComposeConditions:
         assert results[1]["processed"] == "already upper"
         assert results[2]["processed"] == "LONG TEXT"
 
-    def test_multiple_transforms_in_branch(self, spark):
+    def test_multiple_transforms_in_branch(self, create_session):
         """Test multiple transformations in a single branch."""
         data = [
             ("hi",),  # Short - gets multiple transforms
             ("this is longer",),  # Long - gets different transforms
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn(
             "processed", multiple_transforms_in_branch(F.col("text"))
@@ -236,7 +236,7 @@ class TestComposeConditions:
         # Long: lowercase -> reverse
         assert results[1]["processed"] == "regnol si siht"
 
-    def test_elif_chain(self, spark):
+    def test_elif_chain(self, create_session):
         """Test elif chain with different conditions."""
         test_cases = [
             (("short",), "S:short"),  # First condition
@@ -245,19 +245,19 @@ class TestComposeConditions:
         ]
 
         for data, expected in test_cases:
-            df = spark.createDataFrame([data], ["text"])
+            df = create_session.createDataFrame([data], ["text"])
             result_df = df.withColumn("processed", elif_chain(F.col("text")))
             result = result_df.collect()[0]
             assert result["processed"] == expected
 
-    def test_handle_nulls(self, spark):
+    def test_handle_nulls(self, create_session):
         """Test null handling in conditions."""
         data = [
             ("text",),  # Short text
             ("long text",),  # Long text
             (None,),  # Null value
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn("processed", handle_nulls(F.col("text")))
         results = result_df.collect()
@@ -266,7 +266,7 @@ class TestComposeConditions:
         assert results[1]["processed"] == "LONG TEXT"  # Long -> uppercase
         assert results[2]["processed"] == "NULL_REPLACED"  # Null -> replaced
 
-    def test_complex_nested(self, spark):
+    def test_complex_nested(self, create_session):
         """Test complex nested conditions with multiple levels."""
         data = [
             (None,),  # Null
@@ -275,7 +275,7 @@ class TestComposeConditions:
             ("SHORT",),  # Short uppercase
             ("short",),  # Short lowercase
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn("processed", complex_nested(F.col("text")))
         results = result_df.collect()
@@ -286,20 +286,20 @@ class TestComposeConditions:
         assert results[3]["processed"] == "SHORT:SHORT_UPPER"
         assert results[4]["processed"] == "short:SHORT_LOWER"
 
-    def test_empty_dataframe(self, spark):
+    def test_empty_dataframe(self, create_session):
         """Test compose functions with empty dataframe."""
-        df = spark.createDataFrame([], "text: string")
+        df = create_session.createDataFrame([], "text: string")
 
         result_df = df.withColumn("processed", if_then_else(F.col("text")))
         assert result_df.count() == 0
 
-    def test_multiple_columns(self, spark):
+    def test_multiple_columns(self, create_session):
         """Test that compose functions work with multiple columns."""
         data = [
             (1, "short"),
             (2, "this is long"),
         ]
-        df = spark.createDataFrame(data, ["id", "text"])
+        df = create_session.createDataFrame(data, ["id", "text"])
 
         result_df = df.withColumn("processed", if_then_else(F.col("text")))
         results = result_df.collect()
@@ -309,10 +309,10 @@ class TestComposeConditions:
         assert results[1]["id"] == 2
         assert results[1]["processed"] == "THIS IS LONG"
 
-    def test_chained_compose_functions(self, spark):
+    def test_chained_compose_functions(self, create_session):
         """Test chaining multiple compose functions."""
         data = [("test text",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         # Apply multiple composed functions in sequence
         result_df = df.withColumn("step1", if_then_else(F.col("text"))).withColumn(
@@ -333,9 +333,9 @@ class TestComposeConditions:
             ("hello world", "dlrow olleh"),
         ],
     )
-    def test_parametrized_transforms(self, spark, input_text, expected):
+    def test_parametrized_transforms(self, create_session, input_text, expected):
         """Test with parametrized inputs."""
-        df = spark.createDataFrame([(input_text,)], ["text"])
+        df = create_session.createDataFrame([(input_text,)], ["text"])
 
         result_df = df.withColumn(
             "processed", multiple_transforms_in_branch(F.col("text"))
@@ -374,7 +374,7 @@ class TestComposeEdgeCases:
 
         assert callable(only_condition)
 
-    def test_deeply_nested_conditions(self, spark):
+    def test_deeply_nested_conditions(self, create_session):
         """Test very deeply nested conditions."""
 
         @test_ns.compose(debug=True)
@@ -396,7 +396,7 @@ class TestComposeEdgeCases:
             ("LONG UPPER",),  # Long, upper, not null -> lower
             ("long lower",),  # Long, not upper -> upper
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
 
         result_df = df.withColumn("processed", deeply_nested(F.col("text")))
         results = result_df.collect()
@@ -455,7 +455,7 @@ class TestMultipleNamespaces:
         assert hasattr(num_ns, "multiply_by_ten")
         assert hasattr(str_ns, "add_suffix")
     
-    def test_two_namespaces(self, spark):
+    def test_two_namespaces(self, create_session):
         """Test using two different namespaces without passing them."""
         # Ensure namespaces are set up
         self.test_setup_namespaces()
@@ -472,7 +472,7 @@ class TestMultipleNamespaces:
             ("short",),
             ("this is long",),
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
         
         result_df = df.withColumn("processed", two_namespace_pipeline(F.col("text")))
         results = result_df.collect()
@@ -482,7 +482,7 @@ class TestMultipleNamespaces:
         # Long text transformed by both namespaces
         assert results[1]["processed"] == "LONG:THIS IS LONG:DONE"
     
-    def test_three_namespaces(self, spark):
+    def test_three_namespaces(self, create_session):
         """Test using three different namespaces."""
         # Ensure namespaces are set up
         self.test_setup_namespaces()
@@ -496,7 +496,7 @@ class TestMultipleNamespaces:
                 str_ns.add_suffix(suffix=":END")
         
         data = [("hello world",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
         
         result_df = df.withColumn("processed", three_namespace_pipeline(F.col("text")))
         result = result_df.collect()[0]
@@ -504,7 +504,7 @@ class TestMultipleNamespaces:
         # "hello world" -> "HELLO WORLD" -> "DLROW OLLEH" -> "DLROW OLLEH:END"
         assert result["processed"] == "DLROW OLLEH:END"
     
-    def test_namespace_with_original_test_ns(self, spark):
+    def test_namespace_with_original_test_ns(self, create_session):
         """Test that original test_ns still works with new namespaces."""
         # Ensure namespaces are set up
         self.test_setup_namespaces()
@@ -522,7 +522,7 @@ class TestMultipleNamespaces:
             ("hi",),
             ("hello world",),
         ]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
         
         result_df = df.withColumn("processed", mixed_with_test_ns(F.col("text")))
         results = result_df.collect()
@@ -532,7 +532,7 @@ class TestMultipleNamespaces:
         # "hello world" is long -> reversed
         assert results[1]["processed"] == "dlrow olleh"
     
-    def test_namespace_override_in_decorator(self, spark):
+    def test_namespace_override_in_decorator(self, create_session):
         """Test that explicitly passed namespaces override auto-detection."""
         # Ensure namespaces are set up
         self.test_setup_namespaces()
@@ -551,7 +551,7 @@ class TestMultipleNamespaces:
             text_ns.always_foo()  # This should call dummy_ns.always_foo
         
         data = [("test",)]
-        df = spark.createDataFrame(data, ["text"])
+        df = create_session.createDataFrame(data, ["text"])
         
         result_df = df.withColumn("processed", override_pipeline(F.col("text")))
         result = result_df.collect()[0]

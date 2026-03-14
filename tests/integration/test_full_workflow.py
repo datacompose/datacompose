@@ -51,14 +51,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import emails
 
 # Create Spark session
-spark = SparkSession.builder.appName("email_test").master("local[*]").getOrCreate()
+create_session = SparkSession.builder.appName("email_test").master("local[*]").getOrCreate()
 
 # Create test data
-df = spark.createDataFrame([
+df = create_session.createDataFrame([
     ("JOHN.DOE@EXAMPLE.COM", "  Contact me at john.doe@example.com  "),
     ("Jane@TEST.org", "Email: jane@test.org or call"),
     ("invalid-email", "No email here"),
@@ -80,7 +80,7 @@ assert result[0]["is_valid"] == True
 assert result[2]["is_valid"] == False
 
 print("SUCCESS: Email transformations work!")
-spark.stop()
+create_session.stop()
 """)
             
             # Run the transformation test
@@ -122,12 +122,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import phone_numbers
 
-spark = SparkSession.builder.appName("phone_test").master("local[*]").getOrCreate()
+create_session = SparkSession.builder.appName("phone_test").master("local[*]").getOrCreate()
 
-df = spark.createDataFrame([
+df = create_session.createDataFrame([
     ("(555) 123-4567",),
     ("1-800-FLOWERS",),
     ("555.123.4567 ext 999",),
@@ -145,7 +145,7 @@ assert result[0]["normalized"] is not None
 assert result[2]["extension"] == "999"
 
 print("SUCCESS: Phone transformations work!")
-spark.stop()
+create_session.stop()
 """)
             
             result = subprocess.run(
@@ -186,12 +186,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import addresses
 
-spark = SparkSession.builder.appName("address_test").master("local[*]").getOrCreate()
+create_session = SparkSession.builder.appName("address_test").master("local[*]").getOrCreate()
 
-df = spark.createDataFrame([
+df = create_session.createDataFrame([
     ("123 Main Street, Apt 4B",),
     ("456 5th Avenue",),
     ("PO Box 789",),
@@ -209,7 +209,7 @@ assert result[0]["number"] == "123"
 assert result[0]["street"] == "Main"
 
 print("SUCCESS: Address transformations work!")
-spark.stop()
+create_session.stop()
 """)
             
             result = subprocess.run(
@@ -256,15 +256,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "transformers" / "pyspark"))
 
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 import emails
 import phone_numbers
 import addresses
 
-spark = SparkSession.builder.appName("combined_test").master("local[*]").getOrCreate()
+create_session = SparkSession.builder.appName("combined_test").master("local[*]").getOrCreate()
 
 # Create test data with all three types
-df = spark.createDataFrame([
+df = create_session.createDataFrame([
     ("john@example.com", "(555) 123-4567", "123 Main St"),
     ("jane@test.org", "555.987.6543", "456 Oak Ave"),
     ("invalid", "not-a-phone", "PO Box 789"),
@@ -284,7 +284,7 @@ assert result[2]["valid_email"] == False
 assert result[0]["street_num"] == "123"
 
 print("SUCCESS: All transformers work together!")
-spark.stop()
+create_session.stop()
 """)
             
             result = subprocess.run(

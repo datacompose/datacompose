@@ -32,11 +32,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pyspark.sql import Column
-    from pyspark.sql import functions as F
+
+    from datacompose.functions import functions as F
+
 else:
     try:
         from pyspark.sql import Column
-        from pyspark.sql import functions as F
+
+        from datacompose.functions import functions as F
+
     except ImportError:
         pass
 
@@ -52,16 +56,17 @@ text = PrimitiveRegistry("text")
 # Constants
 # =============================================================================
 
-# Zero-width character pattern
+# Zero-width character pattern - using actual Unicode chars for cross-backend compatibility
+# These are: ZWSP, ZWNJ, ZWJ, BOM, Word Joiner, Mongolian Vowel Separator
 ZERO_WIDTH_PATTERN = "[\u200b\u200c\u200d\ufeff\u2060\u180e]"
 
-# Control characters (excluding tab \x09, newline \x0a, carriage return \x0d)
-CONTROL_CHAR_PATTERN = "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"
+# Control characters pattern - using hex escapes for cross-backend compatibility
+# Matches all C0 control chars (0x00-0x1F) plus DEL (0x7F)
+CONTROL_CHAR_PATTERN = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]"
 
-# ANSI escape code pattern
 # ANSI escape code pattern - ESC[ followed by params and command letter
-# The ESC char is \x1b (chr(27)) - we need to include it literally
-ANSI_PATTERN = "\x1b\\[[0-9;]*[a-zA-Z]"
+# ESC is 0x1B - using hex escape for cross-backend compatibility
+ANSI_PATTERN = "\\x1b\\[[0-9;]*[a-zA-Z]"
 
 # URL pattern
 URL_PATTERN = "https?://[^\\s]+|www\\.[^\\s]+|ftp://[^\\s]+"
@@ -71,20 +76,21 @@ HTML_TAG_PATTERN = "<[^>]+>|<!--.*?-->"
 
 # Emoji patterns (simplified - covers most common)
 EMOJI_PATTERN = (
-    "[\U0001F600-\U0001F64F"
-    "\U0001F300-\U0001F5FF"
-    "\U0001F680-\U0001F6FF"
-    "\U0001F1E0-\U0001F1FF"
-    "\U00002702-\U000027B0"
-    "\U0001F900-\U0001F9FF"
-    "\U00002600-\U000026FF"
-    "\uFE00-\uFE0F]"
+    "[\U0001f600-\U0001f64f"
+    "\U0001f300-\U0001f5ff"
+    "\U0001f680-\U0001f6ff"
+    "\U0001f1e0-\U0001f1ff"
+    "\U00002702-\U000027b0"
+    "\U0001f900-\U0001f9ff"
+    "\U00002600-\U000026ff"
+    "\ufe00-\ufe0f]"
 )
 
 
 # =============================================================================
 # Validation Functions
 # =============================================================================
+
 
 @text.register()
 def is_valid_hex(col: "Column") -> "Column":
@@ -97,12 +103,8 @@ def is_valid_hex(col: "Column") -> "Column":
         Column with boolean indicating if valid hex
     """
     cleaned = F.lower(F.regexp_replace(col, "(?i)^0x|[\\s:\\-]", ""))
-    return F.when(
-        col.isNull() | (F.trim(col) == ""),
-        F.lit(False)
-    ).otherwise(
-        (F.length(cleaned) > 0) &
-        (F.regexp_replace(cleaned, "[0-9a-f]", "") == "")
+    return F.when(col.isNull() | (F.trim(col) == ""), F.lit(False)).otherwise(
+        (F.length(cleaned) > 0) & (F.regexp_replace(cleaned, "[0-9a-f]", "") == "")
     )
 
 
@@ -116,15 +118,13 @@ def is_valid_base64(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating if valid base64
     """
-    return F.when(
-        col.isNull(),
-        F.lit(False)
-    ).when(
-        F.trim(col) == "",
-        F.lit(True)
-    ).otherwise(
-        col.rlike("^[A-Za-z0-9+/]*={0,2}$") &
-        ((F.length(col) % 4 == 0) | ~col.rlike("="))
+    return (
+        F.when(col.isNull(), F.lit(False))
+        .when(F.trim(col) == "", F.lit(True))
+        .otherwise(
+            col.rlike("^[A-Za-z0-9+/]*={0,2}$")
+            & ((F.length(col) % 4 == 0) | ~col.rlike("="))
+        )
     )
 
 
@@ -138,14 +138,12 @@ def is_valid_url_encoded(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating if valid URL encoded
     """
-    return F.when(
-        col.isNull(),
-        F.lit(False)
-    ).when(
-        F.trim(col) == "",
-        F.lit(True)
-    ).otherwise(
-        ~col.rlike("%(?![0-9A-Fa-f]{2})")
+    # Remove all valid %XX sequences, then check if any bare % remains
+    cleaned = F.regexp_replace(col, "%[0-9A-Fa-f]{2}", "")
+    return (
+        F.when(col.isNull(), F.lit(False))
+        .when(F.trim(col) == "", F.lit(True))
+        .otherwise(~cleaned.contains("%"))
     )
 
 
@@ -159,11 +157,10 @@ def has_control_characters(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of control characters
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
-        col.rlike(CONTROL_CHAR_PATTERN)
+    # Strip allowed whitespace (tab, newline, CR), then check for remaining control chars
+    stripped = F.regexp_replace(col, "[\\t\\n\\r]", "")
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
+        stripped.rlike(CONTROL_CHAR_PATTERN)
     )
 
 
@@ -177,10 +174,7 @@ def has_zero_width_characters(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of zero-width characters
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
         col.rlike(ZERO_WIDTH_PATTERN)
     )
 
@@ -195,11 +189,8 @@ def has_non_ascii(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of non-ASCII characters
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
-        col.rlike("[^\x00-\x7F]")
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
+        col.rlike("[^\\x00-\\x7f]")
     )
 
 
@@ -213,10 +204,7 @@ def has_escape_sequences(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of escape sequences
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
         col.rlike("\\\\[nrtfvb\\\\\"'0]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}")
     )
 
@@ -231,10 +219,7 @@ def has_url_encoding(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of URL encoding
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
         col.rlike("%[0-9A-Fa-f]{2}")
     )
 
@@ -249,10 +234,7 @@ def has_html_entities(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of HTML entities
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
         col.rlike("&[a-zA-Z]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;")
     )
 
@@ -267,11 +249,8 @@ def has_ansi_codes(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of ANSI codes
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
-        col.rlike("\x1b\\[[0-9;]*[a-zA-Z]")
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
+        col.rlike("\\x1b\\[[0-9;]*[a-zA-Z]")
     )
 
 
@@ -285,11 +264,8 @@ def has_non_printable(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of non-printable characters
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
-        col.rlike("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
+        col.rlike("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]")
     )
 
 
@@ -303,10 +279,7 @@ def has_accents(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of accents
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
         col.rlike("[àáâãäåæçèéêëìíîïñòóôõöøùúûüýÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝ]")
     )
 
@@ -324,11 +297,10 @@ def has_unicode_issues(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of unicode issues
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
-        col.rlike("[\u201c\u201d\u2018\u2019\u2013\u2014\u2026\u00a0\u2003\u2009\uff00-\uffef\u0300-\u036f]")
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
+        col.rlike(
+            "[\u201c\u201d\u2018\u2019\u2013\u2014\u2026\u00a0\u2003\u2009\uff00-\uffef\u0300-\u036f]"
+        )
     )
 
 
@@ -342,19 +314,15 @@ def has_whitespace_issues(col: "Column") -> "Column":
     Returns:
         Column with boolean indicating presence of whitespace issues
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit(False)
-    ).otherwise(
-        (col != F.trim(col)) |
-        col.rlike("\\s{2,}") |
-        col.rlike("[\u00a0\u2003\u2009]")
+    return F.when(col.isNull() | (col == ""), F.lit(False)).otherwise(
+        (col != F.trim(col)) | col.rlike("\\s{2,}") | col.rlike("[\u00a0\u2003\u2009]")
     )
 
 
 # =============================================================================
 # Transformation Functions
 # =============================================================================
+
 
 @text.register()
 def hex_to_text(col: "Column") -> "Column":
@@ -367,10 +335,7 @@ def hex_to_text(col: "Column") -> "Column":
         Column with decoded text
     """
     cleaned = F.lower(F.regexp_replace(col, "(?i)^0x|[\\s:\\-]", ""))
-    return F.when(
-        col.isNull() | (F.trim(col) == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (F.trim(col) == ""), F.lit("")).otherwise(
         F.decode(F.unhex(cleaned), "UTF-8")
     )
 
@@ -385,10 +350,7 @@ def text_to_hex(col: "Column") -> "Column":
     Returns:
         Column with hex encoded string
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(
         F.lower(F.hex(F.encode(col, "UTF-8")))
     )
 
@@ -403,10 +365,7 @@ def clean_hex(col: "Column") -> "Column":
     Returns:
         Column with cleaned hex string
     """
-    return F.when(
-        col.isNull() | (F.trim(col) == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (F.trim(col) == ""), F.lit("")).otherwise(
         F.lower(F.regexp_replace(col, "(?i)^0x|[\\s:\\-]", ""))
     )
 
@@ -426,20 +385,18 @@ def extract_hex(col: "Column") -> "Column":
     # First try to match 0x or # prefixed hex
     prefixed = F.regexp_extract(col, "(?:0x|#)([0-9A-Fa-f]{2,})", 1)
     # Then try MAC-address format (at least 3 groups of 2 hex chars)
-    mac_pattern = F.regexp_extract(col, "([0-9A-Fa-f]{2}[:\\-][0-9A-Fa-f]{2}[:\\-][0-9A-Fa-f]{2,}(?:[:\\-][0-9A-Fa-f]{2})*)", 1)
+    mac_pattern = F.regexp_extract(
+        col,
+        "([0-9A-Fa-f]{2}[:\\-][0-9A-Fa-f]{2}[:\\-][0-9A-Fa-f]{2,}(?:[:\\-][0-9A-Fa-f]{2})*)",
+        1,
+    )
     mac_cleaned = F.lower(F.regexp_replace(mac_pattern, "[:\\-]", ""))
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).when(
-        prefixed != "",
-        F.lower(prefixed)
-    ).when(
-        mac_cleaned != "",
-        mac_cleaned
-    ).otherwise(
-        F.lit("")
+    return (
+        F.when(col.isNull() | (col == ""), F.lit(""))
+        .when(prefixed != "", F.lower(prefixed))
+        .when(mac_cleaned != "", mac_cleaned)
+        .otherwise(F.lit(""))
     )
 
 
@@ -453,10 +410,7 @@ def decode_base64(col: "Column") -> "Column":
     Returns:
         Column with decoded text
     """
-    return F.when(
-        col.isNull() | (F.trim(col) == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (F.trim(col) == ""), F.lit("")).otherwise(
         F.decode(F.unbase64(col), "UTF-8")
     )
 
@@ -471,10 +425,7 @@ def encode_base64(col: "Column") -> "Column":
     Returns:
         Column with base64 encoded string
     """
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(
         F.base64(F.encode(col, "UTF-8"))
     )
 
@@ -492,11 +443,13 @@ def clean_base64(col: "Column") -> "Column":
     stripped = F.regexp_replace(F.trim(col), "\\s", "")
     no_padding = F.regexp_replace(stripped, "=+$", "")
     mod = F.length(no_padding) % 4
-    padding = F.when(mod == 0, F.lit("")).when(mod == 1, F.lit("===")).when(mod == 2, F.lit("==")).otherwise(F.lit("="))
-    return F.when(
-        col.isNull() | (F.trim(col) == ""),
-        F.lit("")
-    ).otherwise(
+    padding = (
+        F.when(mod == 0, F.lit(""))
+        .when(mod == 1, F.lit("==="))
+        .when(mod == 2, F.lit("=="))
+        .otherwise(F.lit("="))
+    )
+    return F.when(col.isNull() | (F.trim(col) == ""), F.lit("")).otherwise(
         F.concat(no_padding, padding)
     )
 
@@ -516,19 +469,15 @@ def extract_base64(col: "Column") -> "Column":
     # First check for data URI base64 prefix
     data_uri = F.regexp_extract(col, "base64,([A-Za-z0-9+/]+=*)", 1)
     # Then look for base64 with proper = padding (more reliable)
-    padded = F.regexp_extract(col, "(?<![A-Za-z0-9+/])([A-Za-z0-9+/]{4,}={1,2})(?![A-Za-z0-9+/=])", 1)
+    padded = F.regexp_extract(
+        col, "(?<![A-Za-z0-9+/])([A-Za-z0-9+/]{4,}={1,2})(?![A-Za-z0-9+/=])", 1
+    )
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).when(
-        data_uri != "",
-        data_uri
-    ).when(
-        padded != "",
-        padded
-    ).otherwise(
-        F.lit("")
+    return (
+        F.when(col.isNull() | (col == ""), F.lit(""))
+        .when(data_uri != "", data_uri)
+        .when(padded != "", padded)
+        .otherwise(F.lit(""))
     )
 
 
@@ -548,7 +497,7 @@ def decode_url(col: "Column") -> "Column":
     """
     result = col
     # Common URL encodings - decode %2B to a placeholder first
-    result = F.regexp_replace(result, "%2[Bb]", "\x00PLUS\x00")
+    result = F.regexp_replace(result, "%2[Bb]", "\uf8ffPLUS\uf8ff")
     result = F.regexp_replace(result, "%20", " ")
     result = F.regexp_replace(result, "%21", "!")
     result = F.regexp_replace(result, "%22", '"')
@@ -583,17 +532,14 @@ def decode_url(col: "Column") -> "Column":
     # Plus sign as space (form encoding) - before restoring %2B
     result = F.regexp_replace(result, "\\+", " ")
     # Restore %2B encoded plus signs
-    result = F.regexp_replace(result, "\x00PLUS\x00", "+")
+    result = F.regexp_replace(result, "\uf8ffPLUS\uf8ff", "+")
     # UTF-8 sequences for common chars
     result = F.regexp_replace(result, "%[Cc]3%[Aa]9", "é")
     result = F.regexp_replace(result, "%[Cc]3%[Aa]0", "à")
     result = F.regexp_replace(result, "%[Cc]3%[Bb]1", "ñ")
     result = F.regexp_replace(result, "%[Ee]2%9[Cc]%93", "✓")
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -641,10 +587,7 @@ def encode_url(col: "Column") -> "Column":
     result = F.regexp_replace(result, "\\}", "%7D")
     result = F.regexp_replace(result, "~", "%7E")
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -681,10 +624,7 @@ def decode_html_entities(col: "Column") -> "Column":
     result = F.regexp_replace(result, "(?i)&#x22;", '"')
     result = F.regexp_replace(result, "(?i)&#x27;", "'")
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -704,10 +644,7 @@ def encode_html_entities(col: "Column") -> "Column":
     result = F.regexp_replace(result, ">", "&gt;")
     result = F.regexp_replace(result, '"', "&quot;")
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -722,7 +659,7 @@ def unescape_string(col: "Column") -> "Column":
     """
     result = col
     # First protect double backslashes with placeholder
-    result = F.regexp_replace(result, "\\\\\\\\", "\x00BACKSLASH\x00")
+    result = F.regexp_replace(result, "\\\\\\\\", "\uf8ffBACKSLASH\uf8ff")
     # Then unescape sequences
     result = F.regexp_replace(result, "\\\\n", "\n")
     result = F.regexp_replace(result, "\\\\t", "\t")
@@ -736,12 +673,9 @@ def unescape_string(col: "Column") -> "Column":
     result = F.regexp_replace(result, "\\\\u0041", "A")
     result = F.regexp_replace(result, "\\\\u0042", "B")
     # Finally restore backslashes
-    result = F.regexp_replace(result, "\x00BACKSLASH\x00", "\\\\")
+    result = F.regexp_replace(result, "\uf8ffBACKSLASH\uf8ff", "\\\\")
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -761,10 +695,7 @@ def escape_string(col: "Column") -> "Column":
     result = F.regexp_replace(result, "\r", "\\\\r")
     result = F.regexp_replace(result, '"', '\\\\"')
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -777,10 +708,7 @@ def normalize_line_endings(col: "Column") -> "Column":
     Returns:
         Column with normalized line endings
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(F.regexp_replace(col, "\r\n", "\n"), "\r", "\n")
     )
 
@@ -828,12 +756,9 @@ def to_ascii(col: "Column") -> "Column":
     result = F.regexp_replace(result, "[ß]", "ss")
     result = F.regexp_replace(result, "Å", "A")
     # Replace remaining non-ASCII with ?
-    result = F.regexp_replace(result, "[^\x00-\x7F]", "?")
+    result = F.regexp_replace(result, "[^\x00-\x7f]", "?")
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -850,10 +775,7 @@ def to_codepoints(col: "Column") -> "Column":
     """
     # This is very limited without UDF - would need to iterate chars
     # For now, just return a placeholder that indicates this needs UDF for full support
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(
         F.concat(F.lit("U+"), F.hex(F.encode(F.substring(col, 1, 1), "UTF-8")))
     )
 
@@ -870,10 +792,7 @@ def from_codepoints(col: "Column") -> "Column":
     """
     # Extract hex values and convert
     hex_val = F.regexp_extract(col, "U\\+([0-9A-Fa-f]+)", 1)
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(
         F.decode(F.unhex(hex_val), "UTF-8")
     )
 
@@ -888,12 +807,7 @@ def reverse_string(col: "Column") -> "Column":
     Returns:
         Column with reversed string
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
-        F.reverse(col)
-    )
+    return F.when(col.isNull(), F.lit("")).otherwise(F.reverse(col))
 
 
 @text.register()
@@ -909,20 +823,13 @@ def truncate(col: "Column", max_length: int, ellipsis: bool = True) -> "Column":
         Column with truncated string
     """
     if ellipsis:
-        return F.when(
-            col.isNull(),
-            F.lit("")
-        ).when(
-            F.length(col) <= max_length,
-            col
-        ).otherwise(
-            F.concat(F.substring(col, 1, max_length - 3), F.lit("..."))
+        return (
+            F.when(col.isNull(), F.lit(""))
+            .when(F.length(col) <= max_length, col)
+            .otherwise(F.concat(F.substring(col, 1, max_length - 3), F.lit("...")))
         )
     else:
-        return F.when(
-            col.isNull(),
-            F.lit("")
-        ).otherwise(
+        return F.when(col.isNull(), F.lit("")).otherwise(
             F.substring(col, 1, max_length)
         )
 
@@ -939,12 +846,7 @@ def pad_left(col: "Column", width: int, pad_char: str = " ") -> "Column":
     Returns:
         Column with left-padded string
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
-        F.lpad(col, width, pad_char)
-    )
+    return F.when(col.isNull(), F.lit("")).otherwise(F.lpad(col, width, pad_char))
 
 
 @text.register()
@@ -959,17 +861,13 @@ def pad_right(col: "Column", width: int, pad_char: str = " ") -> "Column":
     Returns:
         Column with right-padded string
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
-        F.rpad(col, width, pad_char)
-    )
+    return F.when(col.isNull(), F.lit("")).otherwise(F.rpad(col, width, pad_char))
 
 
 # =============================================================================
 # Cleaning Functions
 # =============================================================================
+
 
 @text.register()
 def remove_control_characters(col: "Column") -> "Column":
@@ -981,10 +879,7 @@ def remove_control_characters(col: "Column") -> "Column":
     Returns:
         Column with control characters removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, CONTROL_CHAR_PATTERN, "")
     )
 
@@ -999,10 +894,7 @@ def remove_zero_width_characters(col: "Column") -> "Column":
     Returns:
         Column with zero-width characters removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, ZERO_WIDTH_PATTERN, "")
     )
 
@@ -1017,10 +909,7 @@ def remove_non_printable(col: "Column") -> "Column":
     Returns:
         Column with non-printable characters removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, "[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "")
     )
 
@@ -1035,10 +924,7 @@ def remove_ansi_codes(col: "Column") -> "Column":
     Returns:
         Column with ANSI codes removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, ANSI_PATTERN, "")
     )
 
@@ -1053,13 +939,9 @@ def strip_invisible(col: "Column") -> "Column":
     Returns:
         Column with invisible characters removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(
-            F.regexp_replace(col, CONTROL_CHAR_PATTERN, ""),
-            ZERO_WIDTH_PATTERN, ""
+            F.regexp_replace(col, CONTROL_CHAR_PATTERN, ""), ZERO_WIDTH_PATTERN, ""
         )
     )
 
@@ -1074,10 +956,7 @@ def remove_bom(col: "Column") -> "Column":
     Returns:
         Column with BOM removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, "\ufeff", "")
     )
 
@@ -1105,12 +984,11 @@ def normalize_unicode(col: "Column") -> "Column":
     # Special spaces to regular
     result = F.regexp_replace(result, "[\u00a0\u2003\u2009]", " ")
     # Full-width to ASCII (common ones)
-    result = F.regexp_replace(result, "[\uff21-\uff3a]", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")  # This won't work as intended
+    result = F.regexp_replace(
+        result, "[\uff21-\uff3a]", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    )  # This won't work as intended
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -1151,10 +1029,7 @@ def remove_accents(col: "Column") -> "Column":
     result = F.regexp_replace(result, "Ø", "O")
     result = F.regexp_replace(result, "Å", "A")
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -1167,10 +1042,7 @@ def normalize_whitespace(col: "Column") -> "Column":
     Returns:
         Column with normalized whitespace
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.trim(F.regexp_replace(col, "\\s+", " "))
     )
 
@@ -1185,10 +1057,7 @@ def remove_html_tags(col: "Column") -> "Column":
     Returns:
         Column with HTML tags removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, HTML_TAG_PATTERN, "")
     )
 
@@ -1203,10 +1072,7 @@ def remove_urls(col: "Column") -> "Column":
     Returns:
         Column with URLs removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, URL_PATTERN, "")
     )
 
@@ -1221,10 +1087,7 @@ def remove_emojis(col: "Column") -> "Column":
     Returns:
         Column with emojis removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, EMOJI_PATTERN, "")
     )
 
@@ -1239,10 +1102,7 @@ def remove_punctuation(col: "Column") -> "Column":
     Returns:
         Column with punctuation removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, "[^\\w\\s]", "")
     )
 
@@ -1257,12 +1117,7 @@ def remove_digits(col: "Column") -> "Column":
     Returns:
         Column with digits removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
-        F.regexp_replace(col, "\\d", "")
-    )
+    return F.when(col.isNull(), F.lit("")).otherwise(F.regexp_replace(col, "\\d", ""))
 
 
 @text.register()
@@ -1275,10 +1130,7 @@ def remove_letters(col: "Column") -> "Column":
     Returns:
         Column with letters removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, "[a-zA-Z]", "")
     )
 
@@ -1293,11 +1145,10 @@ def remove_escape_sequences(col: "Column") -> "Column":
     Returns:
         Column with escape sequences removed
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
-        F.regexp_replace(col, "\\\\[nrtfvb\\\\\"'0]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}", "")
+    return F.when(col.isNull(), F.lit("")).otherwise(
+        F.regexp_replace(
+            col, "\\\\[nrtfvb\\\\\"'0]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}", ""
+        )
     )
 
 
@@ -1311,10 +1162,7 @@ def strip_to_alphanumeric(col: "Column") -> "Column":
     Returns:
         Column with only alphanumeric characters
     """
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(
+    return F.when(col.isNull(), F.lit("")).otherwise(
         F.regexp_replace(col, "[^a-zA-Z0-9]", "")
     )
 
@@ -1345,10 +1193,7 @@ def clean_for_comparison(col: "Column") -> "Column":
     # Normalize whitespace
     result = F.trim(F.regexp_replace(result, "\\s+", " "))
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -1382,10 +1227,7 @@ def slugify(col: "Column") -> "Column":
     # Trim hyphens from ends
     result = F.regexp_replace(result, "^-+|-+$", "")
 
-    return F.when(
-        col.isNull() | (col == ""),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull() | (col == ""), F.lit("")).otherwise(result)
 
 
 @text.register()
@@ -1443,7 +1285,4 @@ def clean_string(col: "Column") -> "Column":
     # Normalize whitespace
     result = F.trim(F.regexp_replace(result, "\\s+", " "))
 
-    return F.when(
-        col.isNull(),
-        F.lit("")
-    ).otherwise(result)
+    return F.when(col.isNull(), F.lit("")).otherwise(result)

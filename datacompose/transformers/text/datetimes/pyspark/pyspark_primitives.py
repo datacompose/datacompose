@@ -49,18 +49,21 @@ Installation:
 datacompose add datetimes
 """
 
-import re
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 if TYPE_CHECKING:
     from pyspark.sql import Column
-    from pyspark.sql import functions as F
+
+    from datacompose.functions import functions as F
 else:
     try:
         from pyspark.sql import Column
-        from pyspark.sql import functions as F
+
+        from datacompose.functions import functions as F
     except ImportError:
         pass
+
+import re
 
 try:
     # Try local utils import first (for generated code)
@@ -111,25 +114,27 @@ def extract_datetime_from_text(col: Column) -> Column:
     named_month_long = F.regexp_extract(
         col,
         r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?,\s+\d{4}(?:\s+at\s+\d{1,2}:\d{2}\s+[AP]M)?",
-        0
+        0,
     )
 
     # Short named month with optional time: Jan 15, 2024 at 10:00 AM
     named_month_short = F.regexp_extract(
         col,
         r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}(?:\s+at\s+\d{1,2}:\d{2}\s+[AP]M)?",
-        0
+        0,
     )
 
     # Day-Month-Year with named month: 15-Jan-2024, 15 January 2024
     day_named_month = F.regexp_extract(
         col,
         r"\d{1,2}[\s-](?:Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|September|Oct|October|Nov|November|Dec|December)[\s-]\d{4}",
-        0
+        0,
     )
 
     # US/EU date with time and AM/PM: 01/15/2024 2:30 PM
-    date_time_ampm = F.regexp_extract(col, r"\d{1,2}/\d{1,2}/\d{2,4}\s+\d{1,2}:\d{2}\s+[AP]M", 0)
+    date_time_ampm = F.regexp_extract(
+        col, r"\d{1,2}/\d{1,2}/\d{2,4}\s+\d{1,2}:\d{2}\s+[AP]M", 0
+    )
 
     # US/EU date with time: 01/15/2024 14:30
     date_time = F.regexp_extract(col, r"\d{1,2}/\d{1,2}/\d{2,4}\s+\d{1,2}:\d{2}", 0)
@@ -149,12 +154,22 @@ def extract_datetime_from_text(col: Column) -> Column:
     # Natural language - simple patterns
     tomorrow = F.regexp_extract(col, r"\btomorrow\b", 0)
     yesterday = F.regexp_extract(col, r"\byesterday\b", 0)
-    next_day = F.regexp_extract(col, r"\bnext\s+(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", 0)
-    last_period = F.regexp_extract(col, r"\blast\s+(?:week|month|year|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", 0)
+    next_day = F.regexp_extract(
+        col,
+        r"\bnext\s+(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b",
+        0,
+    )
+    last_period = F.regexp_extract(
+        col,
+        r"\blast\s+(?:week|month|year|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b",
+        0,
+    )
 
     # Just year: 2024 (but not part of a larger date)
-    # Use negative lookbehind/lookahead to avoid matching years in dates
-    year_only = F.regexp_extract(col, r"(?<![/\-\d])\b(20\d{2}|19\d{2})\b(?![/\-\dT])", 1)
+    # This is lowest priority in coalesce, so date-specific patterns catch dates first
+    year_only = F.regexp_extract(
+        col, r"\b(20\d{2}|19\d{2})\b", 1
+    )
 
     # Return first non-empty match using coalesce
     return F.coalesce(
@@ -175,7 +190,7 @@ def extract_datetime_from_text(col: Column) -> Column:
         F.when(next_day != "", next_day),
         F.when(last_period != "", last_period),
         F.when(year_only != "", year_only),
-        F.lit(None)  # Return None if no date found
+        F.lit(None),  # Return None if no date found
     )
 
 
@@ -202,11 +217,16 @@ def standardize_iso(col: Column) -> Column:
         # "2024-Jan-15" -> "2024-01-15 00:00:00"
         # "15-01-2024 14:30" -> "2024-01-15 14:30:00"
     """
+    # Cast to string to handle timestamp/date column inputs
+    str_col = col.cast("string")
     # Normalize whitespace:
     # 1. Trim leading/trailing whitespace (spaces, tabs, newlines)
     # 2. Collapse multiple internal whitespace characters into single spaces
-    trimmed = F.regexp_replace(col, r"^\s+|\s+$", "")
+    trimmed = F.regexp_replace(str_col, r"^\s+|\s+$", "")
     normalized = F.regexp_replace(trimmed, r"\s+", " ")
+    # Replace ISO 'T' separator and trailing 'Z' with space for cross-backend compatibility
+    normalized = F.regexp_replace(normalized, "(\\d)T(\\d)", "\\1 \\2")
+    normalized = F.regexp_replace(normalized, "Z$", "")
 
     # Try multiple formats in order using coalesce
     # try_to_timestamp returns null if format doesn't match or date is invalid
@@ -215,10 +235,7 @@ def standardize_iso(col: Column) -> Column:
 
     parsed = F.coalesce(
         # ISO formats (highest priority - unambiguous)
-        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm:ss'Z'")),
-        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm:ss")),
         F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd HH:mm:ss")),
-        F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd'T'HH:mm")),
         F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd HH:mm")),
         F.try_to_timestamp(normalized, F.lit("yyyy-MM-dd")),
         # ISO date with 12-hour time and AM/PM
@@ -255,6 +272,9 @@ def standardize_iso(col: Column) -> Column:
         F.try_to_timestamp(normalized, F.lit("dd.MM.yyyy")),
         F.try_to_timestamp(normalized, F.lit("d.M.yyyy")),
     )
+
+    # Reject dates with unreasonable years (e.g. truncated input "01/15/202" → year 202)
+    parsed = F.when(F.year(parsed).between(1000, 9999), parsed)
 
     # Format as ISO string "yyyy-MM-dd HH:mm:ss"
     # Returns null if parsed is null
@@ -893,7 +913,7 @@ def add_days(col: Column, days: Column) -> Column:
         F.date_format(
             F.date_add(
                 F.to_date(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss")),
-                days.cast("int")
+                days.cast("int"),
             ),
             "yyyy-MM-dd HH:mm:ss",
         ),
@@ -928,7 +948,7 @@ def add_months(col: Column, months: Column) -> Column:
         F.date_format(
             F.add_months(
                 F.to_date(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss")),
-                months.cast("int")
+                months.cast("int"),
             ),
             "yyyy-MM-dd HH:mm:ss",
         ),
@@ -1020,9 +1040,17 @@ def date_diff_years(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
+    # Compute year diff explicitly to avoid operator precedence issues
+    # with months_between expansion in some backends
+    year_diff = F.year(ts1) - F.year(ts2)
+    # Adjust if the anniversary date hasn't been reached yet
+    mmdd1 = F.month(ts1) * 100 + F.dayofmonth(ts1)
+    mmdd2 = F.month(ts2) * 100 + F.dayofmonth(ts2)
+    adjusted = F.when(mmdd1 < mmdd2, year_diff - 1).otherwise(year_diff)
+
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(),
-        F.floor(F.months_between(ts1, ts2) / 12).cast("long"),
+        adjusted.cast("long"),
     ).otherwise(None)
 
 
@@ -1048,7 +1076,7 @@ def date_diff_hours(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
-    seconds_diff = ts1.cast("long") - ts2.cast("long")
+    seconds_diff = F.unix_timestamp(ts1) - F.unix_timestamp(ts2)
 
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(),
@@ -1078,7 +1106,7 @@ def date_diff_minutes(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
-    seconds_diff = ts1.cast("long") - ts2.cast("long")
+    seconds_diff = F.unix_timestamp(ts1) - F.unix_timestamp(ts2)
 
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(),
@@ -1108,7 +1136,7 @@ def date_diff_seconds(col1: Column, col2: Column) -> Column:
     ts1 = F.to_timestamp(standardized1, "yyyy-MM-dd HH:mm:ss")
     ts2 = F.to_timestamp(standardized2, "yyyy-MM-dd HH:mm:ss")
 
-    seconds_diff = ts1.cast("long") - ts2.cast("long")
+    seconds_diff = F.unix_timestamp(ts1) - F.unix_timestamp(ts2)
 
     return F.when(
         standardized1.isNotNull() & standardized2.isNotNull(), seconds_diff
@@ -1164,26 +1192,44 @@ def business_days_between(start_col: Column, end_col: Column) -> Column:
     # by calculating what day of week it falls on
     business_days_in_remainder = (
         # Day 0 (start day)
-        F.when((remaining_days >= 1) & start_dow.isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        F.when((remaining_days >= 1) & start_dow.isin([2, 3, 4, 5, 6]), 1).otherwise(0)
+        +
         # Day 1
-        F.when((remaining_days >= 2) & ((start_dow + 1) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        F.when(
+            (remaining_days >= 2) & ((start_dow + 1) % 7).isin([2, 3, 4, 5, 6]), 1
+        ).otherwise(0)
+        +
         # Day 2
-        F.when((remaining_days >= 3) & ((start_dow + 2) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        F.when(
+            (remaining_days >= 3) & ((start_dow + 2) % 7).isin([2, 3, 4, 5, 6]), 1
+        ).otherwise(0)
+        +
         # Day 3
-        F.when((remaining_days >= 4) & ((start_dow + 3) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        F.when(
+            (remaining_days >= 4) & ((start_dow + 3) % 7).isin([2, 3, 4, 5, 6]), 1
+        ).otherwise(0)
+        +
         # Day 4
-        F.when((remaining_days >= 5) & ((start_dow + 4) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        F.when(
+            (remaining_days >= 5) & ((start_dow + 4) % 7).isin([2, 3, 4, 5, 6]), 1
+        ).otherwise(0)
+        +
         # Day 5
-        F.when((remaining_days >= 6) & ((start_dow + 5) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0) +
+        F.when(
+            (remaining_days >= 6) & ((start_dow + 5) % 7).isin([2, 3, 4, 5, 6]), 1
+        ).otherwise(0)
+        +
         # Day 6
-        F.when((remaining_days >= 7) & ((start_dow + 6) % 7).isin([2, 3, 4, 5, 6]), 1).otherwise(0)
+        F.when(
+            (remaining_days >= 7) & ((start_dow + 6) % 7).isin([2, 3, 4, 5, 6]), 1
+        ).otherwise(0)
     )
 
     total_business_days = business_days_from_weeks + business_days_in_remainder
 
     return F.when(
         standardized_start.isNotNull() & standardized_end.isNotNull(),
-        total_business_days.cast("int")
+        total_business_days.cast("int"),
     ).otherwise(None)
 
 
@@ -1254,12 +1300,14 @@ def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
     # First standardize the date
     standardized = standardize_iso(col)
 
+    # Strip Java-style single-quote literal quoting (e.g. 'T' -> T)
+    # DuckDB/strftime treats unquoted characters as literals already
+    clean_format = re.sub(r"'([^']+)'", r"\1", format)
+
     # Convert to timestamp and format
     return F.when(
         standardized.isNotNull(),
-        F.date_format(
-            F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss"), format
-        ),
+        F.date_format(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss"), clean_format),
     ).otherwise(None)
 
 
@@ -1508,7 +1556,7 @@ def calculate_age(col: Column, reference_date: Column) -> Column:
     # Calculate years difference
     return F.when(
         standardized_birth.isNotNull() & standardized_ref.isNotNull(),
-        F.floor(F.months_between(ref_ts, birth_ts) / 12)
+        F.floor(F.months_between(ref_ts, birth_ts) / 12),
     ).otherwise(None)
 
 
@@ -1560,8 +1608,8 @@ def format_duration(seconds_col: Column) -> Column:
         F.concat(
             result,
             weeks.cast("string"),
-            F.when(weeks == 1, F.lit(" week")).otherwise(F.lit(" weeks"))
-        )
+            F.when(weeks == 1, F.lit(" week")).otherwise(F.lit(" weeks")),
+        ),
     ).otherwise(result)
 
     # Add days
@@ -1570,8 +1618,8 @@ def format_duration(seconds_col: Column) -> Column:
         F.concat(
             F.when(result != "", F.concat(result, F.lit(" "))).otherwise(result),
             days.cast("string"),
-            F.when(days == 1, F.lit(" day")).otherwise(F.lit(" days"))
-        )
+            F.when(days == 1, F.lit(" day")).otherwise(F.lit(" days")),
+        ),
     ).otherwise(result)
 
     # Add hours
@@ -1580,8 +1628,8 @@ def format_duration(seconds_col: Column) -> Column:
         F.concat(
             F.when(result != "", F.concat(result, F.lit(" "))).otherwise(result),
             hours.cast("string"),
-            F.when(hours == 1, F.lit(" hour")).otherwise(F.lit(" hours"))
-        )
+            F.when(hours == 1, F.lit(" hour")).otherwise(F.lit(" hours")),
+        ),
     ).otherwise(result)
 
     # Add minutes
@@ -1590,8 +1638,8 @@ def format_duration(seconds_col: Column) -> Column:
         F.concat(
             F.when(result != "", F.concat(result, F.lit(" "))).otherwise(result),
             minutes.cast("string"),
-            F.when(minutes == 1, F.lit(" minute")).otherwise(F.lit(" minutes"))
-        )
+            F.when(minutes == 1, F.lit(" minute")).otherwise(F.lit(" minutes")),
+        ),
     ).otherwise(result)
 
     # Add seconds
@@ -1600,20 +1648,14 @@ def format_duration(seconds_col: Column) -> Column:
         F.concat(
             F.when(result != "", F.concat(result, F.lit(" "))).otherwise(result),
             secs.cast("string"),
-            F.when(secs == 1, F.lit(" second")).otherwise(F.lit(" seconds"))
-        )
+            F.when(secs == 1, F.lit(" second")).otherwise(F.lit(" seconds")),
+        ),
     ).otherwise(result)
 
     # Handle zero case
-    result = F.when(
-        abs_seconds == 0,
-        F.lit("0 seconds")
-    ).otherwise(result)
+    result = F.when(abs_seconds == 0, F.lit("0 seconds")).otherwise(result)
 
     # Add negative sign if needed
-    result = F.when(
-        is_negative,
-        F.concat(F.lit("-"), result)
-    ).otherwise(result)
+    result = F.when(is_negative, F.concat(F.lit("-"), result)).otherwise(result)
 
     return result

@@ -4,8 +4,7 @@ Tests timezone conversions, normalizations, and edge cases.
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, StringType
+from datacompose.functions import functions as F
 from datetime import datetime
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
@@ -15,7 +14,7 @@ from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import d
 class TestTimezoneDetection:
     """Test detection and parsing of timezone information."""
 
-    def test_utc_variations(self, spark):
+    def test_utc_variations(self, create_session):
         """Test various UTC timezone notations."""
 
         test_data = [
@@ -31,7 +30,7 @@ class TestTimezoneDetection:
             ("20240115T143000Z", "2024-01-15 14:30:00", "UTC"),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected_time", "expected_tz"])
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected_time", "expected_tz"])
         result_df = df.withColumn(
             "normalized", datetimes.normalize_timezone(F.col("datetime_str"), F.lit("UTC"))
         )
@@ -41,7 +40,7 @@ class TestTimezoneDetection:
             # Note: Actual behavior depends on implementation
             pass
 
-    def test_offset_timezones(self, spark):
+    def test_offset_timezones(self, create_session):
         """Test numeric timezone offsets."""
 
         test_data = [
@@ -62,7 +61,7 @@ class TestTimezoneDetection:
             ("2024-01-15T14:30:00-12:00", "2024-01-16 02:30:00"),  # Baker Island
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected_utc"])
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected_utc"])
         result_df = df.withColumn(
             "normalized", datetimes.normalize_timezone(F.col("datetime_str"), F.lit("UTC"))
         )
@@ -71,7 +70,7 @@ class TestTimezoneDetection:
         for row in results:
             pass  # Document offset handling
 
-    def test_named_timezones(self, spark):
+    def test_named_timezones(self, create_session):
         """Test named timezone abbreviations."""
 
         test_data = [
@@ -98,7 +97,7 @@ class TestTimezoneDetection:
             ("2024-01-15 14:30 AEST", "2024-01-15 04:30:00"),  # Australian Eastern
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected_utc"])
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected_utc"])
         result_df = df.withColumn(
             "normalized", datetimes.normalize_timezone(F.col("datetime_str"), F.lit("UTC"))
         )
@@ -107,7 +106,7 @@ class TestTimezoneDetection:
         for row in results:
             pass  # Document named timezone handling
 
-    def test_ambiguous_timezone_names(self, spark):
+    def test_ambiguous_timezone_names(self, create_session):
         """Test timezone abbreviations that are ambiguous."""
 
         test_data = [
@@ -120,11 +119,7 @@ class TestTimezoneDetection:
             # These should still parse, but document the assumption
         ]
 
-        schema = StructType([
-            StructField("datetime_str", StringType(), True),
-            StructField("expected", StringType(), True)
-        ])
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected"])
         result_df = df.withColumn(
             "normalized", datetimes.normalize_timezone(F.col("datetime_str"), F.lit("UTC"))
         )
@@ -138,7 +133,7 @@ class TestTimezoneDetection:
 class TestTimezoneConversions:
     """Test timezone conversion operations."""
 
-    def test_utc_to_local_conversions(self, spark):
+    def test_utc_to_local_conversions(self, create_session):
         """Test converting from UTC to various local timezones."""
 
         test_data = [
@@ -150,7 +145,7 @@ class TestTimezoneConversions:
             ("2024-01-15 14:30:00", "Australia/Sydney", "2024-01-16 01:30:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["utc_time", "target_tz", "expected"])
+        df = create_session.createDataFrame(test_data, ["utc_time", "target_tz", "expected"])
         result_df = df.withColumn(
             "local_time", datetimes.normalize_timezone(F.col("utc_time"), F.col("target_tz"))
         )
@@ -159,7 +154,7 @@ class TestTimezoneConversions:
         for row in results:
             pass  # Document conversion behavior
 
-    def test_local_to_utc_conversions(self, spark):
+    def test_local_to_utc_conversions(self, create_session):
         """Test converting from local timezones to UTC."""
 
         test_data = [
@@ -169,7 +164,7 @@ class TestTimezoneConversions:
             ("2024-01-15 23:30:00", "Asia/Tokyo", "2024-01-15 14:30:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["local_time", "source_tz", "expected_utc"])
+        df = create_session.createDataFrame(test_data, ["local_time", "source_tz", "expected_utc"])
         result_df = df.withColumn(
             "utc_time", datetimes.add_timezone(F.col("local_time"), F.col("source_tz"))
         )
@@ -178,7 +173,7 @@ class TestTimezoneConversions:
         for row in results:
             pass  # Document conversion behavior
 
-    def test_cross_timezone_conversions(self, spark):
+    def test_cross_timezone_conversions(self, create_session):
         """Test converting between non-UTC timezones."""
 
         test_data = [
@@ -192,7 +187,7 @@ class TestTimezoneConversions:
             ("2024-01-15 20:00:00", "Australia/Sydney", "Europe/Paris", "2024-01-15 11:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
+        df = create_session.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
 
         # This would require adding timezone then normalizing
         result_df = df
@@ -206,7 +201,7 @@ class TestTimezoneConversions:
 class TestDaylightSavingTime:
     """Test handling of daylight saving time transitions."""
 
-    def test_spring_forward_transition(self, spark):
+    def test_spring_forward_transition(self, create_session):
         """Test spring DST transition (clocks move forward)."""
 
         # In 2024, DST starts on March 10 at 2:00 AM (US)
@@ -224,13 +219,13 @@ class TestDaylightSavingTime:
             ("2024-03-11 14:30:00", "America/New_York", "EDT", True),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime", "timezone", "expected_tz", "is_dst"])
+        df = create_session.createDataFrame(test_data, ["datetime", "timezone", "expected_tz", "is_dst"])
 
         results = df.collect()
         for row in results:
             pass  # Document spring forward behavior
 
-    def test_fall_back_transition(self, spark):
+    def test_fall_back_transition(self, create_session):
         """Test fall DST transition (clocks move back)."""
 
         # In 2024, DST ends on November 3 at 2:00 AM (US)
@@ -249,13 +244,13 @@ class TestDaylightSavingTime:
             ("2024-11-04 14:30:00", "America/New_York", "EST", False),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime", "timezone", "expected_tz", "is_dst"])
+        df = create_session.createDataFrame(test_data, ["datetime", "timezone", "expected_tz", "is_dst"])
 
         results = df.collect()
         for row in results:
             pass  # Document fall back behavior
 
-    def test_no_dst_timezones(self, spark):
+    def test_no_dst_timezones(self, create_session):
         """Test timezones that don't observe DST."""
 
         test_data = [
@@ -276,13 +271,13 @@ class TestDaylightSavingTime:
             ("2024-06-10 14:30:00", "Africa/Lagos", False),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime", "timezone", "is_dst"])
+        df = create_session.createDataFrame(test_data, ["datetime", "timezone", "is_dst"])
 
         results = df.collect()
         for row in results:
             pass  # Document no-DST timezone behavior
 
-    def test_southern_hemisphere_dst(self, spark):
+    def test_southern_hemisphere_dst(self, create_session):
         """Test DST in southern hemisphere (opposite of northern)."""
 
         # Australia: DST typically runs October to April
@@ -298,7 +293,7 @@ class TestDaylightSavingTime:
             ("2024-08-15 14:30:00", "Australia/Sydney", False),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime", "timezone", "is_dst"])
+        df = create_session.createDataFrame(test_data, ["datetime", "timezone", "is_dst"])
 
         results = df.collect()
         for row in results:
@@ -309,7 +304,7 @@ class TestDaylightSavingTime:
 class TestTimezoneEdgeCases:
     """Test edge cases in timezone handling."""
 
-    def test_date_boundary_crossing(self, spark):
+    def test_date_boundary_crossing(self, create_session):
         """Test conversions that cross date boundaries."""
 
         test_data = [
@@ -323,13 +318,13 @@ class TestTimezoneEdgeCases:
             ("2024-01-16 01:00:00", "Asia/Tokyo", "America/New_York", "2024-01-15 11:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
+        df = create_session.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
 
         results = df.collect()
         for row in results:
             pass  # Document date boundary behavior
 
-    def test_year_boundary_crossing(self, spark):
+    def test_year_boundary_crossing(self, create_session):
         """Test conversions that cross year boundaries."""
 
         test_data = [
@@ -343,13 +338,13 @@ class TestTimezoneEdgeCases:
             ("2024-12-31 23:59:59", "UTC", "Asia/Tokyo", "2025-01-01 08:59:59"),
         ]
 
-        df = spark.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
+        df = create_session.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
 
         results = df.collect()
         for row in results:
             pass  # Document year boundary behavior
 
-    def test_historical_timezone_changes(self, spark):
+    def test_historical_timezone_changes(self, create_session):
         """Test dates where timezone rules changed historically."""
 
         test_data = [
@@ -364,13 +359,13 @@ class TestTimezoneEdgeCases:
             # Note: Actual behavior depends on timezone database
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime", "timezone", "expected_dst"])
+        df = create_session.createDataFrame(test_data, ["datetime", "timezone", "expected_dst"])
 
         results = df.collect()
         for row in results:
             pass  # Document historical timezone changes
 
-    def test_fractional_offset_timezones(self, spark):
+    def test_fractional_offset_timezones(self, create_session):
         """Test timezones with non-hour offsets."""
 
         test_data = [
@@ -387,13 +382,13 @@ class TestTimezoneEdgeCases:
             ("2024-01-15 14:30:00", "UTC", "Australia/Adelaide", "2024-01-16 00:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
+        df = create_session.createDataFrame(test_data, ["time", "from_tz", "to_tz", "expected"])
 
         results = df.collect()
         for row in results:
             pass  # Document fractional offset behavior
 
-    def test_naive_datetime_handling(self, spark):
+    def test_naive_datetime_handling(self, create_session):
         """Test handling of datetimes without timezone information."""
 
         test_data = [
@@ -403,11 +398,7 @@ class TestTimezoneEdgeCases:
             ("01/15/2024 2:30 PM", None),
         ]
 
-        schema = StructType([
-            StructField("datetime_str", StringType(), True),
-            StructField("expected_tz", StringType(), True)
-        ])
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected_tz"])
 
         # Test adding timezone
         result_df = df.withColumn(
@@ -420,7 +411,7 @@ class TestTimezoneEdgeCases:
         for row in results:
             pass  # Document naive datetime handling
 
-    def test_remove_timezone_info(self, spark):
+    def test_remove_timezone_info(self, create_session):
         """Test removing timezone information from aware datetimes."""
 
         test_data = [
@@ -429,7 +420,7 @@ class TestTimezoneEdgeCases:
             ("2024-01-15 14:30:00 EST", "2024-01-15 14:30:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected_naive"])
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected_naive"])
         result_df = df.withColumn(
             "naive", datetimes.remove_timezone(F.col("datetime_str"))
         )

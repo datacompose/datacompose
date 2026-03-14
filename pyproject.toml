@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "datacompose"
-version = "0.4.0"
+version = "0.5.0"
 description = "Copy-pasteable data transformation primitives for PySpark. Inspired by shadcn-svelte."
 authors = [
     {name = "Datacompose Contributors"},
@@ -44,6 +44,7 @@ dependencies = [
     "jinja2>=3.0.0",
     "pyyaml>=6.0",
     "click>=8.0.0",
+    "sqlframe",
 ]
 
 [project.urls]
@@ -89,4 +90,10 @@ markers = [
     "spark: tests requiring Spark cluster",
     "unit: unit tests that don't require external services",
     "integration: integration tests that may require external services"
+]
+
+[dependency-groups]
+dev = [
+    "duckdb>=1.3.2",
+    "pyspark>=3.5.8",
 ]

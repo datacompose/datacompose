@@ -1,11 +1,11 @@
 """Debug tests for long email validation."""
 
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.emails.pyspark.pyspark_primitives import emails
 
 
-def test_debug_long_emails(spark):
+def test_debug_long_emails(create_session):
     """Debug why long emails are being validated differently than expected."""
 
     # Create a very long but valid email
@@ -20,7 +20,7 @@ def test_debug_long_emails(spark):
         ("normal@example.com", "normal email", True),
     ]
 
-    df = spark.createDataFrame(test_data, ["email", "description", "expected"])
+    df = create_session.createDataFrame(test_data, ["email", "description", "expected"])
     result_df = df.withColumn("email_length", F.length(F.col("email")))
     result_df = result_df.withColumn("is_valid", emails.is_valid_email(F.col("email")))
 

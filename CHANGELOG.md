@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-14
+
+### Added
+- **PostgreSQL Backend**: Full PostgreSQL support via sqlframe
+  - New `postgres` backend option for running transformers against PostgreSQL databases
+  - Automatic SQL compatibility patching (CONTAINS→LIKE rewrite, ARRAY type casting, AM/PM format tokens)
+  - Strict `try_to_timestamp` function for reliable datetime parsing on PostgreSQL
+  - Configurable backend selection via `TEST_BACKENDS` environment variable
+
+### Fixed
+- **Control Character Pattern**: Fixed `CONTROL_CHAR_PATTERN` to preserve tabs, newlines, and carriage returns as documented
+- **Null Byte Placeholders**: Replaced `\x00` placeholder characters in `decode_url` and `unescape_string` with Unicode PUA characters for cross-backend compatibility
+- **DuckDB None Type Inference**: Fixed DuckDB type inference for None-only columns (INTEGER→STRING) in test setup
+- **Version Alignment**: Synchronized version numbers across pyproject.toml, CLI, and module `__init__.py` files
+
+### Changed
+- **Test Infrastructure**: Tests now parameterized across backends (duckdb, pyspark, postgres) with appropriate skips for backend-specific limitations
+
 ## [0.4.0] - 2026-02-02
 
 ### Added

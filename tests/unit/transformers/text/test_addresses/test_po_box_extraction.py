@@ -1,5 +1,5 @@
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,
@@ -10,7 +10,7 @@ from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
 class TestPOBoxExtraction:
     """Test PO Box extraction functionality."""
 
-    def test_extract_po_box(self, spark):
+    def test_extract_po_box(self, create_session):
         """Test extraction of PO Box numbers from addresses."""
         test_data = [
             # Standard formats
@@ -39,7 +39,7 @@ class TestPOBoxExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("po_box", addresses.extract_po_box(F.col("address")))
 
         results = result_df.collect()
@@ -48,7 +48,7 @@ class TestPOBoxExtraction:
                 row["po_box"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['po_box']}'"
 
-    def test_has_po_box(self, spark):
+    def test_has_po_box(self, create_session):
         """Test detection of PO Box in address."""
         test_data = [
             ("PO Box 123", True),
@@ -61,7 +61,7 @@ class TestPOBoxExtraction:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("has_box", addresses.has_po_box(F.col("address")))
 
         results = result_df.collect()
@@ -70,7 +70,7 @@ class TestPOBoxExtraction:
                 row["has_box"] == row["expected"]
             ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['has_box']}"
 
-    def test_is_po_box_only(self, spark):
+    def test_is_po_box_only(self, create_session):
         """Test detection of PO Box-only addresses."""
         test_data = [
             # PO Box only
@@ -90,7 +90,7 @@ class TestPOBoxExtraction:
             (None, False),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("po_only", addresses.is_po_box_only(F.col("address")))
 
         results = result_df.collect()
@@ -99,7 +99,7 @@ class TestPOBoxExtraction:
                 row["po_only"] == row["expected"]
             ), f"Failed for '{row['address']}': expected {row['expected']}, got {row['po_only']}"
 
-    def test_remove_po_box(self, spark):
+    def test_remove_po_box(self, create_session):
         """Test removal of PO Box from address."""
         test_data = [
             # PO Box with street address
@@ -119,7 +119,7 @@ class TestPOBoxExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "without_box", addresses.remove_po_box(F.col("address"))
         )
@@ -130,7 +130,7 @@ class TestPOBoxExtraction:
                 row["without_box"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['without_box']}'"
 
-    def test_standardize_po_box(self, spark):
+    def test_standardize_po_box(self, create_session):
         """Test standardization of PO Box format."""
         test_data = [
             # Various formats to standard
@@ -150,7 +150,7 @@ class TestPOBoxExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "standardized", addresses.standardize_po_box(F.col("address"))
         )
@@ -161,7 +161,7 @@ class TestPOBoxExtraction:
                 row["standardized"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_extract_private_mailbox(self, spark):
+    def test_extract_private_mailbox(self, create_session):
         """Test extraction of private mailbox (PMB) numbers."""
         test_data = [
             # Standard PMB formats
@@ -181,7 +181,7 @@ class TestPOBoxExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "pmb", addresses.extract_private_mailbox(F.col("address"))
         )
@@ -192,7 +192,7 @@ class TestPOBoxExtraction:
                 row["pmb"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['pmb']}'"
 
-    def test_po_box_edge_cases(self, spark):
+    def test_po_box_edge_cases(self, create_session):
         """Test edge cases for PO Box extraction."""
         test_data = [
             # Multiple PO Boxes (should get first)
@@ -215,7 +215,7 @@ class TestPOBoxExtraction:
             ("Casilla de Correo 789", ""),  # Spanish - not handled yet
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn("po_box", addresses.extract_po_box(F.col("address")))
 
         results = result_df.collect()
@@ -224,7 +224,7 @@ class TestPOBoxExtraction:
                 row["po_box"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['po_box']}'"
 
-    def test_combined_po_box_operations(self, spark):
+    def test_combined_po_box_operations(self, create_session):
         """Test combining multiple PO Box operations."""
         test_data = [
             # Full address with PO Box
@@ -235,7 +235,7 @@ class TestPOBoxExtraction:
             ("456 Oak Ave Suite 200 PMB 123, Chicago, IL 60601",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),

@@ -3,7 +3,8 @@ Test address cleaning functionality.
 """
 
 import pytest
-from pyspark.sql import functions as f
+
+from datacompose.functions import functions as f
 
 # Import test data from consolidated file
 from tests.unit.transformers.text.test_addresses.test_data_addresses import (
@@ -16,15 +17,15 @@ from tests.unit.transformers.text.test_addresses.test_data_addresses import (
 
 
 @pytest.fixture
-def address_test_data(spark):
+def address_test_data(create_session):
     """Create test data with various address components."""
-    return spark.createDataFrame(ADDRESS_TEST_DATA, ADDRESS_TEST_DATA_COLUMNS)
+    return create_session.createDataFrame(ADDRESS_TEST_DATA, ADDRESS_TEST_DATA_COLUMNS)
 
 
 @pytest.fixture
-def messy_address_data(spark):
+def messy_address_data(create_session):
     """Create test data with particularly messy addresses for edge case testing."""
-    return spark.createDataFrame(MESSY_ADDRESS_DATA, ["raw_address"])
+    return create_session.createDataFrame(MESSY_ADDRESS_DATA, ["raw_address"])
 
 
 @pytest.fixture
@@ -80,7 +81,7 @@ class TestAddressCleaning:
         ).count()
         assert empty_count >= 1
 
-    def test_extract_zipcode(self, spark, address_test_data):
+    def test_extract_zipcode(self, create_session, address_test_data):
         """Test zip code extraction from various formats."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -111,7 +112,7 @@ class TestAddressCleaning:
         assert results[13]["extracted_zip"] == "90001-1234"  # Extended format
 
     def test_extract_zipcode_from_full_address(
-        self, spark, address_test_data, messy_address_data
+        self, create_session, address_test_data, messy_address_data
     ):
         """Test zip code extraction from full address strings."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
@@ -155,7 +156,7 @@ class TestAddressCleaning:
         assert messy_results[15]["extracted_zip"] == "75201"  # PO Box
         assert messy_results[16]["extracted_zip"] == "77001"  # P.O.Box
 
-    def test_extract_zipcode_edge_cases(self, spark):
+    def test_extract_zipcode_edge_cases(self, create_session):
         """Test zip code extraction with edge cases and invalid formats."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -183,7 +184,7 @@ class TestAddressCleaning:
             ("ZIP: 12345",),  # With label
         ]
 
-        df = spark.createDataFrame(edge_cases, ["text"])
+        df = create_session.createDataFrame(edge_cases, ["text"])
 
         result_df = df.select(
             "text", extract_zip_code(f.col("text")).alias("extracted_zip")
@@ -215,7 +216,7 @@ class TestAddressCleaning:
         assert results[16]["extracted_zip"] == "12345"  # Zip in parentheses
         assert results[17]["extracted_zip"] == "12345"  # With label
 
-    def test_extract_zipcode_international(self, spark):
+    def test_extract_zipcode_international(self, create_session):
         """Test that international postal codes are handled appropriately."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
             extract_zip_code,
@@ -232,7 +233,7 @@ class TestAddressCleaning:
             ("12345 Paris France",),  # US-format zip in international context
         ]
 
-        df = spark.createDataFrame(international_data, ["postal_code"])
+        df = create_session.createDataFrame(international_data, ["postal_code"])
 
         result_df = df.select(
             "postal_code", extract_zip_code(f.col("postal_code")).alias("extracted_zip")
@@ -250,21 +251,21 @@ class TestAddressCleaning:
         assert results[6]["extracted_zip"] == "12345"  # Valid US zip
 
     @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
-    def test_hash_address_sha256_basic(self, spark, address_test_data):
+    def test_hash_address_sha256_basic(self, create_session, address_test_data):
         """Test basic SHA256 hashing functionality."""
         pass
 
     @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
-    def test_hash_address_sha256_with_salt(self, spark):
+    def test_hash_address_sha256_with_salt(self, create_session):
         """Test SHA256 hashing with salt parameter."""
         pass
 
-    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented") 
-    def test_hash_address_sha256_standardization(self, spark):
+    @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
+    def test_hash_address_sha256_standardization(self, create_session):
         """Test that standardization produces consistent hashes."""
         pass
 
     @pytest.mark.skip(reason="hash_address_sha256 not yet implemented")
-    def test_hash_address_sha256_consistency(self, spark):
+    def test_hash_address_sha256_consistency(self, create_session):
         """Test that the same input always produces the same hash."""
         pass

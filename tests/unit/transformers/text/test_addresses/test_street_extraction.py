@@ -3,7 +3,7 @@ Comprehensive tests for street extraction functionality.
 """
 
 import pytest
-from pyspark.sql import functions as F
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
     addresses,
@@ -14,7 +14,7 @@ from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
 class TestStreetExtraction:
     """Test street component extraction functionality."""
 
-    def test_extract_street_number(self, spark):
+    def test_extract_street_number(self, create_session):
         """Test extraction of street numbers."""
         test_data = [
             ("123 Main Street", "123"),
@@ -28,7 +28,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "street_number", addresses.extract_street_number(F.col("address"))
         )
@@ -39,7 +39,7 @@ class TestStreetExtraction:
                 row["street_number"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_number']}'"
 
-    def test_extract_street_prefix(self, spark):
+    def test_extract_street_prefix(self, create_session):
         """Test extraction of directional prefixes."""
         test_data = [
             ("123 North Main Street", "North"),
@@ -53,7 +53,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "street_prefix", addresses.extract_street_prefix(F.col("address"))
         )
@@ -64,7 +64,7 @@ class TestStreetExtraction:
                 row["street_prefix"].lower() == row["expected"].lower()
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_prefix']}'"
 
-    def test_extract_street_name(self, spark):
+    def test_extract_street_name(self, create_session):
         """Test extraction of street names."""
         test_data = [
             ("123 Main Street", "Main"),
@@ -78,7 +78,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "street_name", addresses.extract_street_name(F.col("address"))
         )
@@ -89,7 +89,7 @@ class TestStreetExtraction:
                 row["street_name"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_name']}'"
 
-    def test_extract_street_suffix(self, spark):
+    def test_extract_street_suffix(self, create_session):
         """Test extraction of street suffixes."""
         test_data = [
             ("123 Main Street", "Street"),
@@ -104,7 +104,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "street_suffix", addresses.extract_street_suffix(F.col("address"))
         )
@@ -115,7 +115,7 @@ class TestStreetExtraction:
                 row["street_suffix"].lower() == row["expected"].lower()
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['street_suffix']}'"
 
-    def test_extract_full_street(self, spark):
+    def test_extract_full_street(self, create_session):
         """Test extraction of complete street address."""
         test_data = [
             ("123 Main Street, New York, NY 10001", "123 Main Street"),
@@ -130,7 +130,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
         result_df = df.withColumn(
             "full_street", addresses.extract_full_street(F.col("address"))
         )
@@ -141,7 +141,7 @@ class TestStreetExtraction:
                 row["full_street"] == row["expected"]
             ), f"Failed for '{row['address']}': expected '{row['expected']}', got '{row['full_street']}'"
 
-    def test_standardize_street_prefix(self, spark):
+    def test_standardize_street_prefix(self, create_session):
         """Test standardization of street prefixes."""
         test_data = [
             ("North", "N"),
@@ -162,7 +162,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
         result_df = df.withColumn(
             "standardized", addresses.standardize_street_prefix(F.col("input"))
         )
@@ -173,7 +173,7 @@ class TestStreetExtraction:
                 row["standardized"] == row["expected"]
             ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_standardize_street_suffix(self, spark):
+    def test_standardize_street_suffix(self, create_session):
         """Test standardization of street suffixes."""
         test_data = [
             ("Street", "St"),
@@ -196,7 +196,7 @@ class TestStreetExtraction:
             (None, ""),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
         result_df = df.withColumn(
             "standardized", addresses.standardize_street_suffix(F.col("input"))
         )
@@ -207,7 +207,7 @@ class TestStreetExtraction:
                 row["standardized"] == row["expected"]
             ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_complex_street_addresses(self, spark):
+    def test_complex_street_addresses(self, create_session):
         """Test extraction from complex street addresses."""
         test_data = [
             # Complex multi-word street names
@@ -235,7 +235,7 @@ class TestStreetExtraction:
             "expected_name",
             "expected_suffix",
         ]
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, schema)
 
         result_df = df.select(
             F.col("address"),
@@ -264,7 +264,7 @@ class TestStreetExtraction:
                 row["suffix"].lower() == row["expected_suffix"].lower()
             ), f"Suffix failed for '{row['address']}'"
 
-    def test_international_street_formats(self, spark):
+    def test_international_street_formats(self, create_session):
         """Test with international street address formats."""
         test_data = [
             # UK style
@@ -290,7 +290,7 @@ class TestStreetExtraction:
             "expected_name",
             "expected_suffix",
         ]
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, schema)
 
         result_df = df.select(
             F.col("address"),
@@ -319,7 +319,7 @@ class TestStreetExtraction:
                 row["suffix"].lower() == row["expected_suffix"].lower()
             ), f"Suffix failed for '{row['address']}'"
 
-    def test_edge_cases_and_nulls(self, spark):
+    def test_edge_cases_and_nulls(self, create_session):
         """Test edge cases and null handling."""
         test_data = [
             ("", "", "", "", ""),
@@ -337,7 +337,7 @@ class TestStreetExtraction:
             "expected_name",
             "expected_suffix",
         ]
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, schema)
 
         result_df = df.select(
             F.col("address"),
@@ -351,7 +351,7 @@ class TestStreetExtraction:
         results = result_df.collect()
         assert len(results) == len(test_data)
 
-    def test_standardization_with_custom_mappings(self, spark):
+    def test_standardization_with_custom_mappings(self, create_session):
         """Test street suffix standardization with custom mappings."""
         # Test custom suffix mappings
         custom_mappings = {
@@ -367,7 +367,7 @@ class TestStreetExtraction:
             ("Street", "St"),  # Should still use default
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
 
         # Create a pre-configured standardizer
         standardize_custom = addresses.standardize_street_suffix(
@@ -382,7 +382,7 @@ class TestStreetExtraction:
                 row["standardized"] == row["expected"]
             ), f"Failed for '{row['input']}': expected '{row['expected']}', got '{row['standardized']}'"
 
-    def test_combined_extraction_and_standardization(self, spark):
+    def test_combined_extraction_and_standardization(self, create_session):
         """Test extracting and then standardizing street components."""
         test_data = [
             ("123 North Main Street", "123 N Main St"),
@@ -393,7 +393,7 @@ class TestStreetExtraction:
             ("987 Southwest Elm Court", "987 SW Elm Ct"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
 
         # Extract components
         extracted = df.select(
@@ -435,14 +435,14 @@ class TestStreetExtraction:
                 expected_parts
             ), f"Part count mismatch for '{row['address']}'"
 
-    def test_pre_configured_extractors(self, spark):
+    def test_pre_configured_extractors(self, create_session):
         """Test using pre-configured street extractors."""
         test_data = [
             ("123 Main Street, New York, NY", "123", "Main"),
             ("456 Broadway Avenue, LA, CA", "456", "Broadway"),
         ]
 
-        df = spark.createDataFrame(
+        df = create_session.createDataFrame(
             test_data, ["address", "expected_number", "expected_name"]
         )
 
@@ -467,7 +467,7 @@ class TestStreetExtraction:
 class TestStreetExtractionEdgeCases:
     """Test edge cases for street extraction functionality."""
 
-    def test_st_ambiguity(self, spark):
+    def test_st_ambiguity(self, create_session):
         """Test handling of 'St' as both Saint and Street."""
         test_data = [
             # St as Saint at beginning, Street at end
@@ -487,7 +487,7 @@ class TestStreetExtractionEdgeCases:
             "expected_name",
             "expected_suffix",
         ]
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, schema)
 
         result_df = df.select(
             F.col("address"),
@@ -502,7 +502,7 @@ class TestStreetExtractionEdgeCases:
             # but should at least not crash
             assert row["number"] is not None
 
-    def test_direction_word_conflicts(self, spark):
+    def test_direction_word_conflicts(self, create_session):
         """Test when direction words are part of the street name."""
         test_data = [
             # Direction as street name, not prefix
@@ -515,7 +515,7 @@ class TestStreetExtractionEdgeCases:
         ]
 
         schema = ["address", "exp_number", "exp_prefix", "exp_name", "exp_suffix"]
-        df = spark.createDataFrame(test_data, schema)
+        df = create_session.createDataFrame(test_data, schema)
 
         result_df = df.select(
             F.col("address"),
@@ -529,7 +529,7 @@ class TestStreetExtractionEdgeCases:
         # Verify extraction doesn't crash on ambiguous cases
         assert len(results) == len(test_data)
 
-    def test_highway_and_route_formats(self, spark):
+    def test_highway_and_route_formats(self, create_session):
         """Test highway, route, and interstate formats."""
         test_data = [
             ("Highway 101",),
@@ -543,7 +543,7 @@ class TestStreetExtractionEdgeCases:
             ("Route 66",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -555,7 +555,7 @@ class TestStreetExtractionEdgeCases:
             # Should extract something for each format
             assert row["full_street"] is not None
 
-    def test_po_box_and_rural_routes(self, spark):
+    def test_po_box_and_rural_routes(self, create_session):
         """Test PO Box and rural route formats."""
         test_data = [
             ("PO Box 123",),
@@ -568,7 +568,7 @@ class TestStreetExtractionEdgeCases:
             ("Star Route Box 987",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -579,7 +579,7 @@ class TestStreetExtractionEdgeCases:
         # Should handle without error
         assert len(results) == len(test_data)
 
-    def test_fraction_symbols(self, spark):
+    def test_fraction_symbols(self, create_session):
         """Test addresses with fraction symbols."""
         test_data = [
             ("123½ Main Street", "123½"),
@@ -588,7 +588,7 @@ class TestStreetExtractionEdgeCases:
             ("321⅓ Pine Lane", "321⅓"),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected_number"])
+        df = create_session.createDataFrame(test_data, ["address", "expected_number"])
 
         result_df = df.select(
             F.col("address"),
@@ -600,7 +600,7 @@ class TestStreetExtractionEdgeCases:
             # Should handle unicode fractions
             assert row["number"] != ""
 
-    def test_unicode_and_special_chars(self, spark):
+    def test_unicode_and_special_chars(self, create_session):
         """Test addresses with unicode and special characters."""
         test_data = [
             ("123 Café Street",),
@@ -611,7 +611,7 @@ class TestStreetExtractionEdgeCases:
             ("987 Smith & Sons Street",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -624,7 +624,7 @@ class TestStreetExtractionEdgeCases:
             # Should handle special chars without crashing
             assert row["number"] is not None
 
-    def test_excessive_whitespace(self, spark):
+    def test_excessive_whitespace(self, create_session):
         """Test addresses with excessive spaces, tabs, etc."""
         test_data = [
             ("123    Main    Street",),
@@ -633,7 +633,7 @@ class TestStreetExtractionEdgeCases:
             ("   321 Pine Lane   ",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -646,7 +646,7 @@ class TestStreetExtractionEdgeCases:
             # Should handle whitespace variations
             assert row["number"] != ""
 
-    def test_mixed_case_consistency(self, spark):
+    def test_mixed_case_consistency(self, create_session):
         """Test various case combinations."""
         test_data = [
             ("123 MAIN STREET",),
@@ -654,7 +654,7 @@ class TestStreetExtractionEdgeCases:
             ("789 MaIn StReEt",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -668,7 +668,7 @@ class TestStreetExtractionEdgeCases:
             assert row["name"].lower() == "main"
             assert row["suffix"].lower() == "street"
 
-    def test_very_long_street_names(self, spark):
+    def test_very_long_street_names(self, create_session):
         """Test extraction with unusually long street names."""
         test_data = [
             ("123 Martin Luther King Junior Memorial Boulevard",),
@@ -676,7 +676,7 @@ class TestStreetExtractionEdgeCases:
             ("789 Saint Mary of the Immaculate Conception Street",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -689,7 +689,7 @@ class TestStreetExtractionEdgeCases:
             # Should handle long names
             assert len(row["full_street"]) > 0
 
-    def test_building_and_business_names(self, spark):
+    def test_building_and_business_names(self, create_session):
         """Test addresses with building names instead of numbers."""
         test_data = [
             ("Empire State Building, 350 5th Avenue",),
@@ -698,7 +698,7 @@ class TestStreetExtractionEdgeCases:
             ("Tower 2, 456 Oak Avenue",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -710,7 +710,7 @@ class TestStreetExtractionEdgeCases:
         for row in results:
             assert row["full_street"] is not None
 
-    def test_international_formats(self, spark):
+    def test_international_formats(self, create_session):
         """Test non-English address formats."""
         test_data = [
             # Spanish
@@ -724,7 +724,7 @@ class TestStreetExtractionEdgeCases:
             ("Bahnhofstrasse 456",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -736,7 +736,7 @@ class TestStreetExtractionEdgeCases:
             # Should handle international formats without crashing
             assert row["full_street"] is not None
 
-    def test_repeated_patterns(self, spark):
+    def test_repeated_patterns(self, create_session):
         """Test addresses with repeated words."""
         test_data = [
             ("123 Street Street",),
@@ -744,7 +744,7 @@ class TestStreetExtractionEdgeCases:
             ("789 North North Street",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -757,7 +757,7 @@ class TestStreetExtractionEdgeCases:
         for row in results:
             assert row["number"] is not None
 
-    def test_numbers_at_end(self, spark):
+    def test_numbers_at_end(self, create_session):
         """Test addresses with numbers at the end."""
         test_data = [
             ("Broadway 123",),
@@ -766,7 +766,7 @@ class TestStreetExtractionEdgeCases:
             ("Route 66 Mile 42",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -778,7 +778,7 @@ class TestStreetExtractionEdgeCases:
             # Should extract something even with non-standard ordering
             assert row["full_street"] != ""
 
-    def test_malformed_addresses(self, spark):
+    def test_malformed_addresses(self, create_session):
         """Test severely malformed addresses."""
         test_data = [
             ("!!!123***Main###Street!!!",),
@@ -786,7 +786,7 @@ class TestStreetExtractionEdgeCases:
             ("@#$321 Pine Lane$#@",),
         ]
 
-        df = spark.createDataFrame(test_data, ["address"])
+        df = create_session.createDataFrame(test_data, ["address"])
 
         result_df = df.select(
             F.col("address"),
@@ -797,7 +797,7 @@ class TestStreetExtractionEdgeCases:
         # Should not crash on malformed input
         assert len(results) == len(test_data)
 
-    def test_already_standardized(self, spark):
+    def test_already_standardized(self, create_session):
         """Test input that's already in standard form."""
         test_data = [
             ("N", "N"),
@@ -807,7 +807,7 @@ class TestStreetExtractionEdgeCases:
             ("Blvd", "Blvd"),
         ]
 
-        df = spark.createDataFrame(test_data, ["input", "expected"])
+        df = create_session.createDataFrame(test_data, ["input", "expected"])
 
         result_df = df.select(
             F.col("input"),
@@ -823,7 +823,7 @@ class TestStreetExtractionEdgeCases:
             else:
                 assert row["suffix"] == row["input"]
 
-    def test_conflicting_custom_mappings(self, spark):
+    def test_conflicting_custom_mappings(self, create_session):
         """Test when custom mappings conflict with standard ones."""
         custom_mappings = {
             "STREET": "STR",  # Conflicts with standard St
@@ -837,7 +837,7 @@ class TestStreetExtractionEdgeCases:
             ("Avenue",),
         ]
 
-        df = spark.createDataFrame(test_data, ["input"])
+        df = create_session.createDataFrame(test_data, ["input"])
 
         result_df = df.select(
             F.col("input"),
@@ -853,7 +853,7 @@ class TestStreetExtractionEdgeCases:
             if row["input"].upper() in custom_mappings:
                 assert row["custom"] != row["standard"]
 
-    def test_extract_full_street_from_complete_addresses(self, spark):
+    def test_extract_full_street_from_complete_addresses(self, create_session):
         """Test extracting street from complete addresses with city, state, ZIP."""
         test_data = [
             # Standard US formats
@@ -899,7 +899,7 @@ class TestStreetExtractionEdgeCases:
             ("456 Oak Ave., P.O. Box 789, Town, ST 67890", "456 Oak Ave."),
         ]
 
-        df = spark.createDataFrame(test_data, ["address", "expected"])
+        df = create_session.createDataFrame(test_data, ["address", "expected"])
 
         result_df = df.select(
             F.col("address"),
@@ -925,7 +925,7 @@ class TestStreetExtractionEdgeCases:
                         f"Warning: '{row['address']}' extracted '{row['extracted']}' vs expected '{row['expected']}'"
                     )
 
-    def test_extract_components_from_full_address(self, spark):
+    def test_extract_components_from_full_address(self, create_session):
         """Test extracting all components from complete address strings."""
         test_data = [
             # Complete US addresses with all components
@@ -962,7 +962,7 @@ class TestStreetExtractionEdgeCases:
         ]
 
         for address, expected in test_data:
-            df = spark.createDataFrame([(address,)], ["address"])
+            df = create_session.createDataFrame([(address,)], ["address"])
 
             result_df = df.select(
                 F.col("address"),

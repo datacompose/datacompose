@@ -62,12 +62,16 @@ from typing import TYPE_CHECKING, Dict, Optional
 if TYPE_CHECKING:
     # For type checkers only - these imports are always available during type checking
     from pyspark.sql import Column
-    from pyspark.sql import functions as F
+
+    from datacompose.functions import functions as F
+
 else:
     # At runtime, handle missing PySpark gracefully
     try:
         from pyspark.sql import Column
-        from pyspark.sql import functions as F
+
+        from datacompose.functions import functions as F
+
     except ImportError:
         # PySpark is not installed - functions will fail at runtime if called
         pass
@@ -156,7 +160,11 @@ def extract_all_phone_numbers_from_text(col: Column) -> Column:
     first_phone_numbers = extract_phone_numbers_from_text(col)
 
     # Return array with single element or empty array
-    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(F.array())
+    # Use array_remove to create a typed empty array (F.array() with no args fails in DuckDB)
+    empty_array = F.array_remove(F.array(F.lit("")), "")
+    return F.when(first_phone_numbers != "", F.array(first_phone_numbers)).otherwise(
+        empty_array
+    )
 
 
 @phone_numbers.register()
@@ -923,7 +931,9 @@ def get_region_from_area_code(col: Column) -> Column:
 
 
 @phone_numbers.register()
-def hash_phone_numbers_sha256(col:Column, salt:str="", standardize_first:bool=True) -> Column:
+def hash_phone_numbers_sha256(
+    col: Column, salt: str = "", standardize_first: bool = True
+) -> Column:
     """Hash email with SHA256, with email-specific preprocessing."""
     if standardize_first:
         phone_number = standardize_phone_numbers_e164(col)
@@ -932,8 +942,8 @@ def hash_phone_numbers_sha256(col:Column, salt:str="", standardize_first:bool=Tr
         phone_number = col
 
     return F.when(
-        is_valid_phone_numbers(phone_number), 
-        F.sha2(F.concat(phone_number, F.lit(salt)), 256)
+        is_valid_phone_numbers(phone_number),
+        F.sha2(F.concat(phone_number, F.lit(salt)), 256),
     ).otherwise(F.lit(None))
 
 

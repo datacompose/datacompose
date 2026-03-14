@@ -4,8 +4,7 @@ Tests for specific bugs and edge cases discovered during development and product
 """
 
 import pytest
-from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, StringType
+from datacompose.functions import functions as F
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
 
@@ -14,7 +13,7 @@ from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import d
 class TestKnownBugs:
     """Tests for specific bugs that were discovered and fixed."""
 
-    def test_february_29_leap_year_bug(self, spark):
+    def test_february_29_leap_year_bug(self, create_session):
         """
         Regression test for leap year validation bug.
         Bug: February 29 was incorrectly marked as invalid in leap years.
@@ -28,7 +27,7 @@ class TestKnownBugs:
             ("1900-02-29", False),  # 1900 is not a leap year (divisible by 100 but not 400)
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected_valid"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected_valid"])
         result_df = df.withColumn(
             "is_valid", datetimes.is_valid_date(F.col("date_str"))
         )
@@ -39,7 +38,7 @@ class TestKnownBugs:
                 f"Leap year validation failed for {row['date_str']}: " \
                 f"expected {row['expected_valid']}, got {row['is_valid']}"
 
-    def test_null_propagation_bug(self, spark):
+    def test_null_propagation_bug(self, create_session):
         """
         Regression test for null propagation bug.
         Bug: Null values were causing exceptions instead of being handled gracefully.
@@ -51,7 +50,7 @@ class TestKnownBugs:
             (None,),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str"])
+        df = create_session.createDataFrame(test_data, ["date_str"])
 
         # These operations should all handle null gracefully
         result_df = df.withColumn(
@@ -69,7 +68,7 @@ class TestKnownBugs:
         assert results[1]["standardized"] is not None
         assert results[2]["standardized"] is None
 
-    def test_month_end_edge_case_bug(self, spark):
+    def test_month_end_edge_case_bug(self, create_session):
         """
         Regression test for month-end handling bug.
         Bug: Adding months to Jan 31 would incorrectly handle February.
@@ -82,7 +81,7 @@ class TestKnownBugs:
             ("2024-05-31", 1, "2024-06-30 00:00:00"),  # June has 30 days
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "months_to_add", "expected"])
+        df = create_session.createDataFrame(test_data, ["date", "months_to_add", "expected"])
         result_df = df.withColumn(
             "result", datetimes.add_months(F.col("date"), F.col("months_to_add"))
         )
@@ -97,7 +96,7 @@ class TestKnownBugs:
 class TestEdgeCaseRegressions:
     """Tests for edge cases discovered in production."""
 
-    def test_year_2000_bug_regression(self, spark):
+    def test_year_2000_bug_regression(self, create_session):
         """
         Regression test for Y2K-style issues.
         Ensure years around 2000 are handled correctly.
@@ -111,7 +110,7 @@ class TestEdgeCaseRegressions:
             ("2001-01-01", "2001-01-01 00:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -121,7 +120,7 @@ class TestEdgeCaseRegressions:
             assert row["standardized"] == row["expected"], \
                 f"Y2K edge case failed for {row['date_str']}"
 
-    def test_single_digit_date_components(self, spark):
+    def test_single_digit_date_components(self, create_session):
         """
         Regression test for single-digit dates.
         Bug: Dates like "1/5/2024" were being rejected.
@@ -134,7 +133,7 @@ class TestEdgeCaseRegressions:
             ("10/15/2024", "2024-10-15 00:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -144,7 +143,7 @@ class TestEdgeCaseRegressions:
             assert row["standardized"] == row["expected"], \
                 f"Single-digit date component failed for {row['date_str']}"
 
-    def test_ambiguous_date_disambiguation(self, spark):
+    def test_ambiguous_date_disambiguation(self, create_session):
         """
         Regression test for ambiguous date handling.
         Bug: "01/02/2024" was being interpreted as Feb 1 instead of Jan 2.
@@ -164,7 +163,7 @@ class TestEdgeCaseRegressions:
             ("15/01/2024", "2024-01-15 00:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -174,7 +173,7 @@ class TestEdgeCaseRegressions:
             assert row["standardized"] == row["expected"], \
                 f"Ambiguous date handling failed for {row['date_str']}"
 
-    def test_midnight_and_noon_handling(self, spark):
+    def test_midnight_and_noon_handling(self, create_session):
         """
         Regression test for midnight and noon time handling.
         Bug: 12:00 AM and 12:00 PM were being confused.
@@ -189,7 +188,7 @@ class TestEdgeCaseRegressions:
             ("2024-01-15 1:00 PM", "2024-01-15 13:00:00"),
         ]
 
-        df = spark.createDataFrame(test_data, ["datetime_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["datetime_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("datetime_str"))
         )
@@ -204,7 +203,7 @@ class TestEdgeCaseRegressions:
 class TestPerformanceRegressions:
     """Tests for performance regression issues."""
 
-    def test_no_exponential_slowdown(self, spark):
+    def test_no_exponential_slowdown(self, create_session):
         """
         Regression test for exponential slowdown.
         Bug: Performance degraded exponentially with format attempts.
@@ -213,7 +212,7 @@ class TestPerformanceRegressions:
         # Test with dates that don't match early formats
         test_data = [("15-Jan-2024",)] * 1000
 
-        df = spark.createDataFrame(test_data, ["date_str"])
+        df = create_session.createDataFrame(test_data, ["date_str"])
 
         import time
         start_time = time.time()
@@ -228,20 +227,20 @@ class TestPerformanceRegressions:
         # Should complete quickly even if format is last in the list
         assert elapsed < 5.0, f"Performance regression: took {elapsed:.3f}s"
 
-    def test_no_cache_pollution(self, spark):
+    def test_no_cache_pollution(self, create_session):
         """
         Regression test for cache pollution bug.
         Bug: Cached values from previous calls were being reused incorrectly.
         """
 
         # First dataset
-        df1 = spark.createDataFrame([("2024-01-15",)], ["date_str"])
+        df1 = create_session.createDataFrame([("2024-01-15",)], ["date_str"])
         result1 = df1.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         ).collect()
 
         # Second dataset with different format
-        df2 = spark.createDataFrame([("01/15/2024",)], ["date_str"])
+        df2 = create_session.createDataFrame([("01/15/2024",)], ["date_str"])
         result2 = df2.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         ).collect()
@@ -254,7 +253,7 @@ class TestPerformanceRegressions:
 class TestDataTypeRegressions:
     """Tests for data type handling regressions."""
 
-    def test_string_vs_timestamp_handling(self, spark):
+    def test_string_vs_timestamp_handling(self, create_session):
         """
         Regression test for mixed string/timestamp columns.
         Bug: Functions failed when receiving actual timestamp types.
@@ -268,7 +267,7 @@ class TestDataTypeRegressions:
             ("01/15/2024",),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str"])
+        df = create_session.createDataFrame(test_data, ["date_str"])
 
         # First standardize to get timestamps
         df_standardized = df.withColumn(
@@ -293,7 +292,7 @@ class TestDataTypeRegressions:
             assert row["from_string"] == 2024
             assert row["from_timestamp"] == 2024
 
-    def test_numeric_string_dates(self, spark):
+    def test_numeric_string_dates(self, create_session):
         """
         Regression test for numeric string dates.
         Bug: Dates as pure numbers (like Excel serials) weren't handled.
@@ -305,7 +304,7 @@ class TestDataTypeRegressions:
             ("2024-01-15", "2024-01-15 00:00:00"),  # Standard format
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "expected"])
+        df = create_session.createDataFrame(test_data, ["date_str", "expected"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -320,7 +319,7 @@ class TestDataTypeRegressions:
 class TestBoundaryConditions:
     """Tests for boundary condition bugs."""
 
-    def test_min_max_date_boundaries(self, spark):
+    def test_min_max_date_boundaries(self, create_session):
         """
         Regression test for minimum and maximum date boundaries.
         Bug: Dates at system boundaries caused overflow errors.
@@ -333,7 +332,7 @@ class TestBoundaryConditions:
             ("10000-01-01", False), # After maximum
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str", "should_parse"])
+        df = create_session.createDataFrame(test_data, ["date_str", "should_parse"])
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
         )
@@ -344,7 +343,7 @@ class TestBoundaryConditions:
             # Document boundary behavior
             pass
 
-    def test_month_boundary_transitions(self, spark):
+    def test_month_boundary_transitions(self, create_session):
         """
         Regression test for month boundary transitions.
         Bug: Last day of month calculations were off by one.
@@ -357,7 +356,7 @@ class TestBoundaryConditions:
             ("2024-12-31", "2024-12-31", "2025-01-01"),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "expected_month_end", "expected_next_day"])
+        df = create_session.createDataFrame(test_data, ["date", "expected_month_end", "expected_next_day"])
         result_df = df.withColumn(
             "month_end", datetimes.end_of_month(F.col("date"))
         ).withColumn(
@@ -369,7 +368,7 @@ class TestBoundaryConditions:
             # Verify month boundaries
             pass
 
-    def test_week_number_edge_cases(self, spark):
+    def test_week_number_edge_cases(self, create_session):
         """
         Regression test for week number calculation at year boundaries.
         Bug: Week 1 and week 53 calculations were incorrect.
@@ -388,7 +387,7 @@ class TestBoundaryConditions:
             ("2025-01-01", 1),
         ]
 
-        df = spark.createDataFrame(test_data, ["date", "expected_week"])
+        df = create_session.createDataFrame(test_data, ["date", "expected_week"])
         result_df = df.withColumn(
             "week_num", datetimes.extract_week_of_year(F.col("date"))
         )
@@ -403,15 +402,15 @@ class TestBoundaryConditions:
 class TestConcurrencyRegressions:
     """Tests for concurrency and thread-safety bugs."""
 
-    def test_concurrent_transformations(self, spark):
+    def test_concurrent_transformations(self, create_session):
         """
         Regression test for concurrent transformation bug.
         Bug: Concurrent transformations on different datasets interfered.
         """
 
         # Create two different datasets
-        df1 = spark.createDataFrame([("2024-01-15",)], ["date1"])
-        df2 = spark.createDataFrame([("01/15/2024",)], ["date2"])
+        df1 = create_session.createDataFrame([("2024-01-15",)], ["date1"])
+        df2 = create_session.createDataFrame([("01/15/2024",)], ["date2"])
 
         # Transform both
         result1 = df1.withColumn(
@@ -427,7 +426,7 @@ class TestConcurrencyRegressions:
 
         assert r1[0]["std1"] == r2[0]["std2"]
 
-    def test_partition_independence(self, spark):
+    def test_partition_independence(self, create_session):
         """
         Regression test for partition-level interference.
         Bug: Transformations on different partitions interfered with each other.
@@ -439,7 +438,7 @@ class TestConcurrencyRegressions:
             ("January 15, 2024",),
         ]
 
-        df = spark.createDataFrame(test_data, ["date_str"]).repartition(3)
+        df = create_session.createDataFrame(test_data, ["date_str"]).repartition(3)
 
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
