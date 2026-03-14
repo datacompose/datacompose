@@ -277,6 +277,8 @@ def remove_custom_city(city_name: str) -> None:
 def extract_street_number(col: Column) -> Column:
     """Extract street/house number from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts the numeric portion at the beginning of an address.
     Handles various formats: 123, 123A, 123-125, etc.
 
@@ -303,6 +305,8 @@ def extract_street_number(col: Column) -> Column:
 @addresses.register()
 def extract_street_prefix(col: Column) -> Column:
     """Extract directional prefix from street address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Extracts directional prefixes like N, S, E, W, NE, NW, SE, SW.
 
@@ -334,6 +338,8 @@ def extract_street_prefix(col: Column) -> Column:
 @addresses.register()
 def extract_street_name(col: Column) -> Column:
     """Extract street name from address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Extracts the main street name, excluding number, prefix, and suffix.
 
@@ -429,6 +435,8 @@ def extract_street_name(col: Column) -> Column:
 def extract_street_suffix(col: Column) -> Column:
     """Extract street type/suffix from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts street type like Street, Avenue, Road, Boulevard, etc.
 
     Args:
@@ -499,6 +507,8 @@ def extract_street_suffix(col: Column) -> Column:
 def extract_full_street(col: Column) -> Column:
     """Extract complete street address (number + prefix + name + suffix).
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts everything before apartment/suite and city/state/zip.
 
     Args:
@@ -538,6 +548,8 @@ def standardize_street_prefix(
     col: Column, custom_mappings: Optional[Dict[str, str]] = None
 ) -> Column:
     """Standardize street directional prefixes to abbreviated form.
+
+    Dialects: postgres, pyspark, duckdb
 
     Converts all variations to standard USPS abbreviations:
     North/N/N. → N, South/S/S. → S, etc.
@@ -608,6 +620,8 @@ def standardize_street_suffix(
     col: Column, custom_mappings: Optional[Dict[str, str]] = None
 ) -> Column:
     """Standardize street type/suffix to USPS abbreviated form.
+
+    Dialects: postgres, pyspark, duckdb
 
     Converts all variations to standard USPS abbreviations per the config:
     Street/St/St. → St, Avenue/Ave/Av → Ave, Boulevard → Blvd, etc.
@@ -737,6 +751,8 @@ def standardize_street_suffix(
 def extract_apartment_number(col: Column) -> Column:
     """Extract apartment/unit number from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts apartment, suite, unit, or room numbers including:
     Apt 5B, Suite 200, Unit 12, #4A, Rm 101, etc.
 
@@ -773,6 +789,8 @@ def extract_apartment_number(col: Column) -> Column:
 @addresses.register()
 def extract_floor(col: Column) -> Column:
     """Extract floor number from address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Extracts floor information like:
     5th Floor, Floor 2, Fl 3, Level 4, etc.
@@ -817,6 +835,8 @@ def extract_floor(col: Column) -> Column:
 def extract_building(col: Column) -> Column:
     """Extract building name or identifier from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts building information like:
     Building A, Tower 2, Complex B, Block C, etc.
 
@@ -857,6 +877,8 @@ def extract_building(col: Column) -> Column:
 def extract_unit_type(col: Column) -> Column:
     """Extract the type of unit (Apt, Suite, Unit, etc.) from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing address text
 
@@ -890,6 +912,8 @@ def standardize_unit_type(
     col: Column, custom_mappings: Optional[Dict[str, str]] = None
 ) -> Column:
     """Standardize unit type to common abbreviations.
+
+    Dialects: postgres, pyspark, duckdb
 
     Converts all variations to standard abbreviations:
     Apartment/Apt. → Apt, Suite → Ste, Room → Rm, etc.
@@ -956,6 +980,8 @@ def standardize_unit_type(
 def extract_secondary_address(col: Column) -> Column:
     """Extract complete secondary address information (unit type + number).
 
+    Dialects: postgres, pyspark, duckdb
+
     Combines unit type and number into standard format:
     "Apt 5B", "Ste 200", "Unit 12", etc.
 
@@ -987,6 +1013,8 @@ def extract_secondary_address(col: Column) -> Column:
 def has_apartment(col: Column) -> Column:
     """Check if address contains apartment/unit information.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing address text
 
@@ -1015,6 +1043,8 @@ def has_apartment(col: Column) -> Column:
 @addresses.register()
 def remove_secondary_address(col: Column) -> Column:
     """Remove apartment/suite/unit information from address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Removes secondary address components to get clean street address.
 
@@ -1081,6 +1111,8 @@ def format_secondary_address(unit_type: Column, unit_number: Column) -> Column:
 def extract_zip_code(col: Column) -> Column:  # type: ignore
     """Extract US ZIP code (5-digit or ZIP+4 format) from text.
 
+    Dialects: postgres, pyspark, duckdb
+
     Returns empty string for null/invalid inputs.
     """
     extracted = F.regexp_extract(col, r"\b(\d{5}(?:-\d{4})?)\b", 1)
@@ -1091,6 +1123,8 @@ def extract_zip_code(col: Column) -> Column:  # type: ignore
 @addresses.register()
 def validate_zip_code(col: Column) -> Column:
     """Validate if a ZIP code is in correct US format.
+
+    Dialects: postgres, pyspark, duckdb
 
     Validates:
     - 5-digit format (e.g., "12345")
@@ -1121,6 +1155,8 @@ def validate_zip_code(col: Column) -> Column:
 def is_valid_zip_code(col: Column) -> "Column":
     """Alias for validate_zip_code for consistency.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col (Column): Column containing ZIP codes to validate
 
@@ -1133,6 +1169,8 @@ def is_valid_zip_code(col: Column) -> "Column":
 @addresses.register()
 def standardize_zip_code(col: Column):
     """Standardize ZIP code format.
+
+    Dialects: postgres, pyspark, duckdb
 
     - Removes extra spaces
     - Ensures proper dash placement for ZIP+4
@@ -1158,6 +1196,8 @@ def standardize_zip_code(col: Column):
 def get_zip_code_type(col: Column):
     """Determine the type of ZIP code.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col (Column): Column containing ZIP codes
 
@@ -1181,6 +1221,8 @@ def get_zip_code_type(col: Column):
 def split_zip_code(col: Column):
     """Split ZIP+4 code into base and extension components.
 
+    Dialects: pyspark, duckdb
+
     Args:
         col (Column): Column containing ZIP codes
 
@@ -1203,6 +1245,8 @@ def split_zip_code(col: Column):
 @addresses.register()
 def extract_city(col: Column, custom_cities: Optional[List] = None) -> Column:
     """Extract city name from US address text.
+
+    Dialects: postgres, pyspark, duckdb
 
     Extracts city by finding text before state abbreviation or ZIP code.
     Handles various formats including comma-separated and multi-word cities.
@@ -1369,6 +1413,8 @@ def extract_city(col: Column, custom_cities: Optional[List] = None) -> Column:
 def extract_state(col: Column, custom_states: Optional[Dict] = None) -> Column:
     """Extract and standardize state to 2-letter abbreviation.
 
+    Dialects: postgres, pyspark, duckdb
+
     Handles both full state names and abbreviations, case-insensitive.
     Returns standardized 2-letter uppercase abbreviation.
 
@@ -1440,6 +1486,8 @@ def validate_city(
 ) -> Column:
     """Validate if a city name appears valid.
 
+    Dialects: postgres, pyspark, duckdb
+
     Validates:
     - Not empty/null
     - Within reasonable length bounds
@@ -1495,6 +1543,8 @@ def validate_city(
 def validate_state(col: Column) -> Column:
     """Validate if state code is a valid US state abbreviation.
 
+    Dialects: postgres, pyspark, duckdb
+
     Checks against list of valid US state abbreviations including territories.
 
     Args:
@@ -1518,6 +1568,8 @@ def validate_state(col: Column) -> Column:
 @addresses.register()
 def standardize_city(col: Column, custom_mappings: Optional[Dict] = None) -> Column:
     """Standardize city name formatting.
+
+    Dialects: postgres, pyspark, duckdb
 
     - Trims whitespace
     - Normalizes internal spacing
@@ -1589,6 +1641,8 @@ def standardize_city(col: Column, custom_mappings: Optional[Dict] = None) -> Col
 def standardize_state(col: Column) -> Column:
     """Convert state to standard 2-letter format.
 
+    Dialects: postgres, pyspark, duckdb
+
     Converts full names to abbreviations and ensures uppercase.
 
     Args:
@@ -1604,6 +1658,8 @@ def standardize_state(col: Column) -> Column:
 @addresses.register()
 def get_state_name(col: Column) -> Column:
     """Convert state abbreviation to full name.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing 2-letter state abbreviations
@@ -1706,6 +1762,8 @@ for standard_name, variations in COUNTRIES.items():
 def extract_country(col: Column) -> Column:
     """Extract country from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts country names from addresses, handling common variations
     and abbreviations. Returns standardized country name.
 
@@ -1750,6 +1808,8 @@ def extract_country(col: Column) -> Column:
 def has_country(col: Column) -> Column:
     """Check if address contains country information.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing address text
 
@@ -1767,6 +1827,8 @@ def has_country(col: Column) -> Column:
 @addresses.register()
 def remove_country(col: Column) -> Column:
     """Remove country from address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Removes country information from the end of addresses.
 
@@ -1809,6 +1871,8 @@ def remove_country(col: Column) -> Column:
 def standardize_country(col: Column, custom_mappings: Optional[dict] = None) -> Column:
     """Standardize country name to consistent format.
 
+    Dialects: postgres, pyspark, duckdb
+
     Converts various country representations to standard names.
 
     Args:
@@ -1849,6 +1913,8 @@ def standardize_country(col: Column, custom_mappings: Optional[dict] = None) -> 
 def extract_po_box(col: Column) -> Column:
     """Extract PO Box number from address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Extracts PO Box, P.O. Box, POB, Post Office Box numbers.
     Handles various formats including with/without periods and spaces.
 
@@ -1885,6 +1951,8 @@ def extract_po_box(col: Column) -> Column:
 def has_po_box(col: Column) -> Column:
     """Check if address contains PO Box.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing address text
 
@@ -1902,6 +1970,8 @@ def has_po_box(col: Column) -> Column:
 @addresses.register()
 def is_po_box_only(col: Column) -> Column:
     """Check if address is ONLY a PO Box (no street address).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing address text
@@ -1933,6 +2003,8 @@ def is_po_box_only(col: Column) -> Column:
 @addresses.register()
 def remove_po_box(col: Column) -> Column:
     """Remove PO Box from address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Removes PO Box information while preserving other address components.
 
@@ -1970,6 +2042,8 @@ def remove_po_box(col: Column) -> Column:
 @addresses.register()
 def standardize_po_box(col: Column) -> Column:
     """Standardize PO Box format to consistent representation.
+
+    Dialects: postgres, pyspark, duckdb
 
     Converts various PO Box formats to standard "PO Box XXXX" format.
 
@@ -2011,6 +2085,8 @@ def standardize_po_box(col: Column) -> Column:
 @addresses.register()
 def extract_private_mailbox(col: Column) -> Column:
     """Extract private mailbox (PMB) number from address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Extracts PMB or Private Mail Box numbers, commonly used with
     commercial mail receiving agencies (like UPS Store).

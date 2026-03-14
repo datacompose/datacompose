@@ -142,6 +142,8 @@ def extract_email(col: Column) -> Column:
     """
     Extract first valid email address from text.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing text with potential email addresses
 
@@ -160,6 +162,8 @@ def extract_all_emails(col: Column) -> Column:
     """
     Extract all email addresses from text as an array.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing text with potential email addresses
 
@@ -175,6 +179,8 @@ def extract_all_emails(col: Column) -> Column:
 def extract_username(col: Column) -> Column:
     """
     Extract username (local part) from email address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -192,6 +198,8 @@ def extract_domain(col: Column) -> Column:
     """
     Extract domain from email address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -208,6 +216,8 @@ def extract_domain_name(col: Column) -> Column:
     """
     Extract domain name without TLD from email address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -223,6 +233,8 @@ def extract_domain_name(col: Column) -> Column:
 def extract_tld(col: Column) -> Column:
     """
     Extract top-level domain from email address.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -246,6 +258,8 @@ def extract_tld(col: Column) -> Column:
 def is_valid_email(col: Column, min_length: int = 6, max_length: int = 254) -> Column:
     """
     Check if email address has valid format.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -278,6 +292,8 @@ def is_valid_username(col: Column, min_length: int = 1, max_length: int = 64) ->
     """
     Check if email username part is valid.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
         min_length (Optional): Minimum length for valid username (default 1)
@@ -303,6 +319,8 @@ def is_valid_domain(col: Column) -> Column:
     """
     Check if email domain part is valid.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -327,6 +345,8 @@ def has_plus_addressing(col: Column) -> Column:
     """
     Check if email uses plus addressing (e.g., user+tag@gmail.com).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -342,6 +362,8 @@ def is_disposable_email(
 ) -> Column:
     """
     Check if email is from a disposable email service.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -380,6 +402,8 @@ def is_corporate_email(
 ) -> Column:
     """
     Check if email appears to be from a corporate domain (not free email provider).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -435,6 +459,8 @@ def remove_whitespace(col: Column) -> Column:
     """
     Remove all whitespace from email address.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -449,6 +475,8 @@ def lowercase_email(col: Column) -> Column:
     """
     Convert entire email address to lowercase.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -462,6 +490,8 @@ def lowercase_email(col: Column) -> Column:
 def lowercase_domain(col: Column) -> Column:
     """
     Convert only domain part to lowercase, preserve username case.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -482,6 +512,8 @@ def remove_plus_addressing(col: Column) -> Column:
     """
     Remove plus addressing from email (e.g., user+tag@gmail.com -> user@gmail.com).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -497,6 +529,8 @@ def remove_plus_addressing(col: Column) -> Column:
 def remove_dots_from_gmail(col: Column) -> Column:
     """
     Remove dots from Gmail addresses (Gmail ignores dots in usernames).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -526,6 +560,8 @@ def fix_common_typos(
 ) -> Column:
     """
     Fix common domain typos in email addresses.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -596,6 +632,8 @@ def standardize_email(
     """
     Apply standard email cleaning and normalization.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
         lowercase (Optional): Convert to lowercase (default True)
@@ -632,6 +670,8 @@ def normalize_gmail(col: Column) -> Column:
     """
     Normalize Gmail addresses (remove dots, plus addressing, lowercase).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -654,6 +694,8 @@ def get_canonical_email(col: Column) -> Column:
     Get canonical form of email address for deduplication.
     Applies maximum normalization.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -675,6 +717,8 @@ def extract_name_from_email(col: Column) -> Column:
     """
     Attempt to extract person's name from email username.
     E.g., john.smith@example.com -> "John Smith"
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -707,6 +751,8 @@ def extract_name_from_email(col: Column) -> Column:
 def get_email_provider(col: Column) -> Column:
     """
     Get email provider name from domain.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -747,7 +793,10 @@ def get_email_provider(col: Column) -> Column:
 def hash_email_sha256(
     col: Column, salt: str = "", standardize_first: bool = True
 ) -> Column:
-    """Hash email with SHA256, with email-specific preprocessing."""
+    """Hash email with SHA256, with email-specific preprocessing.
+
+    Dialects: postgres, pyspark, duckdb
+    """
     if standardize_first:
         # Critical: hash the CANONICAL form for deduplication
         email = get_canonical_email(col)
@@ -764,6 +813,8 @@ def hash_email_sha256(
 def mask_email(col: Column, mask_char: str = "*", keep_chars: int = 3) -> Column:
     """
     Mask email address for privacy (e.g., joh***@gm***.com).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address
@@ -805,6 +856,8 @@ def filter_valid_emails(col: Column) -> Column:
     """
     Return email only if valid, otherwise return null.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -819,6 +872,8 @@ def filter_corporate_emails(col: Column) -> Column:
     """
     Return email only if corporate, otherwise return null.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing email address
 
@@ -832,6 +887,8 @@ def filter_corporate_emails(col: Column) -> Column:
 def filter_non_disposable_emails(col: Column) -> Column:
     """
     Return email only if not disposable, otherwise return null.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing email address

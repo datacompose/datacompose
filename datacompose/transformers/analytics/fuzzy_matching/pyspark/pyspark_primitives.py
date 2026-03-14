@@ -77,6 +77,8 @@ fuzzy = PrimitiveRegistry("fuzzy")
 def levenshtein(col1: "Column", col2: "Column") -> "Column":
     """Calculate Levenshtein edit distance between two strings.
 
+    Dialects: pyspark
+
     The Levenshtein distance is the minimum number of single-character edits
     (insertions, deletions, substitutions) required to transform one string
     into another.
@@ -97,6 +99,8 @@ def levenshtein(col1: "Column", col2: "Column") -> "Column":
 @fuzzy.register()
 def levenshtein_normalized(col1: "Column", col2: "Column") -> "Column":
     """Calculate normalized Levenshtein similarity (0.0 to 1.0).
+
+    Dialects: pyspark
 
     Returns a similarity score where 1.0 means identical strings and
     0.0 means completely different. Calculated as:
@@ -122,6 +126,8 @@ def levenshtein_threshold(
     col1: "Column", col2: "Column", threshold: float = 0.8
 ) -> "Column":
     """Check if normalized Levenshtein similarity meets threshold.
+
+    Dialects: pyspark
 
     Args:
         col1: First string column
@@ -151,6 +157,8 @@ def levenshtein_threshold(
 def soundex(col: "Column") -> "Column":
     """Calculate Soundex phonetic encoding of a string.
 
+    Dialects: pyspark
+
     Soundex encodes a string into a letter followed by three digits,
     representing how the word sounds in English.
 
@@ -169,6 +177,8 @@ def soundex(col: "Column") -> "Column":
 @fuzzy.register()
 def soundex_match(col1: "Column", col2: "Column") -> "Column":
     """Check if two strings have the same Soundex encoding.
+
+    Dialects: pyspark
 
     Useful for matching names that sound alike but are spelled differently
     (e.g., "Smith" and "Smyth").
@@ -197,6 +207,8 @@ def jaccard_similarity(
 ) -> "Column":
     """Calculate Jaccard similarity between tokenized strings.
 
+    Dialects: pyspark
+
     Splits both strings into tokens and calculates:
     |intersection| / |union|
 
@@ -224,6 +236,8 @@ def jaccard_similarity(
 def token_overlap(col1: "Column", col2: "Column", delimiter: str = " ") -> "Column":
     """Count number of overlapping tokens between two strings.
 
+    Dialects: pyspark
+
     Args:
         col1: First string column
         col2: Second string column
@@ -249,6 +263,8 @@ def token_overlap(col1: "Column", col2: "Column", delimiter: str = " ") -> "Colu
 def exact_match(col1: "Column", col2: "Column", ignore_case: bool = True) -> "Column":
     """Check if two strings match exactly.
 
+    Dialects: pyspark
+
     Args:
         col1: First string column
         col2: Second string column
@@ -270,6 +286,8 @@ def contains_match(
     col1: "Column", col2: "Column", ignore_case: bool = True
 ) -> "Column":
     """Check if one string contains the other.
+
+    Dialects: pyspark
 
     Returns True if col1 contains col2 OR col2 contains col1.
 
@@ -295,6 +313,8 @@ def contains_match(
 def prefix_match(col1: "Column", col2: "Column", length: int = 3) -> "Column":
     """Check if two strings share the same prefix.
 
+    Dialects: pyspark
+
     Args:
         col1: First string column
         col2: Second string column
@@ -317,6 +337,8 @@ def prefix_match(col1: "Column", col2: "Column", length: int = 3) -> "Column":
 @fuzzy.register()
 def ngram_similarity(col1: "Column", col2: "Column", n: int = 2) -> "Column":
     """Calculate n-gram (character-level) similarity between two strings.
+
+    Dialects: pyspark
 
     Breaks strings into overlapping character sequences of length n,
     then calculates Jaccard similarity on the n-gram sets.
@@ -359,6 +381,8 @@ def ngram_similarity(col1: "Column", col2: "Column", n: int = 2) -> "Column":
 def ngram_distance(col1: "Column", col2: "Column", n: int = 2) -> "Column":
     """Calculate n-gram distance (1 - similarity) between two strings.
 
+    Dialects: pyspark
+
     Args:
         col1: First string column
         col2: Second string column
@@ -395,6 +419,8 @@ def ngram_distance(col1: "Column", col2: "Column", n: int = 2) -> "Column":
 @fuzzy.register()
 def cosine_similarity(col1: "Column", col2: "Column", delimiter: str = " ") -> "Column":
     """Calculate cosine similarity between tokenized strings.
+
+    Dialects: pyspark
 
     Treats each string as a bag of words and computes cosine similarity
     based on term frequency. Good for comparing longer text.

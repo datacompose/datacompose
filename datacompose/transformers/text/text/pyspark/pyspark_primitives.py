@@ -96,6 +96,8 @@ EMOJI_PATTERN = (
 def is_valid_hex(col: "Column") -> "Column":
     """Check if string is valid hexadecimal.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to validate
 
@@ -111,6 +113,8 @@ def is_valid_hex(col: "Column") -> "Column":
 @text.register()
 def is_valid_base64(col: "Column") -> "Column":
     """Check if string is valid base64.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string to validate
@@ -132,6 +136,8 @@ def is_valid_base64(col: "Column") -> "Column":
 def is_valid_url_encoded(col: "Column") -> "Column":
     """Check if string is valid URL encoded (no malformed percent sequences).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to validate
 
@@ -151,6 +157,8 @@ def is_valid_url_encoded(col: "Column") -> "Column":
 def has_control_characters(col: "Column") -> "Column":
     """Check if string contains control characters (excluding tab/newline/CR).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -168,6 +176,8 @@ def has_control_characters(col: "Column") -> "Column":
 def has_zero_width_characters(col: "Column") -> "Column":
     """Check if string contains zero-width characters.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -182,6 +192,8 @@ def has_zero_width_characters(col: "Column") -> "Column":
 @text.register()
 def has_non_ascii(col: "Column") -> "Column":
     """Check if string contains non-ASCII characters.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string to check
@@ -198,6 +210,8 @@ def has_non_ascii(col: "Column") -> "Column":
 def has_escape_sequences(col: "Column") -> "Column":
     """Check if string contains literal escape sequences (\\n, \\t, etc).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -212,6 +226,8 @@ def has_escape_sequences(col: "Column") -> "Column":
 @text.register()
 def has_url_encoding(col: "Column") -> "Column":
     """Check if string contains URL percent encoding.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string to check
@@ -228,6 +244,8 @@ def has_url_encoding(col: "Column") -> "Column":
 def has_html_entities(col: "Column") -> "Column":
     """Check if string contains HTML entities.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -242,6 +260,8 @@ def has_html_entities(col: "Column") -> "Column":
 @text.register()
 def has_ansi_codes(col: "Column") -> "Column":
     """Check if string contains ANSI escape codes.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string to check
@@ -258,6 +278,8 @@ def has_ansi_codes(col: "Column") -> "Column":
 def has_non_printable(col: "Column") -> "Column":
     """Check if string contains non-printable characters.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -273,6 +295,8 @@ def has_non_printable(col: "Column") -> "Column":
 def has_accents(col: "Column") -> "Column":
     """Check if string contains accented characters.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -287,6 +311,8 @@ def has_accents(col: "Column") -> "Column":
 @text.register()
 def has_unicode_issues(col: "Column") -> "Column":
     """Check if string contains unicode normalization issues.
+
+    Dialects: postgres, pyspark, duckdb
 
     Detects: curly quotes, fancy dashes, special spaces, full-width chars,
     and combining characters (accents as separate codepoints).
@@ -308,6 +334,8 @@ def has_unicode_issues(col: "Column") -> "Column":
 def has_whitespace_issues(col: "Column") -> "Column":
     """Check if string has whitespace issues.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string to check
 
@@ -328,6 +356,8 @@ def has_whitespace_issues(col: "Column") -> "Column":
 def hex_to_text(col: "Column") -> "Column":
     """Convert hexadecimal string to text.
 
+    Dialects: pyspark, duckdb
+
     Args:
         col: Column containing hex string
 
@@ -344,6 +374,8 @@ def hex_to_text(col: "Column") -> "Column":
 def text_to_hex(col: "Column") -> "Column":
     """Convert text to hexadecimal string.
 
+    Dialects: pyspark, duckdb
+
     Args:
         col: Column containing text
 
@@ -359,6 +391,8 @@ def text_to_hex(col: "Column") -> "Column":
 def clean_hex(col: "Column") -> "Column":
     """Clean hex string (remove prefix, normalize case, remove separators).
 
+    Dialects: pyspark, duckdb
+
     Args:
         col: Column containing hex string
 
@@ -373,6 +407,8 @@ def clean_hex(col: "Column") -> "Column":
 @text.register()
 def extract_hex(col: "Column") -> "Column":
     """Extract first hex value from mixed content.
+
+    Dialects: pyspark, duckdb
 
     Looks for hex with prefix (0x, #) or MAC-address format (XX:XX:XX).
 
@@ -404,6 +440,8 @@ def extract_hex(col: "Column") -> "Column":
 def decode_base64(col: "Column") -> "Column":
     """Decode base64 string to text.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing base64 string
 
@@ -419,6 +457,8 @@ def decode_base64(col: "Column") -> "Column":
 def encode_base64(col: "Column") -> "Column":
     """Encode text to base64 string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing text
 
@@ -433,6 +473,8 @@ def encode_base64(col: "Column") -> "Column":
 @text.register()
 def clean_base64(col: "Column") -> "Column":
     """Clean base64 string (remove whitespace, fix padding).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing base64 string
@@ -457,6 +499,8 @@ def clean_base64(col: "Column") -> "Column":
 @text.register()
 def extract_base64(col: "Column") -> "Column":
     """Extract base64 from mixed content.
+
+    Dialects: postgres, pyspark, duckdb
 
     Looks for base64 strings with = padding or that follow "base64," prefix.
 
@@ -484,6 +528,8 @@ def extract_base64(col: "Column") -> "Column":
 @text.register()
 def decode_url(col: "Column") -> "Column":
     """Decode URL percent-encoded string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Note: Uses regexp_replace for common encodings. For full URL decoding,
     consider using a UDF or processing outside Spark. Plus signs (+) in form
@@ -546,6 +592,8 @@ def decode_url(col: "Column") -> "Column":
 def encode_url(col: "Column") -> "Column":
     """Encode string with URL percent-encoding.
 
+    Dialects: postgres, pyspark, duckdb
+
     Note: Uses regexp_replace for common chars. For full URL encoding,
     consider using a UDF or processing outside Spark.
 
@@ -594,6 +642,8 @@ def encode_url(col: "Column") -> "Column":
 def decode_html_entities(col: "Column") -> "Column":
     """Decode HTML entities to characters.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing HTML entities
 
@@ -631,6 +681,8 @@ def decode_html_entities(col: "Column") -> "Column":
 def encode_html_entities(col: "Column") -> "Column":
     """Encode special characters as HTML entities.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -650,6 +702,8 @@ def encode_html_entities(col: "Column") -> "Column":
 @text.register()
 def unescape_string(col: "Column") -> "Column":
     """Convert literal escape sequences to actual characters.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string with escape sequences
@@ -682,6 +736,8 @@ def unescape_string(col: "Column") -> "Column":
 def escape_string(col: "Column") -> "Column":
     """Convert special characters to literal escape sequences.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -702,6 +758,8 @@ def escape_string(col: "Column") -> "Column":
 def normalize_line_endings(col: "Column") -> "Column":
     """Normalize line endings to LF.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -716,6 +774,8 @@ def normalize_line_endings(col: "Column") -> "Column":
 @text.register()
 def to_ascii(col: "Column") -> "Column":
     """Transliterate non-ASCII characters to ASCII equivalents.
+
+    Dialects: pyspark
 
     Note: Limited without UDF. Handles common accented chars and unicode replacements.
 
@@ -765,6 +825,8 @@ def to_ascii(col: "Column") -> "Column":
 def to_codepoints(col: "Column") -> "Column":
     """Convert string to Unicode codepoints representation.
 
+    Dialects: pyspark, duckdb
+
     Note: Limited implementation - works for basic ASCII.
 
     Args:
@@ -784,6 +846,8 @@ def to_codepoints(col: "Column") -> "Column":
 def from_codepoints(col: "Column") -> "Column":
     """Convert Unicode codepoints representation to string.
 
+    Dialects: pyspark, duckdb
+
     Args:
         col: Column containing codepoints
 
@@ -801,6 +865,8 @@ def from_codepoints(col: "Column") -> "Column":
 def reverse_string(col: "Column") -> "Column":
     """Reverse a string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -813,6 +879,8 @@ def reverse_string(col: "Column") -> "Column":
 @text.register()
 def truncate(col: "Column", max_length: int, ellipsis: bool = True) -> "Column":
     """Truncate string to maximum length.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -838,6 +906,8 @@ def truncate(col: "Column", max_length: int, ellipsis: bool = True) -> "Column":
 def pad_left(col: "Column", width: int, pad_char: str = " ") -> "Column":
     """Pad string on the left to specified width.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
         width: Target width
@@ -852,6 +922,8 @@ def pad_left(col: "Column", width: int, pad_char: str = " ") -> "Column":
 @text.register()
 def pad_right(col: "Column", width: int, pad_char: str = " ") -> "Column":
     """Pad string on the right to specified width.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -873,6 +945,8 @@ def pad_right(col: "Column", width: int, pad_char: str = " ") -> "Column":
 def remove_control_characters(col: "Column") -> "Column":
     """Remove control characters (preserving tab, newline, CR).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -887,6 +961,8 @@ def remove_control_characters(col: "Column") -> "Column":
 @text.register()
 def remove_zero_width_characters(col: "Column") -> "Column":
     """Remove zero-width characters.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -903,6 +979,8 @@ def remove_zero_width_characters(col: "Column") -> "Column":
 def remove_non_printable(col: "Column") -> "Column":
     """Remove non-printable characters (preserving tab, newline, CR).
 
+    Dialects: pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -918,6 +996,8 @@ def remove_non_printable(col: "Column") -> "Column":
 def remove_ansi_codes(col: "Column") -> "Column":
     """Remove ANSI escape codes.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -932,6 +1012,8 @@ def remove_ansi_codes(col: "Column") -> "Column":
 @text.register()
 def strip_invisible(col: "Column") -> "Column":
     """Remove all invisible characters (control chars, zero-width, BOM).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -950,6 +1032,8 @@ def strip_invisible(col: "Column") -> "Column":
 def remove_bom(col: "Column") -> "Column":
     """Remove byte order mark (BOM).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -964,6 +1048,8 @@ def remove_bom(col: "Column") -> "Column":
 @text.register()
 def normalize_unicode(col: "Column") -> "Column":
     """Normalize unicode (replace curly quotes, fancy dashes, special spaces).
+
+    Dialects: postgres, pyspark, duckdb
 
     Note: NFKC normalization requires UDF. This handles common replacements.
 
@@ -994,6 +1080,8 @@ def normalize_unicode(col: "Column") -> "Column":
 @text.register()
 def remove_accents(col: "Column") -> "Column":
     """Remove accents/diacritics from characters.
+
+    Dialects: postgres, pyspark, duckdb
 
     Note: Full NFD normalization requires UDF. This handles common accented chars.
 
@@ -1036,6 +1124,8 @@ def remove_accents(col: "Column") -> "Column":
 def normalize_whitespace(col: "Column") -> "Column":
     """Normalize whitespace (trim and collapse multiple spaces).
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -1050,6 +1140,8 @@ def normalize_whitespace(col: "Column") -> "Column":
 @text.register()
 def remove_html_tags(col: "Column") -> "Column":
     """Remove HTML tags from string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -1066,6 +1158,8 @@ def remove_html_tags(col: "Column") -> "Column":
 def remove_urls(col: "Column") -> "Column":
     """Remove URLs from string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -1080,6 +1174,8 @@ def remove_urls(col: "Column") -> "Column":
 @text.register()
 def remove_emojis(col: "Column") -> "Column":
     """Remove emojis from string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -1096,6 +1192,8 @@ def remove_emojis(col: "Column") -> "Column":
 def remove_punctuation(col: "Column") -> "Column":
     """Remove punctuation from string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -1111,6 +1209,8 @@ def remove_punctuation(col: "Column") -> "Column":
 def remove_digits(col: "Column") -> "Column":
     """Remove digits from string.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -1123,6 +1223,8 @@ def remove_digits(col: "Column") -> "Column":
 @text.register()
 def remove_letters(col: "Column") -> "Column":
     """Remove letters from string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -1138,6 +1240,8 @@ def remove_letters(col: "Column") -> "Column":
 @text.register()
 def remove_escape_sequences(col: "Column") -> "Column":
     """Remove literal escape sequences from string.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -1156,6 +1260,8 @@ def remove_escape_sequences(col: "Column") -> "Column":
 def strip_to_alphanumeric(col: "Column") -> "Column":
     """Keep only alphanumeric characters.
 
+    Dialects: postgres, pyspark, duckdb
+
     Args:
         col: Column containing string
 
@@ -1170,6 +1276,8 @@ def strip_to_alphanumeric(col: "Column") -> "Column":
 @text.register()
 def clean_for_comparison(col: "Column") -> "Column":
     """Clean string for comparison (lowercase, trim, normalize whitespace, remove accents).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -1199,6 +1307,8 @@ def clean_for_comparison(col: "Column") -> "Column":
 @text.register()
 def slugify(col: "Column") -> "Column":
     """Convert string to URL-safe slug.
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
@@ -1234,6 +1344,8 @@ def slugify(col: "Column") -> "Column":
 def collapse_repeats(col: "Column", max_repeat: int = 2) -> "Column":
     """Collapse repeated characters to maximum count.
 
+    Dialects: postgres, pyspark, duckdb
+
     Note: Without UDF, this only handles specific patterns.
     For max_repeat=1, collapses to single char. For max_repeat=2, collapses 3+ to 2.
 
@@ -1260,6 +1372,8 @@ def collapse_repeats(col: "Column", max_repeat: int = 2) -> "Column":
 @text.register()
 def clean_string(col: "Column") -> "Column":
     """Comprehensive string cleaning (remove BOM, zero-width, control chars, normalize unicode).
+
+    Dialects: postgres, pyspark, duckdb
 
     Args:
         col: Column containing string
