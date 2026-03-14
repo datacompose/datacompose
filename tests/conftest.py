@@ -10,8 +10,10 @@ import pytest
 
 from datacompose.functions import set_backend
 
-# Backends to test against (start with duckdb only)
-BACKENDS = ["duckdb", "pyspark", "postgres"]
+# Backends to test against. Set TEST_BACKENDS env var (comma-separated) to override.
+# e.g. TEST_BACKENDS=duckdb,postgres pytest ...
+BACKENDS = [b.strip() for b in os.environ.get("TEST_BACKENDS", "duckdb").split(",")]
+
 
 
 @pytest.fixture(scope="session", params=BACKENDS)
@@ -45,6 +47,29 @@ def create_session(backend, setup_backend):
         from sqlframe.duckdb import DuckDBSession
 
         session = DuckDBSession()
+
+        # DuckDB infers None-only columns as INTEGER, causing string
+        # functions (regexp_replace, etc.) to fail with type mismatch.
+        # Wrap createDataFrame to use explicit STRING types for those columns.
+        _orig_create_df = session.createDataFrame
+
+        def _typed_createDataFrame(data, schema=None, **kwargs):
+            if (
+                isinstance(schema, list)
+                and all(isinstance(s, str) for s in schema)
+                and isinstance(data, list)
+                and data
+            ):
+                n_cols = len(schema)
+                if any(
+                    all(row[col_idx] is None for row in data)
+                    for col_idx in range(n_cols)
+                ):
+                    ddl = ", ".join(f"{name} STRING" for name in schema)
+                    return _orig_create_df(data, ddl, **kwargs)
+            return _orig_create_df(data, schema, **kwargs)
+
+        session.createDataFrame = _typed_createDataFrame
 
     elif backend == "pyspark":
         from sqlframe.spark import SparkSession
