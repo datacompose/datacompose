@@ -6,14 +6,13 @@ import json
 import os
 import sys
 try:
-    import termios
-    import tty
+    import termios as _termios_check
     _USE_TERMIOS = True
 except ImportError:
     _USE_TERMIOS = False
 
 try:
-    import msvcrt
+    import msvcrt as _msvcrt_check
     _USE_MSVCRT = True
 except ImportError:
     _USE_MSVCRT = False
@@ -103,6 +102,8 @@ class InitCommand:
     def get_key():
         """Get a single key press from the user."""
         if _USE_TERMIOS:
+            import termios
+            import tty
             try:
                 fd = sys.stdin.fileno()
                 old_settings = termios.tcgetattr(fd)
@@ -119,10 +120,11 @@ class InitCommand:
                 return input()
 
         if _USE_MSVCRT:
-            key = msvcrt.getwch()
+            import msvcrt
+            key = msvcrt.getch().decode("utf-8", errors="replace")
             # Handle arrow keys (two-byte sequences: \x00 or \xe0 prefix)
             if key in ("\x00", "\xe0"):
-                second = msvcrt.getwch()
+                second = msvcrt.getch().decode("utf-8", errors="replace")
                 # Map Windows arrow key codes to Unix escape sequences
                 arrow_map = {"H": "\x1b[A", "P": "\x1b[B", "M": "\x1b[C", "K": "\x1b[D"}
                 return arrow_map.get(second, second)

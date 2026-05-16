@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black mypy
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Black
+        run: black --check .
+
+      - name: Mypy
+        run: mypy datacompose/
+
+  test:
+    name: Unit Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run unit tests
+        run: pytest -m unit -v --tb=short
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: pypi
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify versions match tag
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+
+          PYPROJECT_VERSION=$(python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])")
+          CLI_INIT_VERSION=$(python -c "import re; m=re.search(r'__version__\s*=\s*[\"\'](.*?)[\"\']', open('datacompose/cli/__init__.py').read()); print(m.group(1))")
+          OPS_INIT_VERSION=$(python -c "import re; m=re.search(r'__version__\s*=\s*[\"\'](.*?)[\"\']', open('datacompose/operators/__init__.py').read()); print(m.group(1))")
+          CLI_MAIN_VERSION=$(python -c "import re; m=re.search(r'version_option\([\"\'](.*?)[\"\']', open('datacompose/cli/main.py').read()); print(m.group(1))")
+          CHANGELOG_OK=$(grep -c "## \[$TAG_VERSION\]" CHANGELOG.md || true)
+
+          FAILED=0
+          check() {
+            if [ "$1" != "$TAG_VERSION" ]; then
+              echo "MISMATCH in $2: found '$1', expected '$TAG_VERSION'"
+              FAILED=1
+            else
+              echo "OK $2: $1"
+            fi
+          }
+
+          check "$PYPROJECT_VERSION"    "pyproject.toml"
+          check "$CLI_INIT_VERSION"     "datacompose/cli/__init__.py"
+          check "$OPS_INIT_VERSION"     "datacompose/operators/__init__.py"
+          check "$CLI_MAIN_VERSION"     "datacompose/cli/main.py"
+
+          if [ "$CHANGELOG_OK" -eq 0 ]; then
+            echo "MISMATCH in CHANGELOG.md: no entry for [$TAG_VERSION]"
+            FAILED=1
+          else
+            echo "OK CHANGELOG.md: [$TAG_VERSION] entry found"
+          fi
+
+          exit $FAILED
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
