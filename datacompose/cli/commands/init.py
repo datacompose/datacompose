@@ -121,10 +121,10 @@ class InitCommand:
 
         if _USE_MSVCRT:
             import msvcrt
-            key = msvcrt.getch().decode("utf-8", errors="replace")
+            key = msvcrt.getch().decode("utf-8", errors="replace")  # type: ignore[attr-defined]
             # Handle arrow keys (two-byte sequences: \x00 or \xe0 prefix)
             if key in ("\x00", "\xe0"):
-                second = msvcrt.getch().decode("utf-8", errors="replace")
+                second = msvcrt.getch().decode("utf-8", errors="replace")  # type: ignore[attr-defined]
                 # Map Windows arrow key codes to Unix escape sequences
                 arrow_map = {"H": "\x1b[A", "P": "\x1b[B", "M": "\x1b[C", "K": "\x1b[D"}
                 return arrow_map.get(second, second)
