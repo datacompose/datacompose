@@ -99,8 +99,11 @@ jobs:
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi == 'true'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository-url: https://test.pypi.org/legacy/
 
     - name: Publish to PyPI
       if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi == 'false')
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
