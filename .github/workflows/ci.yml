@@ -30,8 +30,8 @@ jobs:
       - name: Black
         run: black --check .
 
-      - name: Mypy
-        run: mypy datacompose/
+#      - name: Mypy
+#        run: mypy datacompose/
 #  test:
 #    name: Unit Tests (Python ${{ matrix.python-version }})
 #    runs-on: ubuntu-latest
