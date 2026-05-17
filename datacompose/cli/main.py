@@ -19,7 +19,7 @@ from datacompose.cli.commands.list import list_cmd
 
 
 @click.group()
-@click.version_option("0.5.1", prog_name="datacompose")
+@click.version_option("0.5.2", prog_name="datacompose")
 @click.pass_context
 def cli(ctx):
     """Generate data cleaning UDFs for various platforms.
