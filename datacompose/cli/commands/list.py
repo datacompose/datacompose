@@ -2,6 +2,8 @@
 List command for showing available targets and transformers.
 """
 
+from pathlib import Path
+
 import click
 
 from datacompose.transformers.discovery import TransformerDiscovery
@@ -56,10 +58,10 @@ class ListCommand:
     @staticmethod
     def _list_targets() -> int:
         """List available target platforms."""
-        from cli.commands.add import AddCommand
+        from datacompose.cli.commands.add import AddCommand  # type: ignore[attr-defined]
 
         print(" Available targets:")
-        for target in AddCommand.AVAILABLE_TARGETS.keys():
+        for target in AddCommand.AVAILABLE_TARGETS.keys():  # type: ignore[attr-defined]
             print(f"  • {target}")
 
         print(
@@ -79,7 +81,7 @@ class ListCommand:
         print(" Available transformers:")
 
         # Group transformers by domain (extracted from path)
-        domains = {}
+        domains: dict[str, dict[str, Path]] = {}
         for transformer_name, transformer_path in transformers.items():
             # Extract domain from path
             domain = (

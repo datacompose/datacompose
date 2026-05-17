@@ -9,9 +9,9 @@ import sys
 
 # Import argcomplete for tab completion
 try:
-    import argcomplete
+    import argcomplete  # type: ignore[import-not-found]
 except ImportError:
-    argcomplete = None
+    argcomplete = None  # type: ignore[assignment]
 
 from datacompose.cli.commands.add import add
 from datacompose.cli.commands.init import init

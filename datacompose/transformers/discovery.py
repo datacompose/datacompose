@@ -54,7 +54,7 @@ class TransformerDiscovery:
         Returns:
             Dict[platform, Dict[generator_type, generator_class]]
         """
-        generators = {}
+        generators: dict[str, dict[str, type]] = {}
 
         # Look for platform directories
         for platform_dir in self.generators_dir.iterdir():

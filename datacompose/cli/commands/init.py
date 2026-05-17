@@ -438,10 +438,11 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
             config = template_config
             print("Using default configuration...")
         else:
-            config = InitCommand.prompt_for_config(template_config)
+            prompted = InitCommand.prompt_for_config(template_config)
             # Check if user cancelled the configuration
-            if config is None:
+            if prompted is None:
                 return 0
+            config = prompted
 
         # Write the configuration file
         with open(config_path, "w") as f:

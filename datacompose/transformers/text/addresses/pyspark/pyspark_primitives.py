@@ -201,7 +201,7 @@ STATE_ABBREV = {
 
 # Custom cities that users want to recognize
 # Users can add to this list for better city extraction
-CUSTOM_CITIES = set()
+CUSTOM_CITIES: set[str] = set()
 
 
 def add_custom_state(full_name: str, abbreviation: str) -> None:

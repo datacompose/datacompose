@@ -122,8 +122,8 @@ class PrimitiveRegistry:
             namespace_name: Name for this namespace (used in error messages)
         """
         self.namespace_name = namespace_name
-        self._primitives = {}
-        self._conditionals = {}
+        self._primitives: dict[str, Any] = {}
+        self._conditionals: dict[str, Any] = {}
 
     def register(
         self, name: Optional[str] = None, is_conditional: Optional[bool] = None
@@ -326,7 +326,7 @@ def _fallback_compose(func: Callable, namespaces: Dict, debug: bool) -> Callable
                                 except Exception:
                                     pass
 
-                            steps.append(method(**kwargs) if kwargs else method)
+                            steps.append(method(**kwargs) if kwargs else method)  # type: ignore[arg-type]
 
         def pipeline(col: Column) -> Column:  # type: ignore
             result = col  # type: ignore
@@ -577,7 +577,7 @@ class PipelineCompiler:
                 for keyword in node.keywords:
                     kwargs[keyword.arg] = self._get_value(keyword.value)
 
-                return method(**kwargs) if kwargs else method
+                return method(**kwargs) if kwargs else method  # type: ignore[arg-type, return-value]
 
         return lambda col: True
 
@@ -599,7 +599,7 @@ class PipelineCompiler:
                 for keyword in node.keywords:
                     kwargs[keyword.arg] = self._get_value(keyword.value)
 
-                action = method(**kwargs) if kwargs else method
+                action = method(**kwargs) if kwargs else method  # type: ignore[arg-type]
 
                 try:
                     return CompiledStep(step_type="transform", action=action)
