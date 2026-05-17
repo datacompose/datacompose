@@ -56,8 +56,7 @@ Installation:
 datacompose add phone_numbers
 """
 
-import re
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # For type checkers only - these imports are always available during type checking
@@ -759,11 +758,6 @@ def format_e164(col: Column) -> Column:
 
     # Check if it's a valid NANP number first
     is_nanp = is_valid_nanp(col)
-
-    # Use default country code "1" if not present and number is 10 digits NANP
-    final_country = F.when(
-        (country_code == "") & (F.length(digits) == 10) & is_nanp, F.lit("1")
-    ).otherwise(country_code)
 
     # Build E.164 format - only for valid phones
     return F.when(

@@ -54,7 +54,7 @@ class TransformerDiscovery:
         Returns:
             Dict[platform, Dict[generator_type, generator_class]]
         """
-        generators = {}
+        generators: dict[str, dict[str, type]] = {}
 
         # Look for platform directories
         for platform_dir in self.generators_dir.iterdir():
@@ -73,9 +73,7 @@ class TransformerDiscovery:
 
                         try:
                             # Import the generator module
-                            module_path = (
-                                f"datacompose.generators.{platform_name}.{generator_name}"
-                            )
+                            module_path = f"datacompose.generators.{platform_name}.{generator_name}"
                             module = importlib.import_module(module_path)
 
                             # Find generator classes or factory functions
@@ -107,10 +105,7 @@ class TransformerDiscovery:
 
         if transformer in transformers:
             # Return basic info about the transformer
-            return {
-                "name": transformer,
-                "path": str(transformers[transformer])
-            }
+            return {"name": transformer, "path": str(transformers[transformer])}
 
         return None
 

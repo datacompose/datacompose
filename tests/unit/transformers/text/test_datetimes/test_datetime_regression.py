@@ -20,11 +20,14 @@ class TestKnownBugs:
         """
 
         test_data = [
-            ("2024-02-29", True),   # 2024 is a leap year
-            ("2020-02-29", True),   # 2020 is a leap year
-            ("2000-02-29", True),   # 2000 is a leap year (divisible by 400)
+            ("2024-02-29", True),  # 2024 is a leap year
+            ("2020-02-29", True),  # 2020 is a leap year
+            ("2000-02-29", True),  # 2000 is a leap year (divisible by 400)
             ("2023-02-29", False),  # 2023 is not a leap year
-            ("1900-02-29", False),  # 1900 is not a leap year (divisible by 100 but not 400)
+            (
+                "1900-02-29",
+                False,
+            ),  # 1900 is not a leap year (divisible by 100 but not 400)
         ]
 
         df = create_session.createDataFrame(test_data, ["date_str", "expected_valid"])
@@ -34,9 +37,10 @@ class TestKnownBugs:
 
         results = result_df.collect()
         for row in results:
-            assert row["is_valid"] == row["expected_valid"], \
-                f"Leap year validation failed for {row['date_str']}: " \
+            assert row["is_valid"] == row["expected_valid"], (
+                f"Leap year validation failed for {row['date_str']}: "
                 f"expected {row['expected_valid']}, got {row['is_valid']}"
+            )
 
     def test_null_propagation_bug(self, create_session):
         """
@@ -53,12 +57,10 @@ class TestKnownBugs:
         df = create_session.createDataFrame(test_data, ["date_str"])
 
         # These operations should all handle null gracefully
-        result_df = df.withColumn(
-            "standardized", datetimes.standardize_iso(F.col("date_str"))
-        ).withColumn(
-            "is_valid", datetimes.is_valid_date(F.col("date_str"))
-        ).withColumn(
-            "year", datetimes.extract_year(F.col("date_str"))
+        result_df = (
+            df.withColumn("standardized", datetimes.standardize_iso(F.col("date_str")))
+            .withColumn("is_valid", datetimes.is_valid_date(F.col("date_str")))
+            .withColumn("year", datetimes.extract_year(F.col("date_str")))
         )
 
         results = result_df.collect()
@@ -81,15 +83,18 @@ class TestKnownBugs:
             ("2024-05-31", 1, "2024-06-30 00:00:00"),  # June has 30 days
         ]
 
-        df = create_session.createDataFrame(test_data, ["date", "months_to_add", "expected"])
+        df = create_session.createDataFrame(
+            test_data, ["date", "months_to_add", "expected"]
+        )
         result_df = df.withColumn(
             "result", datetimes.add_months(F.col("date"), F.col("months_to_add"))
         )
 
         results = result_df.collect()
         for row in results:
-            assert row["result"] == row["expected"], \
-                f"Month-end bug for {row['date']} + {row['months_to_add']} months"
+            assert (
+                row["result"] == row["expected"]
+            ), f"Month-end bug for {row['date']} + {row['months_to_add']} months"
 
 
 @pytest.mark.unit
@@ -117,8 +122,9 @@ class TestEdgeCaseRegressions:
 
         results = result_df.collect()
         for row in results:
-            assert row["standardized"] == row["expected"], \
-                f"Y2K edge case failed for {row['date_str']}"
+            assert (
+                row["standardized"] == row["expected"]
+            ), f"Y2K edge case failed for {row['date_str']}"
 
     def test_single_digit_date_components(self, create_session):
         """
@@ -140,8 +146,9 @@ class TestEdgeCaseRegressions:
 
         results = result_df.collect()
         for row in results:
-            assert row["standardized"] == row["expected"], \
-                f"Single-digit date component failed for {row['date_str']}"
+            assert (
+                row["standardized"] == row["expected"]
+            ), f"Single-digit date component failed for {row['date_str']}"
 
     def test_ambiguous_date_disambiguation(self, create_session):
         """
@@ -153,11 +160,9 @@ class TestEdgeCaseRegressions:
             # Unambiguous dates (day > 12) - parsed as DD/MM/YYYY
             ("13/01/2024", "2024-01-13 00:00:00"),  # Valid: DD/MM/YYYY (day > 12)
             ("01/13/2024", "2024-01-13 00:00:00"),  # Valid: MM/DD/YYYY
-
             # Ambiguous dates that should prefer MM/DD/YYYY (both interpretations valid)
             ("01/02/2024", "2024-01-02 00:00:00"),  # Jan 2 (MM/DD/YYYY tried first)
             ("02/03/2024", "2024-02-03 00:00:00"),  # Feb 3 (MM/DD/YYYY tried first)
-
             # Dates that can only be DD/MM/YYYY
             ("31/01/2024", "2024-01-31 00:00:00"),
             ("15/01/2024", "2024-01-15 00:00:00"),
@@ -170,8 +175,9 @@ class TestEdgeCaseRegressions:
 
         results = result_df.collect()
         for row in results:
-            assert row["standardized"] == row["expected"], \
-                f"Ambiguous date handling failed for {row['date_str']}"
+            assert (
+                row["standardized"] == row["expected"]
+            ), f"Ambiguous date handling failed for {row['date_str']}"
 
     def test_midnight_and_noon_handling(self, create_session):
         """
@@ -195,8 +201,9 @@ class TestEdgeCaseRegressions:
 
         results = result_df.collect()
         for row in results:
-            assert row["standardized"] == row["expected"], \
-                f"Midnight/noon handling failed for {row['datetime_str']}"
+            assert (
+                row["standardized"] == row["expected"]
+            ), f"Midnight/noon handling failed for {row['datetime_str']}"
 
 
 @pytest.mark.unit
@@ -215,6 +222,7 @@ class TestPerformanceRegressions:
         df = create_session.createDataFrame(test_data, ["date_str"])
 
         import time
+
         start_time = time.time()
 
         result_df = df.withColumn(
@@ -260,7 +268,6 @@ class TestDataTypeRegressions:
         """
 
         # Create dataframe with actual dates (not strings)
-        from datetime import datetime as dt
 
         test_data = [
             ("2024-01-15",),
@@ -282,9 +289,7 @@ class TestDataTypeRegressions:
         # Should handle both strings and timestamps
         result_df = df_with_ts.withColumn(
             "from_string", datetimes.extract_year(F.col("date_str"))
-        ).withColumn(
-            "from_timestamp", datetimes.extract_year(F.col("as_timestamp"))
-        )
+        ).withColumn("from_timestamp", datetimes.extract_year(F.col("as_timestamp")))
 
         results = result_df.collect()
         # Both methods should work and return the same year
@@ -299,7 +304,7 @@ class TestDataTypeRegressions:
         """
 
         test_data = [
-            ("44941", None),   # Excel serial date
+            ("44941", None),  # Excel serial date
             ("20240115", None),  # YYYYMMDD format
             ("2024-01-15", "2024-01-15 00:00:00"),  # Standard format
         ]
@@ -326,10 +331,10 @@ class TestBoundaryConditions:
         """
 
         test_data = [
-            ("0001-01-01", True),   # Minimum date
-            ("9999-12-31", True),   # Maximum date
+            ("0001-01-01", True),  # Minimum date
+            ("9999-12-31", True),  # Maximum date
             ("0000-01-01", False),  # Before minimum
-            ("10000-01-01", False), # After maximum
+            ("10000-01-01", False),  # After maximum
         ]
 
         df = create_session.createDataFrame(test_data, ["date_str", "should_parse"])
@@ -339,9 +344,7 @@ class TestBoundaryConditions:
 
         results = result_df.collect()
         for row in results:
-            is_parsed = row["standardized"] is not None
-            # Document boundary behavior
-            pass
+            pass  # Document boundary behavior
 
     def test_month_boundary_transitions(self, create_session):
         """
@@ -356,12 +359,12 @@ class TestBoundaryConditions:
             ("2024-12-31", "2024-12-31", "2025-01-01"),
         ]
 
-        df = create_session.createDataFrame(test_data, ["date", "expected_month_end", "expected_next_day"])
+        df = create_session.createDataFrame(
+            test_data, ["date", "expected_month_end", "expected_next_day"]
+        )
         result_df = df.withColumn(
             "month_end", datetimes.end_of_month(F.col("date"))
-        ).withColumn(
-            "next_day", datetimes.add_days(F.col("date"), F.lit(1))
-        )
+        ).withColumn("next_day", datetimes.add_days(F.col("date"), F.lit(1)))
 
         results = result_df.collect()
         for row in results:
@@ -378,10 +381,8 @@ class TestBoundaryConditions:
             # First week of year
             ("2024-01-01", 1),
             ("2024-01-07", 1),
-
             # Last week of year
             ("2024-12-31", 53),
-
             # Transition weeks
             ("2024-12-30", 53),
             ("2025-01-01", 1),
@@ -413,12 +414,8 @@ class TestConcurrencyRegressions:
         df2 = create_session.createDataFrame([("01/15/2024",)], ["date2"])
 
         # Transform both
-        result1 = df1.withColumn(
-            "std1", datetimes.standardize_iso(F.col("date1"))
-        )
-        result2 = df2.withColumn(
-            "std2", datetimes.standardize_iso(F.col("date2"))
-        )
+        result1 = df1.withColumn("std1", datetimes.standardize_iso(F.col("date1")))
+        result2 = df2.withColumn("std2", datetimes.standardize_iso(F.col("date2")))
 
         # Both should work independently
         r1 = result1.collect()

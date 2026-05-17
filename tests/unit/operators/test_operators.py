@@ -553,46 +553,48 @@ class TestTypeValidation:
 
     def test_compose_namespace_requirement(self, sparksession):
         """Test that compose requires namespace to be passed for method resolution"""
-        
+
         ns = PrimitiveRegistry("test_ns")
-        
+
         @ns.register()
         def transform1(col):
             return f.upper(col)
-            
+
         @ns.register()
         def transform2(col):
             return f.trim(col)
-        
+
         # Test with namespace passed - should work
         @ns.compose(ns=ns, debug=False)
         def pipeline_with_ns():
             ns.transform1()
             ns.transform2()
-        
+
         # Test without namespace - will use fallback
         @ns.compose(debug=False)
         def pipeline_without_ns():
             ns.transform1()
             ns.transform2()
-        
+
         # Both should be callable
         assert callable(pipeline_with_ns)
         assert callable(pipeline_without_ns)
-        
+
         # Test with actual data
         data = [("  hello  ",), ("  world  ",)]
         df = sparksession.createDataFrame(data, ["text"])
-        
+
         # Pipeline with namespace should work correctly
         result_with_ns = df.withColumn("processed", pipeline_with_ns(f.col("text")))
         collected_with_ns = result_with_ns.collect()
         assert collected_with_ns[0]["processed"] == "HELLO"
         assert collected_with_ns[1]["processed"] == "WORLD"
-        
+
         # Pipeline without namespace might not work as expected (fallback behavior)
         # This tests that the fallback doesn't break, even if it doesn't apply transforms
-        result_without_ns = df.withColumn("processed", pipeline_without_ns(f.col("text")))
+        result_without_ns = df.withColumn(
+            "processed", pipeline_without_ns(f.col("text"))
+        )
         collected_without_ns = result_without_ns.collect()
         # The fallback might return the original column or empty pipeline
         assert collected_without_ns is not None

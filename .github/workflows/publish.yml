@@ -16,6 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Verify commit is on main
+      run: |
+        git fetch origin main
+        if ! git merge-base --is-ancestor HEAD origin/main; then
+          echo "Error: this commit is not on main — aborting publish"
+          exit 1
+        fi
+
     
     - name: Set up Python
       uses: actions/setup-python@v4

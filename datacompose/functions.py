@@ -51,9 +51,11 @@ def _pg_regex(pattern):
         # of the pattern.  Collect all (?i), (?s), etc. from anywhere in the
         # pattern, merge them, and prepend once.
         found_flags = set()
+
         def _collect(m):
             found_flags.update(m.group(1))
             return ""
+
         pattern = re.sub(r"\(\?([imsxn]+)\)", _collect, pattern)
         if found_flags:
             pattern = "(?" + "".join(sorted(found_flags)) + ")" + pattern
@@ -77,7 +79,7 @@ def _patch_postgres_module(module):
         # so pull them out and re-prepend after we add our own ^.
         flag_match = re.match(r"^(\(\?[imsxn]+\))", pattern)
         flags = flag_match.group(1) if flag_match else ""
-        rest = pattern[len(flags):]
+        rest = pattern[len(flags) :]
 
         inner = rest
         has_start = inner.startswith("^")
@@ -95,9 +97,9 @@ def _patch_postgres_module(module):
             full = flags + "^" + prefix + inner + suffix + "$"
             repl = "\\" + str(idx)
         extracted = _orig_replace(col, module.lit(full), module.lit(repl))
-        return module.when(
-            _orig_like(col, module.lit(pattern)), extracted
-        ).otherwise(module.lit(""))
+        return module.when(_orig_like(col, module.lit(pattern)), extracted).otherwise(
+            module.lit("")
+        )
 
     # -- helper to translate regex in both strings and Column(Lit(...)) ------
     def _translate_pattern(pattern):

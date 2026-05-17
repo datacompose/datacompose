@@ -5,7 +5,6 @@ Tests transformation speed and scalability with large datasets.
 
 import pytest
 from datacompose.functions import functions as F
-from datetime import datetime, timedelta
 import time
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
@@ -116,16 +115,12 @@ class TestDatetimePerformance:
         df = create_session.createDataFrame(test_dates, ["date_str"])
 
         start_time = time.time()
-        result_df = df.withColumn(
-            "standardized", datetimes.standardize_iso(F.col("date_str"))
-        ).withColumn(
-            "is_valid", datetimes.is_valid_date(F.col("date_str"))
-        ).withColumn(
-            "year", datetimes.extract_year(F.col("date_str"))
-        ).withColumn(
-            "month", datetimes.extract_month(F.col("date_str"))
-        ).withColumn(
-            "day", datetimes.extract_day(F.col("date_str"))
+        result_df = (
+            df.withColumn("standardized", datetimes.standardize_iso(F.col("date_str")))
+            .withColumn("is_valid", datetimes.is_valid_date(F.col("date_str")))
+            .withColumn("year", datetimes.extract_year(F.col("date_str")))
+            .withColumn("month", datetimes.extract_month(F.col("date_str")))
+            .withColumn("day", datetimes.extract_day(F.col("date_str")))
         )
         result_df.count()  # Force evaluation
         end_time = time.time()
@@ -179,14 +174,14 @@ class TestDatetimePerformance:
         start_time = time.time()
         result_df = df.withColumn(
             "standardized", datetimes.standardize_iso(F.col("date_str"))
-        ).withColumn(
-            "is_valid", datetimes.is_valid_date(F.col("date_str"))
-        )
+        ).withColumn("is_valid", datetimes.is_valid_date(F.col("date_str")))
         result_df.count()
         end_time = time.time()
 
         elapsed = end_time - start_time
-        print(f"\nInvalid-heavy dataset (50K records, 80% invalid): {elapsed:.3f} seconds")
+        print(
+            f"\nInvalid-heavy dataset (50K records, 80% invalid): {elapsed:.3f} seconds"
+        )
 
         # Invalid data shouldn't significantly slow down processing
         assert elapsed < 25.0, f"Invalid-heavy dataset took too long: {elapsed:.3f}s"
@@ -228,7 +223,9 @@ class TestDatetimePerformance:
         end_time = time.time()
 
         elapsed = end_time - start_time
-        print(f"\nWide variety formats (100K records, 20 formats): {elapsed:.3f} seconds")
+        print(
+            f"\nWide variety formats (100K records, 20 formats): {elapsed:.3f} seconds"
+        )
 
         assert elapsed < 35.0, f"Wide variety dataset took too long: {elapsed:.3f}s"
 
@@ -280,13 +277,12 @@ class TestDatetimeScalability:
         df = create_session.createDataFrame(test_dates, ["date_str"])
 
         # Apply multiple transformations
-        result_df = df.withColumn(
-            "standardized", datetimes.standardize_iso(F.col("date_str"))
-        ).withColumn(
-            "year", datetimes.extract_year(F.col("standardized"))
-        ).withColumn(
-            "month", datetimes.extract_month(F.col("standardized"))
-        ).cache()
+        result_df = (
+            df.withColumn("standardized", datetimes.standardize_iso(F.col("date_str")))
+            .withColumn("year", datetimes.extract_year(F.col("standardized")))
+            .withColumn("month", datetimes.extract_month(F.col("standardized")))
+            .cache()
+        )
 
         # Force materialization
         count = result_df.count()
@@ -320,7 +316,9 @@ class TestDatetimeScalability:
             end_time = time.time()
 
             timings[num_partitions] = end_time - start_time
-            print(f"\n{num_partitions} partitions: {timings[num_partitions]:.3f} seconds")
+            print(
+                f"\n{num_partitions} partitions: {timings[num_partitions]:.3f} seconds"
+            )
 
         # More partitions should generally be faster (up to a point)
         # But this depends on cluster size, so we just verify it runs

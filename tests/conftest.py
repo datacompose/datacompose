@@ -15,7 +15,6 @@ from datacompose.functions import set_backend
 BACKENDS = [b.strip() for b in os.environ.get("TEST_BACKENDS", "duckdb").split(",")]
 
 
-
 @pytest.fixture(scope="session", params=BACKENDS)
 def backend(request):
     """Parameterized backend fixture - tests run against each backend."""

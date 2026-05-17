@@ -2,26 +2,19 @@
 Init command for initializing a Datacompose project configuration.
 """
 
+import importlib.util
 import json
 import os
 import sys
-try:
-    import termios as _termios_check
-    _USE_TERMIOS = True
-except ImportError:
-    _USE_TERMIOS = False
-
-try:
-    import msvcrt as _msvcrt_check
-    _USE_MSVCRT = True
-except ImportError:
-    _USE_MSVCRT = False
 from pathlib import Path
 from typing import Any, Dict
 
 import click
 
 from datacompose.cli.colors import dim, error, highlight, info, success
+
+_USE_TERMIOS = importlib.util.find_spec("termios") is not None
+_USE_MSVCRT = importlib.util.find_spec("msvcrt") is not None
 
 # Get the directory where this module is located
 
@@ -104,6 +97,7 @@ class InitCommand:
         if _USE_TERMIOS:
             import termios
             import tty
+
             try:
                 fd = sys.stdin.fileno()
                 old_settings = termios.tcgetattr(fd)
@@ -121,6 +115,7 @@ class InitCommand:
 
         if _USE_MSVCRT:
             import msvcrt
+
             key = msvcrt.getch().decode("utf-8", errors="replace")  # type: ignore[attr-defined]
             # Handle arrow keys (two-byte sequences: \x00 or \xe0 prefix)
             if key in ("\x00", "\xe0"):
@@ -443,10 +438,11 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
             config = template_config
             print("Using default configuration...")
         else:
-            config = InitCommand.prompt_for_config(template_config)
+            prompted = InitCommand.prompt_for_config(template_config)
             # Check if user cancelled the configuration
-            if config is None:
+            if prompted is None:
                 return 0
+            config = prompted
 
         # Write the configuration file
         with open(config_path, "w") as f:

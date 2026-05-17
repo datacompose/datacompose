@@ -2,7 +2,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import click
 import pytest
@@ -254,7 +254,7 @@ class TestErrorHandling:
         mock_cli.side_effect = click.ClickException("Click error")
 
         with patch("sys.exit") as mock_exit:
-            with patch("click.echo") as mock_echo:
+            with patch("click.echo"):
                 main()
                 # ClickException might be handled differently
                 mock_exit.assert_called()

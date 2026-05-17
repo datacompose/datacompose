@@ -10,8 +10,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from datacompose import functions
-from datacompose.functions import (
+from datacompose import functions  # noqa: E402
+from datacompose.functions import (  # noqa: E402
     SUPPORTED_BACKENDS,
     BackendNotInitializedError,
     UnsupportedBackendError,
@@ -167,11 +167,14 @@ class TestFunctionsGetattr:
 class TestBackendModulePaths:
     """Tests to verify correct module paths for each backend."""
 
-    @pytest.mark.parametrize("backend_name,expected_path", [
-        ("duckdb", "sqlframe.duckdb.functions"),
-        ("pyspark", "sqlframe.spark.functions"),
-        ("postgres", "sqlframe.postgres.functions"),
-    ])
+    @pytest.mark.parametrize(
+        "backend_name,expected_path",
+        [
+            ("duckdb", "sqlframe.duckdb.functions"),
+            ("pyspark", "sqlframe.spark.functions"),
+            ("postgres", "sqlframe.postgres.functions"),
+        ],
+    )
     def test_backend_module_path(self, backend_name, expected_path):
         """Test that each backend maps to the correct module path."""
         set_backend(backend_name)

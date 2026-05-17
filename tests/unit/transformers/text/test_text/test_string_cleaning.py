@@ -6,7 +6,6 @@ Covers control characters, zero-width chars, unicode normalization, and whitespa
 import pytest
 from datacompose.functions import functions as F
 
-
 # =============================================================================
 # TEST DATA
 # =============================================================================
@@ -266,22 +265,28 @@ CLEAN_STRING_DATA = [
 # TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestControlCharacterCleaning:
     """Tests for control character cleaning functions."""
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_CONTROL_CHARS_DATA)
-    def test_remove_control_characters(self, create_session, backend, input_val, expected):
+    def test_remove_control_characters(
+        self, create_session, backend, input_val, expected
+    ):
         """Test removal of control characters while preserving tabs/newlines."""
         if backend == "postgres" and input_val and "\x00" in input_val:
             pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.remove_control_characters(F.col("input")))
+        result_df = df.withColumn(
+            "result", text.remove_control_characters(F.col("input"))
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_control_characters({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_control_characters({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_NON_PRINTABLE_DATA)
     def test_remove_non_printable(self, create_session, backend, input_val, expected):
@@ -290,22 +295,24 @@ class TestControlCharacterCleaning:
             pytest.skip("postgres regex pattern contains null byte literal")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_non_printable(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_non_printable({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_non_printable({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_ANSI_CODES_DATA)
     def test_remove_ansi_codes(self, create_session, input_val, expected):
         """Test removal of ANSI escape codes."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_ansi_codes(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_ansi_codes({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_ansi_codes({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -317,11 +324,14 @@ class TestInvisibleCharacterCleaning:
         """Test removal of zero-width characters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.remove_zero_width_characters(F.col("input")))
+        result_df = df.withColumn(
+            "result", text.remove_zero_width_characters(F.col("input"))
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_zero_width_characters({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_zero_width_characters({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", STRIP_INVISIBLE_DATA)
     def test_strip_invisible(self, create_session, backend, input_val, expected):
@@ -330,22 +340,24 @@ class TestInvisibleCharacterCleaning:
             pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.strip_invisible(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"strip_invisible({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"strip_invisible({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_BOM_DATA)
     def test_remove_bom(self, create_session, input_val, expected):
         """Test removal of byte order mark."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_bom(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_bom({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_bom({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -357,22 +369,24 @@ class TestUnicodeNormalizationCleaning:
         """Test unicode normalization (NFKC + common replacements)."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.normalize_unicode(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"normalize_unicode({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"normalize_unicode({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_ACCENTS_DATA)
     def test_remove_accents(self, create_session, input_val, expected):
         """Test removal of accents/diacritics."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_accents(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_accents({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_accents({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -384,11 +398,12 @@ class TestWhitespaceCleaning:
         """Test whitespace normalization (trim + collapse multiple)."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.normalize_whitespace(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"normalize_whitespace({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"normalize_whitespace({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -400,33 +415,36 @@ class TestContentRemovalCleaning:
         """Test removal of HTML tags."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_html_tags(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_html_tags({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_html_tags({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_URLS_DATA)
     def test_remove_urls(self, create_session, input_val, expected):
         """Test removal of URLs."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_urls(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_urls({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_urls({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_EMOJIS_DATA)
     def test_remove_emojis(self, create_session, input_val, expected):
         """Test removal of emojis."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_emojis(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_emojis({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_emojis({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -438,55 +456,62 @@ class TestCharacterTypeCleaning:
         """Test removal of punctuation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_punctuation(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_punctuation({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_punctuation({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_DIGITS_DATA)
     def test_remove_digits(self, create_session, input_val, expected):
         """Test removal of digits."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_digits(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_digits({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_digits({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_LETTERS_DATA)
     def test_remove_letters(self, create_session, input_val, expected):
         """Test removal of letters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.remove_letters(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_letters({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_letters({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", REMOVE_ESCAPE_SEQUENCES_DATA)
     def test_remove_escape_sequences(self, create_session, input_val, expected):
         """Test removal of literal escape sequences."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.remove_escape_sequences(F.col("input")))
+        result_df = df.withColumn(
+            "result", text.remove_escape_sequences(F.col("input"))
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"remove_escape_sequences({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"remove_escape_sequences({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", STRIP_TO_ALPHANUMERIC_DATA)
     def test_strip_to_alphanumeric(self, create_session, input_val, expected):
         """Test stripping to alphanumeric only."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.strip_to_alphanumeric(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"strip_to_alphanumeric({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"strip_to_alphanumeric({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -498,33 +523,38 @@ class TestComprehensiveCleaning:
         """Test comprehensive cleaning for string comparison."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_for_comparison(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"clean_for_comparison({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"clean_for_comparison({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", SLUGIFY_DATA)
     def test_slugify(self, create_session, input_val, expected):
         """Test slugification."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.slugify(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"slugify({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"slugify({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,max_repeat,expected", COLLAPSE_REPEATS_DATA)
     def test_collapse_repeats(self, create_session, input_val, max_repeat, expected):
         """Test collapsing repeated characters."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.collapse_repeats(F.col("input"), max_repeat=max_repeat))
+        result_df = df.withColumn(
+            "result", text.collapse_repeats(F.col("input"), max_repeat=max_repeat)
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"collapse_repeats({input_val!r}, {max_repeat}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"collapse_repeats({input_val!r}, {max_repeat}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", CLEAN_STRING_DATA)
     def test_clean_string(self, create_session, backend, input_val, expected):
@@ -533,8 +563,9 @@ class TestComprehensiveCleaning:
             pytest.skip("postgres cannot store null bytes in text")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_string(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"clean_string({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"clean_string({input_val!r}) = {result!r}, expected {expected!r}"

@@ -86,7 +86,8 @@ class TestPhoneExtraction:
 
         # Use our new extract_phone_numbers_from_text function
         result_df = df.withColumn(
-            "extracted_phone", phone_numbers.extract_phone_numbers_from_text(F.col("text"))
+            "extracted_phone",
+            phone_numbers.extract_phone_numbers_from_text(F.col("text")),
         )
 
         results = result_df.collect()
@@ -604,13 +605,15 @@ class TestPhoneCleaning:
             ("invalid_phone",),  # Invalid format
             (None,),  # Null input
         ]
-        
+
         df = create_session.createDataFrame(test_data, ["phone"])
 
         # Test hashing without standardization to avoid memory issues
         result_df = df.select(
-            "phone", 
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("hashed_phone")
+            "phone",
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "hashed_phone"
+            ),
         )
 
         results = result_df.collect()
@@ -637,14 +640,18 @@ class TestPhoneCleaning:
             ("5551234567",),
             ("15551235555",),
         ]
-        
+
         df = create_session.createDataFrame(test_data, ["phone"])
 
         # Test with different salts
         result_df = df.select(
             "phone",
-            hash_phone_numbers_sha256(F.col("phone"), salt="", standardize_first=False).alias("no_salt"),
-            hash_phone_numbers_sha256(F.col("phone"), salt="phone_salt", standardize_first=False).alias("with_salt")
+            hash_phone_numbers_sha256(
+                F.col("phone"), salt="", standardize_first=False
+            ).alias("no_salt"),
+            hash_phone_numbers_sha256(
+                F.col("phone"), salt="phone_salt", standardize_first=False
+            ).alias("with_salt"),
         )
 
         results = result_df.collect()
@@ -670,22 +677,28 @@ class TestPhoneCleaning:
             ("(555) 123-4567",),  # With parentheses
             ("+1 555 123 4567",),  # International format
         ]
-        
+
         df = create_session.createDataFrame(test_data, ["phone"])
 
         # Test without standardization to avoid memory issues
         result_df = df.select(
             "phone",
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("standardized_hash"),
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("raw_hash")
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "standardized_hash"
+            ),
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "raw_hash"
+            ),
         )
 
         results = result_df.collect()
 
         # Without standardization, variations should be different
-        standardized_hashes = [r["standardized_hash"] for r in results if r["standardized_hash"]]
+        standardized_hashes = [
+            r["standardized_hash"] for r in results if r["standardized_hash"]
+        ]
         raw_hashes = [r["raw_hash"] for r in results if r["raw_hash"]]
-        
+
         # Both columns should be identical since both use standardize_first=False
         assert standardized_hashes == raw_hashes
         # Without standardization, they should be different
@@ -698,14 +711,18 @@ class TestPhoneCleaning:
         )
 
         test_phone = "555-123-4567"
-        
+
         # Create multiple rows with the same phone
         test_data = [(test_phone,)] * 3
         df = create_session.createDataFrame(test_data, ["phone"])
 
         result_df = df.select(
-            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias("hash1"),
-            hash_phone_numbers_sha256(F.col("phone"), salt="salt1", standardize_first=False).alias("hash2")
+            hash_phone_numbers_sha256(F.col("phone"), standardize_first=False).alias(
+                "hash1"
+            ),
+            hash_phone_numbers_sha256(
+                F.col("phone"), salt="salt1", standardize_first=False
+            ).alias("hash2"),
         )
 
         results = result_df.collect()
@@ -713,7 +730,7 @@ class TestPhoneCleaning:
         # All hashes should be identical for the same input
         hashes1 = [r["hash1"] for r in results]
         hashes2 = [r["hash2"] for r in results]
-        
+
         assert len(set(hashes1)) == 1  # All identical
         assert len(set(hashes2)) == 1  # All identical
         assert hashes1[0] != hashes2[0]  # But different salts produce different hashes

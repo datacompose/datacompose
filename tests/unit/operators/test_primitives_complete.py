@@ -3,10 +3,9 @@
 import logging
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-from pyspark.sql import SparkSession
 from datacompose.functions import functions as F
 
 # Add project root to path for imports
@@ -301,7 +300,7 @@ class TestCompose:
 
         @registry.compose()
         def reverse_text():
-            test.reverse()
+            test.reverse()  # noqa: F821
 
         df = create_session.createDataFrame([("hello",)], ["text"])
         result = df.select(reverse_text(F.col("text"))).collect()

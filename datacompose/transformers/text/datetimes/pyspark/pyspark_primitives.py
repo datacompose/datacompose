@@ -49,7 +49,7 @@ Installation:
 datacompose add datetimes
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from pyspark.sql import Column
@@ -169,9 +169,7 @@ def extract_datetime_from_text(col: Column) -> Column:
 
     # Just year: 2024 (but not part of a larger date)
     # This is lowest priority in coalesce, so date-specific patterns catch dates first
-    year_only = F.regexp_extract(
-        col, r"\b(20\d{2}|19\d{2})\b", 1
-    )
+    year_only = F.regexp_extract(col, r"\b(20\d{2}|19\d{2})\b", 1)
 
     # Return first non-empty match using coalesce
     return F.coalesce(
@@ -1347,7 +1345,9 @@ def format_date(col: Column, format: str = "yyyy-MM-dd") -> Column:
     # Convert to timestamp and format
     return F.when(
         standardized.isNotNull(),
-        F.date_format(F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss"), clean_format),
+        F.date_format(
+            F.to_timestamp(standardized, "yyyy-MM-dd HH:mm:ss"), clean_format
+        ),
     ).otherwise(None)
 
 
