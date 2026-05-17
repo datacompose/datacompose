@@ -14,9 +14,9 @@ df.show()
 
 # %%
 
-from pyspark.sql import functions as F
+from pyspark.sql import functions as F  # noqa: E402
 
-from transformers.pyspark.phone_numbers import phone_numbers
+from transformers.pyspark.phone_numbers import phone_numbers  # noqa: E402
 
 
 # Example 1: Basic compose with if-then for phone validation and formatting

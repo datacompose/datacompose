@@ -5,7 +5,6 @@ Tests transformation speed and scalability with large datasets.
 
 import pytest
 from datacompose.functions import functions as F
-from datetime import datetime, timedelta
 import time
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes

@@ -1,7 +1,6 @@
 """Test that generated code can properly import and use PrimitiveRegistry."""
 
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest

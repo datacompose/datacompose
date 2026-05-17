@@ -260,7 +260,6 @@ class TestDataTypeRegressions:
         """
 
         # Create dataframe with actual dates (not strings)
-        from datetime import datetime as dt
 
         test_data = [
             ("2024-01-15",),
@@ -339,9 +338,7 @@ class TestBoundaryConditions:
 
         results = result_df.collect()
         for row in results:
-            is_parsed = row["standardized"] is not None
-            # Document boundary behavior
-            pass
+            pass  # Document boundary behavior
 
     def test_month_boundary_transitions(self, create_session):
         """

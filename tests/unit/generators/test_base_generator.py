@@ -11,8 +11,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from datacompose.generators.pyspark.generator import (
-    SparkPandasUDFGenerator,  # noqa: E402
+from datacompose.generators.pyspark.generator import (  # noqa: E402
+    SparkPandasUDFGenerator,
 )
 
 

@@ -235,7 +235,7 @@ class TestDatetimeNullAndEmpty:
 
         # Verify nulls are handled
         assert results[0]["standardized"] is None
-        assert results[0]["is_valid"] == False or results[0]["is_valid"] is None
+        assert not results[0]["is_valid"] or results[0]["is_valid"] is None
         assert results[0]["year"] is None
 
         # Verify valid dates still work
@@ -264,7 +264,7 @@ class TestDatetimeNullAndEmpty:
 
         # Empty strings should be handled gracefully
         assert results[0]["standardized"] is None
-        assert results[0]["is_valid"] == False or results[0]["is_valid"] is None
+        assert not results[0]["is_valid"] or results[0]["is_valid"] is None
 
         # Valid date still works
         assert results[1]["standardized"] is not None

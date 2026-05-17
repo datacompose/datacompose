@@ -5,7 +5,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, call, mock_open
+from unittest.mock import patch, mock_open
 import pytest
 from click.testing import CliRunner
 
@@ -17,7 +17,6 @@ from datacompose.cli.commands.init import (  # noqa: E402
     InitCommand,
     _run_init,
     DEFAULT_CONFIG,
-    init,
 )
 from datacompose.cli.main import cli  # noqa: E402
 

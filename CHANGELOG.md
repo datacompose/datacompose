@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Windows/PowerShell Support**: `datacompose init` now works on Windows via `msvcrt` for interactive arrow key navigation
+- **CI/CD Pipeline**: GitHub Actions publish workflow that triggers on `v*` tags on the `main` branch only
+  - Version consistency check across all 5 version locations before publishing
+- **Version Management**: `bump-my-version` integration for bumping versions across all files in one command
+
 ## [0.5.0] - 2026-03-14
 
 ### Added
@@ -32,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Distance functions**: `levenshtein`, `levenshtein_normalized`, `levenshtein_threshold`
   - **Phonetic functions**: `soundex`, `soundex_match`
   - **Token-based functions**: `jaccard_similarity`, `token_overlap`
+  - 
   - **N-gram functions**: `ngram_similarity`, `ngram_distance`
   - **Utility functions**: `exact_match`, `contains_match`, `prefix_match`
   - **Advanced**: `cosine_similarity` for term-frequency based comparison

@@ -49,7 +49,7 @@ Installation:
 datacompose add datetimes
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from pyspark.sql import Column

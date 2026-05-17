@@ -2,26 +2,19 @@
 Init command for initializing a Datacompose project configuration.
 """
 
+import importlib.util
 import json
 import os
 import sys
-try:
-    import termios as _termios_check
-    _USE_TERMIOS = True
-except ImportError:
-    _USE_TERMIOS = False
-
-try:
-    import msvcrt as _msvcrt_check
-    _USE_MSVCRT = True
-except ImportError:
-    _USE_MSVCRT = False
 from pathlib import Path
 from typing import Any, Dict
 
 import click
 
 from datacompose.cli.colors import dim, error, highlight, info, success
+
+_USE_TERMIOS = importlib.util.find_spec("termios") is not None
+_USE_MSVCRT = importlib.util.find_spec("msvcrt") is not None
 
 # Get the directory where this module is located
 

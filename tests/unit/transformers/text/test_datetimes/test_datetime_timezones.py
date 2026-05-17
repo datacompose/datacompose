@@ -5,7 +5,6 @@ Tests timezone conversions, normalizations, and edge cases.
 
 import pytest
 from datacompose.functions import functions as F
-from datetime import datetime
 
 from datacompose.transformers.text.datetimes.pyspark.pyspark_primitives import datetimes
 

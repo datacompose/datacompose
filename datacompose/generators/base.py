@@ -135,11 +135,9 @@ class BaseGenerator(ABC):
         # Find the transformers directory root
         path_parts = output_path.parts
         try:
-            transformers_index = path_parts.index("transformers")
-            transformers_root = Path(*path_parts[: transformers_index + 1])
+            path_parts.index("transformers")
         except ValueError:
-            # Fallback to parent directory if no 'transformers' in path
-            transformers_root = output_path.parent.parent
+            pass
 
         # Create utils directory in the same directory as the generated files
         # This puts it at transformers/pyspark/utils

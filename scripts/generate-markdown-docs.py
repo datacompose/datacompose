@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """Generate markdown documentation files for all dialects."""
 
-import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Any
-import json
 import ast
-import inspect
 
 def extract_function_info(func_code: str) -> Dict[str, Any]:
     """Extract function signature and docstring from function code."""
@@ -49,7 +46,7 @@ def extract_function_info(func_code: str) -> Dict[str, Any]:
             'has_compose': has_compose,
             'signature': f"{func_def.name}({', '.join(args)})"
         }
-    except:
+    except Exception:
         return None
 
 def scan_transformers_directory(transformers_dir: Path) -> Dict[str, Dict[str, Dict[str, List[Dict[str, Any]]]]]:
@@ -94,7 +91,7 @@ def scan_transformers_directory(transformers_dir: Path) -> Dict[str, Dict[str, D
                                     if func_info:
                                         func_info['file'] = py_file.stem
                                         primitives[lib_name][dialect].append(func_info)
-                    except:
+                    except Exception:
                         continue
                 
                 # Sort functions alphabetically

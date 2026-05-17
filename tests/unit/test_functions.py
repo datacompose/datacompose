@@ -10,8 +10,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from datacompose import functions
-from datacompose.functions import (
+from datacompose import functions  # noqa: E402
+from datacompose.functions import (  # noqa: E402
     SUPPORTED_BACKENDS,
     BackendNotInitializedError,
     UnsupportedBackendError,

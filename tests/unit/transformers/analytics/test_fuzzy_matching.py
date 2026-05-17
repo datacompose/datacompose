@@ -104,8 +104,6 @@ class TestLevenshtein:
 
     def test_levenshtein_threshold_configured(self, sample_df):
         """Test pre-configured Levenshtein threshold."""
-        strict_match = fuzzy.levenshtein_threshold(threshold=0.9)
-
         result = (
             sample_df.filter(F.col("col_a").isNotNull())
             .select(

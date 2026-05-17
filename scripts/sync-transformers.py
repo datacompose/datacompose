@@ -272,9 +272,9 @@ class TransformerDocGenerator:
             module_docstring = ast.get_docstring(tree)
             if not module_docstring:
                 return {}
-        except:
+        except Exception:
             return {}
-        
+
         sections = {}
         
         # Extract Preview Output
@@ -325,7 +325,7 @@ class TransformerDocGenerator:
         # Create DataFrame
         try:
             df = pd.DataFrame(data, columns=headers)
-        except:
+        except Exception:
             return table_text  # Fallback if parsing fails
         
         # Color schemes for each column position
@@ -551,7 +551,7 @@ class TransformerDocGenerator:
             functions = self.extract_registered_functions(primitives_file, registry_name)
             
             if not functions:
-                print(f"  No registered functions found")
+                print("  No registered functions found")
                 continue
             
             print(f"  Extracted {len(functions)} functions")
