@@ -18,7 +18,9 @@ def fix_typos_optimized(create_session, email_df, email_col="email"):
     """
     # Create typo mapping DataFrame
     typo_data = [(k, v) for k, v in DOMAIN_TYPO_MAPPINGS.items()]
-    typo_df = create_session.createDataFrame(typo_data, ["typo_domain", "correct_domain"])
+    typo_df = create_session.createDataFrame(
+        typo_data, ["typo_domain", "correct_domain"]
+    )
 
     # Extract domain and join with typo mappings
     result_df = (
@@ -66,7 +68,9 @@ class TestOptimizedEmailFunctions:
         result_df = fix_typos_optimized(create_session, df)
 
         # Collect results - use dict lookup since join may reorder rows
-        results = {row["original_email"]: row["fixed_email"] for row in result_df.collect()}
+        results = {
+            row["original_email"]: row["fixed_email"] for row in result_df.collect()
+        }
 
         # Verify each result
         for original, expected in test_data:

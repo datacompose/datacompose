@@ -62,7 +62,9 @@ class ListCommand:
         for target in AddCommand.AVAILABLE_TARGETS.keys():
             print(f"  • {target}")
 
-        print("\n💡 Use 'datacompose add <transformer> --target <target>' to generate UDFs")
+        print(
+            "\n💡 Use 'datacompose add <transformer> --target <target>' to generate UDFs"
+        )
         return 0
 
     @staticmethod
@@ -91,10 +93,14 @@ class ListCommand:
 
         for domain, domain_transformers in sorted(domains.items()):
             print(f"\n  {domain}/")
-            for transformer_name, transformer_path in sorted(domain_transformers.items()):
+            for transformer_name, transformer_path in sorted(
+                domain_transformers.items()
+            ):
                 print(f"    • {transformer_name}")
 
-        print("\nUsage: datacompose add <transformer> --target <platform> [--type <type>]")
+        print(
+            "\nUsage: datacompose add <transformer> --target <platform> [--type <type>]"
+        )
         print("Example: datacompose add emails --target pyspark")
         return 0
 
@@ -113,6 +119,8 @@ class ListCommand:
             for gen_type, gen_class in sorted(platform_generators.items()):
                 print(f"    • {gen_type} ({gen_class.__name__})")
 
-        print("\nUsage: datacompose add <transformer> --target <platform> [--type <type>]")
+        print(
+            "\nUsage: datacompose add <transformer> --target <platform> [--type <type>]"
+        )
         print("Example: datacompose add emails --target pyspark")
         return 0

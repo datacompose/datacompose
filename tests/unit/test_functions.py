@@ -167,11 +167,14 @@ class TestFunctionsGetattr:
 class TestBackendModulePaths:
     """Tests to verify correct module paths for each backend."""
 
-    @pytest.mark.parametrize("backend_name,expected_path", [
-        ("duckdb", "sqlframe.duckdb.functions"),
-        ("pyspark", "sqlframe.spark.functions"),
-        ("postgres", "sqlframe.postgres.functions"),
-    ])
+    @pytest.mark.parametrize(
+        "backend_name,expected_path",
+        [
+            ("duckdb", "sqlframe.duckdb.functions"),
+            ("pyspark", "sqlframe.spark.functions"),
+            ("postgres", "sqlframe.postgres.functions"),
+        ],
+    )
     def test_backend_module_path(self, backend_name, expected_path):
         """Test that each backend maps to the correct module path."""
         set_backend(backend_name)

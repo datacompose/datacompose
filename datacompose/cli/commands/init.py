@@ -97,6 +97,7 @@ class InitCommand:
         if _USE_TERMIOS:
             import termios
             import tty
+
             try:
                 fd = sys.stdin.fileno()
                 old_settings = termios.tcgetattr(fd)
@@ -114,6 +115,7 @@ class InitCommand:
 
         if _USE_MSVCRT:
             import msvcrt
+
             key = msvcrt.getch().decode("utf-8", errors="replace")  # type: ignore[attr-defined]
             # Handle arrow keys (two-byte sequences: \x00 or \xe0 prefix)
             if key in ("\x00", "\xe0"):

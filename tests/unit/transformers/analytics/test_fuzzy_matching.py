@@ -388,7 +388,9 @@ class TestCosineSimilarity:
 
     def test_cosine_similarity_identical(self, create_session):
         """Test Cosine similarity with identical strings."""
-        df = create_session.createDataFrame([("hello world", "hello world")], ["a", "b"])
+        df = create_session.createDataFrame(
+            [("hello world", "hello world")], ["a", "b"]
+        )
         result = df.select(
             fuzzy.cosine_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()
@@ -405,11 +407,11 @@ class TestCosineSimilarity:
 
     def test_cosine_similarity_partial(self, create_session):
         """Test Cosine similarity with partial overlap."""
-        df = create_session.createDataFrame([("hello world", "hello there")], ["a", "b"])
+        df = create_session.createDataFrame(
+            [("hello world", "hello there")], ["a", "b"]
+        )
         result = df.select(
             fuzzy.cosine_similarity(F.col("a"), F.col("b")).alias("sim")
         ).collect()
         # Should have some similarity due to "hello"
         assert 0.0 < result[0]["sim"] < 1.0
-
-

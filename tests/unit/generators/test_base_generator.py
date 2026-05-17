@@ -169,7 +169,9 @@ def {{ udf_name }}(input_value):
         # Check that __init__.py files are created in transformers hierarchy
         assert (temp_dir / "transformers" / "__init__.py").exists()
         assert (temp_dir / "transformers" / "spark" / "__init__.py").exists()
-        assert (temp_dir / "transformers" / "spark" / "email_cleaner" / "__init__.py").exists()
+        assert (
+            temp_dir / "transformers" / "spark" / "email_cleaner" / "__init__.py"
+        ).exists()
 
     # Test file generation methods were removed in refactoring
     # The generator no longer creates test files, only primitives files

@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+
 # import yaml  # No longer needed - spec files removed
 from click.testing import CliRunner
 
@@ -185,7 +186,7 @@ class TestListCommand:
         # Create a transformer directory structure
         transformer_dir = temp_dir / "test_domain" / "test_transformer" / "pyspark"
         transformer_dir.mkdir(parents=True)
-        
+
         # Create a pyspark_primitives.py file to make it a valid transformer
         primitives_file = transformer_dir / "pyspark_primitives.py"
         primitives_file.write_text("# Test transformer")

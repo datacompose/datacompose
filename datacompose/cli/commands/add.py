@@ -13,7 +13,6 @@ from datacompose.transformers.discovery import TransformerDiscovery
 from datacompose.functions import set_backend as set_target
 
 
-
 # Completion functions for Click shell completion
 def complete_transformer(ctx, param, incomplete):
     """Complete transformer names from discovery system."""
@@ -115,18 +114,14 @@ def add(ctx, transformer, target, type, output, verbose):
     if target is None:
         # If no config file exists or is malformed, fail early
         if config is None:
-            print(
-                error(
-                    "Error: No target specified and no config file found"
-                )
-            )
+            print(error("Error: No target specified and no config file found"))
             print(
                 info(
                     "Please specify a target with --target or run 'datacompose init' to set up defaults"
                 )
             )
             ctx.exit(1)
-            
+
         # Try to get default target from config
         target = ConfigLoader.get_default_target(config)
         if not target:
@@ -212,7 +207,7 @@ def _run_add(transformer, target, output, verbose) -> int:
     try:
         # Create generator instance
         # Note: template_dir is required by base class but not used by current generators
-        Generator = generator_class( # This is a class
+        Generator = generator_class(  # This is a class
             template_dir=Path("."),  # Placeholder - not actually used
             output_dir=Path(output_dir),
             verbose=verbose,

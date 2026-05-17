@@ -826,7 +826,10 @@ class TestEmailEdgeCases:
 
         # Test hashing without standardization to avoid memory issues
         result_df = df.select(
-            "email", hash_email_sha256(F.col("email"), standardize_first=False).alias("hashed_email")
+            "email",
+            hash_email_sha256(F.col("email"), standardize_first=False).alias(
+                "hashed_email"
+            ),
         )
 
         results = result_df.collect()
@@ -857,8 +860,12 @@ class TestEmailEdgeCases:
         # Test with different salts
         result_df = df.select(
             "email",
-            hash_email_sha256(F.col("email"), salt="", standardize_first=False).alias("no_salt"),
-            hash_email_sha256(F.col("email"), salt="email_salt", standardize_first=False).alias("with_salt"),
+            hash_email_sha256(F.col("email"), salt="", standardize_first=False).alias(
+                "no_salt"
+            ),
+            hash_email_sha256(
+                F.col("email"), salt="email_salt", standardize_first=False
+            ).alias("with_salt"),
         )
 
         results = result_df.collect()
@@ -904,7 +911,9 @@ class TestEmailEdgeCases:
         raw_hashes = [r["raw_hash"] for r in results if r["raw_hash"]]
 
         # Both should be different without canonicalization
-        assert len(set(canonical_hashes)) > 1  # Should be different without canonicalization
+        assert (
+            len(set(canonical_hashes)) > 1
+        )  # Should be different without canonicalization
         assert len(set(raw_hashes)) > 1  # Should be different without canonicalization
         assert canonical_hashes == raw_hashes  # Both columns should be identical
 
@@ -922,7 +931,9 @@ class TestEmailEdgeCases:
 
         result_df = df.select(
             hash_email_sha256(F.col("email"), standardize_first=False).alias("hash1"),
-            hash_email_sha256(F.col("email"), salt="salt1", standardize_first=False).alias("hash2"),
+            hash_email_sha256(
+                F.col("email"), salt="salt1", standardize_first=False
+            ).alias("hash2"),
         )
 
         results = result_df.collect()

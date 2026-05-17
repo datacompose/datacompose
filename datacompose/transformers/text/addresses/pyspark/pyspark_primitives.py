@@ -2023,7 +2023,9 @@ def remove_po_box(col: Column) -> Column:
     col = F.when(col.isNull(), F.lit("")).otherwise(col)
 
     # Remove PO Box patterns - handle POB separately to avoid false positives
-    main_pattern = r"(?i),?\s*(?:P\.?\s?O\.?\s?Box|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)\s*,?"
+    main_pattern = (
+        r"(?i),?\s*(?:P\.?\s?O\.?\s?Box|Post\s+Office\s+Box)\s+(#?[A-Z0-9\-/]+)\s*,?"
+    )
     pob_pattern = r"(?i),?\s*\bPOB\s+(#?\d[A-Z0-9\-/]*)\s*,?"
 
     # Remove both PO Box patterns

@@ -6,7 +6,6 @@ Covers hex conversion, base64, URL encoding, HTML entities, and escape sequences
 import pytest
 from datacompose.functions import functions as F
 
-
 # =============================================================================
 # TEST DATA
 # =============================================================================
@@ -138,7 +137,10 @@ HTML_DECODE_DATA = [
     ("&#60;", "<"),
     ("&#x3C;", "<"),
     ("&#x3c;", "<"),
-    ("&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;", '<script>alert("xss")</script>'),
+    (
+        "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;",
+        '<script>alert("xss")</script>',
+    ),
     ("Tom &amp; Jerry", "Tom & Jerry"),
     ("5 &gt; 3 &amp;&amp; 3 &lt; 5", "5 > 3 && 3 < 5"),
     ("&copy;", "©"),
@@ -179,7 +181,7 @@ ESCAPE_DATA = [
     ("hello\nworld", r"hello\nworld"),
     ("tab\there", r"tab\there"),
     ("back\\slash", r"back\\slash"),
-    ('quote"here', r'quote\"here'),
+    ('quote"here', r"quote\"here"),
     ("\r\n", r"\r\n"),
     ("", ""),
     (None, ""),
@@ -263,6 +265,7 @@ PAD_RIGHT_DATA = [
 # TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestHexTransformations:
     """Tests for hexadecimal transformation functions."""
@@ -274,11 +277,12 @@ class TestHexTransformations:
             pytest.skip("sqlframe postgres has no unhex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.hex_to_text(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"hex_to_text({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"hex_to_text({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", TEXT_TO_HEX_DATA)
     def test_text_to_hex(self, create_session, backend, input_val, expected):
@@ -287,11 +291,12 @@ class TestHexTransformations:
             pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.text_to_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"text_to_hex({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"text_to_hex({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", CLEAN_HEX_DATA)
     def test_clean_hex(self, create_session, backend, input_val, expected):
@@ -300,11 +305,12 @@ class TestHexTransformations:
             pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"clean_hex({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"clean_hex({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", EXTRACT_HEX_DATA)
     def test_extract_hex(self, create_session, backend, input_val, expected):
@@ -313,11 +319,12 @@ class TestHexTransformations:
             pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.extract_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"extract_hex({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"extract_hex({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -329,44 +336,48 @@ class TestBase64Transformations:
         """Test base64 decoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.decode_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"decode_base64({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"decode_base64({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", BASE64_ENCODE_DATA)
     def test_encode_base64(self, create_session, input_val, expected):
         """Test base64 encoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.encode_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"encode_base64({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"encode_base64({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", CLEAN_BASE64_DATA)
     def test_clean_base64(self, create_session, input_val, expected):
         """Test base64 string cleaning."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.clean_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"clean_base64({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"clean_base64({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", EXTRACT_BASE64_DATA)
     def test_extract_base64(self, create_session, input_val, expected):
         """Test base64 extraction from mixed content."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.extract_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"extract_base64({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"extract_base64({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -378,22 +389,24 @@ class TestUrlEncodingTransformations:
         """Test URL decoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.decode_url(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"decode_url({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"decode_url({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", URL_ENCODE_DATA)
     def test_encode_url(self, create_session, input_val, expected):
         """Test URL encoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.encode_url(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"encode_url({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"encode_url({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -405,22 +418,24 @@ class TestHtmlEntityTransformations:
         """Test HTML entity decoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.decode_html_entities(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"decode_html_entities({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"decode_html_entities({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", HTML_ENCODE_DATA)
     def test_encode_html_entities(self, create_session, input_val, expected):
         """Test HTML entity encoding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.encode_html_entities(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"encode_html_entities({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"encode_html_entities({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -432,22 +447,24 @@ class TestEscapeSequenceTransformations:
         """Test unescaping literal escape sequences."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.unescape_string(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"unescape_string({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"unescape_string({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", ESCAPE_DATA)
     def test_escape_string(self, create_session, input_val, expected):
         """Test escaping to literal escape sequences."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.escape_string(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"escape_string({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"escape_string({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -459,11 +476,12 @@ class TestLineEndingTransformations:
         """Test line ending normalization."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.normalize_line_endings(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"normalize_line_endings({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"normalize_line_endings({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -477,11 +495,12 @@ class TestUnicodeTransformations:
             pytest.skip("postgres regex pattern with unicode char class unsupported")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.to_ascii(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"to_ascii({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"to_ascii({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", TO_CODEPOINTS_DATA)
     def test_to_codepoints(self, create_session, backend, input_val, expected):
@@ -490,11 +509,12 @@ class TestUnicodeTransformations:
             pytest.skip("sqlframe postgres has no hex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.to_codepoints(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"to_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"to_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,expected", FROM_CODEPOINTS_DATA)
     def test_from_codepoints(self, create_session, backend, input_val, expected):
@@ -503,11 +523,12 @@ class TestUnicodeTransformations:
             pytest.skip("sqlframe postgres has no unhex function")
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.from_codepoints(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"from_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"from_codepoints({input_val!r}) = {result!r}, expected {expected!r}"
 
 
 @pytest.mark.unit
@@ -519,41 +540,51 @@ class TestStringManipulationTransformations:
         """Test string reversal."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         result_df = df.withColumn("result", text.reverse_string(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"reverse_string({input_val!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"reverse_string({input_val!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,max_len,expected", TRUNCATE_DATA)
     def test_truncate(self, create_session, input_val, max_len, expected):
         """Test string truncation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.truncate(F.col("input"), max_length=max_len))
+        result_df = df.withColumn(
+            "result", text.truncate(F.col("input"), max_length=max_len)
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"truncate({input_val!r}, {max_len}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"truncate({input_val!r}, {max_len}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,width,char,expected", PAD_LEFT_DATA)
     def test_pad_left(self, create_session, input_val, width, char, expected):
         """Test left padding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.pad_left(F.col("input"), width=width, pad_char=char))
+        result_df = df.withColumn(
+            "result", text.pad_left(F.col("input"), width=width, pad_char=char)
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"pad_left({input_val!r}, {width}, {char!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"pad_left({input_val!r}, {width}, {char!r}) = {result!r}, expected {expected!r}"
 
     @pytest.mark.parametrize("input_val,width,char,expected", PAD_RIGHT_DATA)
     def test_pad_right(self, create_session, input_val, width, char, expected):
         """Test right padding."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
-        result_df = df.withColumn("result", text.pad_right(F.col("input"), width=width, pad_char=char))
+        result_df = df.withColumn(
+            "result", text.pad_right(F.col("input"), width=width, pad_char=char)
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"pad_right({input_val!r}, {width}, {char!r}) = {result!r}, expected {expected!r}"
+        assert (
+            result == expected
+        ), f"pad_right({input_val!r}, {width}, {char!r}) = {result!r}, expected {expected!r}"

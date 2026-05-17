@@ -46,7 +46,9 @@ def special_cases_df(create_session):
 @pytest.fixture
 def international_postal_codes_df(create_session):
     """Create DataFrame with international postal codes."""
-    return create_session.createDataFrame(INTERNATIONAL_POSTAL_CODES, ["input", "expected"])
+    return create_session.createDataFrame(
+        INTERNATIONAL_POSTAL_CODES, ["input", "expected"]
+    )
 
 
 @pytest.fixture
@@ -70,7 +72,9 @@ def null_handling_df(create_session):
 @pytest.fixture
 def performance_test_df(create_session):
     """Create large DataFrame for performance testing."""
-    return create_session.createDataFrame(generate_performance_test_data(10000), ["id", "text"])
+    return create_session.createDataFrame(
+        generate_performance_test_data(10000), ["id", "text"]
+    )
 
 
 @pytest.mark.unit
@@ -435,7 +439,6 @@ class TestZipCodeExtraction:
                 row["extracted"] == row["expected"]
             ), f"Failed for malformed input: expected '{row['expected']}', got '{row['extracted']}'"
 
-
     def test_consistency_across_runs(self, create_session):
         """Test that results are consistent across multiple runs."""
         from datacompose.transformers.text.addresses.pyspark.pyspark_primitives import (
@@ -726,7 +729,9 @@ class TestZipCodeValidation:
             (None, None, None),  # Null
         ]
 
-        df = create_session.createDataFrame(test_data, ["zip", "expected_base", "expected_ext"])
+        df = create_session.createDataFrame(
+            test_data, ["zip", "expected_base", "expected_ext"]
+        )
         result_df = df.withColumn("split", split_zip_code(F.col("zip")))
 
         # Extract base and extension from struct
@@ -852,7 +857,9 @@ class TestZipCodeValidation:
             validate_zip_code,
         )
 
-        df = create_session.createDataFrame([(None,), (None,), (None,)], ["zip"]).withColumn("zip", F.col("zip").cast("string"))
+        df = create_session.createDataFrame(
+            [(None,), (None,), (None,)], ["zip"]
+        ).withColumn("zip", F.col("zip").cast("string"))
 
         # Apply all functions - none should throw errors
         result_df = (

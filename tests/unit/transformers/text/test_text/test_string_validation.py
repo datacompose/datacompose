@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 from datacompose.functions import functions as F
 
-
 # =============================================================================
 # TEST DATA
 # =============================================================================
@@ -240,6 +239,7 @@ HAS_WHITESPACE_ISSUES_DATA = [
 # TESTS
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestHexValidation:
     """Tests for hexadecimal validation functions."""
@@ -254,24 +254,29 @@ class TestHexValidation:
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.is_valid_hex(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"is_valid_hex({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"is_valid_hex({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
 class TestBase64Validation:
     """Tests for base64 validation functions."""
 
-    @pytest.mark.parametrize("input_val,expected", VALID_BASE64_DATA + INVALID_BASE64_DATA)
+    @pytest.mark.parametrize(
+        "input_val,expected", VALID_BASE64_DATA + INVALID_BASE64_DATA
+    )
     def test_is_valid_base64(self, create_session, input_val, expected):
         """Test base64 string validation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.is_valid_base64(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"is_valid_base64({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"is_valid_base64({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -283,24 +288,26 @@ class TestUrlEncodingValidation:
         """Test URL encoding detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_url_encoding(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_url_encoding({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_url_encoding({input_val!r}) = {result}, expected {expected}"
 
     @pytest.mark.parametrize("input_val,expected", IS_VALID_URL_ENCODED_DATA)
     def test_is_valid_url_encoded(self, create_session, input_val, expected):
         """Test URL encoded string validation."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.is_valid_url_encoded(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"is_valid_url_encoded({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"is_valid_url_encoded({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -312,12 +319,13 @@ class TestHtmlEntitiesValidation:
         """Test HTML entity detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_html_entities(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_html_entities({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_html_entities({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -340,7 +348,9 @@ class TestControlCharacterValidation:
             df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_control_characters(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_control_characters({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_control_characters({input_val!r}) = {result}, expected {expected}"
 
     @pytest.mark.parametrize("input_val,expected", HAS_NON_PRINTABLE_DATA)
     def test_has_non_printable(self, create_session, backend, input_val, expected):
@@ -358,19 +368,22 @@ class TestControlCharacterValidation:
             df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_non_printable(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_non_printable({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_non_printable({input_val!r}) = {result}, expected {expected}"
 
     @pytest.mark.parametrize("input_val,expected", HAS_ANSI_CODES_DATA)
     def test_has_ansi_codes(self, create_session, input_val, expected):
         """Test ANSI escape code detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_ansi_codes(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_ansi_codes({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_ansi_codes({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -382,12 +395,15 @@ class TestInvisibleCharacterValidation:
         """Test zero-width character detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
-        result_df = df.withColumn("result", text.has_zero_width_characters(F.col("input")))
+        result_df = df.withColumn(
+            "result", text.has_zero_width_characters(F.col("input"))
+        )
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_zero_width_characters({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_zero_width_characters({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -399,36 +415,39 @@ class TestUnicodeValidation:
         """Test non-ASCII character detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_non_ascii(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_non_ascii({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_non_ascii({input_val!r}) = {result}, expected {expected}"
 
     @pytest.mark.parametrize("input_val,expected", HAS_ACCENTS_DATA)
     def test_has_accents(self, create_session, input_val, expected):
         """Test accent/diacritic detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_accents(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_accents({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_accents({input_val!r}) = {result}, expected {expected}"
 
     @pytest.mark.parametrize("input_val,expected", HAS_UNICODE_ISSUES_DATA)
     def test_has_unicode_issues(self, create_session, input_val, expected):
         """Test unicode normalization issue detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_unicode_issues(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_unicode_issues({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_unicode_issues({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -440,12 +459,13 @@ class TestEscapeSequenceValidation:
         """Test escape sequence detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_escape_sequences(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_escape_sequences({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_escape_sequences({input_val!r}) = {result}, expected {expected}"
 
 
 @pytest.mark.unit
@@ -457,9 +477,10 @@ class TestWhitespaceValidation:
         """Test whitespace issue detection."""
         from datacompose.transformers.text.text.pyspark.pyspark_primitives import text
 
-        
         df = create_session.createDataFrame([(input_val,)], ["input"])
         df = df.withColumn("input", F.col("input").cast("string"))
         result_df = df.withColumn("result", text.has_whitespace_issues(F.col("input")))
         result = result_df.collect()[0]["result"]
-        assert result == expected, f"has_whitespace_issues({input_val!r}) = {result}, expected {expected}"
+        assert (
+            result == expected
+        ), f"has_whitespace_issues({input_val!r}) = {result}, expected {expected}"
