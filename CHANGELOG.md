@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-17
+
 ### Added
 - **Windows/PowerShell Support**: `datacompose init` now works on Windows via `msvcrt` for interactive arrow key navigation
 - **CI/CD Pipeline**: GitHub Actions publish workflow that triggers on `v*` tags on the `main` branch only
