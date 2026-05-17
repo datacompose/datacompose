@@ -4,12 +4,20 @@ Init command for initializing a Datacompose project configuration.
 
 import json
 import os
-import subprocess
 import sys
-import termios
-import tty
+try:
+    import termios as _termios_check
+    _USE_TERMIOS = True
+except ImportError:
+    _USE_TERMIOS = False
+
+try:
+    import msvcrt as _msvcrt_check
+    _USE_MSVCRT = True
+except ImportError:
+    _USE_MSVCRT = False
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import click
 
@@ -31,7 +39,10 @@ DEFAULT_CONFIG = {
 
 @click.command()
 @click.option(
-    "--force", "-f", is_flag=True, help="Overwrite existing datacompose.json if it exists"
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Overwrite existing datacompose.json if it exists",
 )
 @click.option(
     "--output",
@@ -59,7 +70,11 @@ class InitCommand:
     def get_config_template(template_name: str) -> Dict[str, Any]:
         """Get configuration template by name."""
         if template_name == "minimal":
-            return {"version": "1.0", "default_target": "pyspark", "targets": {"pyspark": {"output": "./transformers/pyspark"}}}
+            return {
+                "version": "1.0",
+                "default_target": "pyspark",
+                "targets": {"pyspark": {"output": "./transformers/pyspark"}},
+            }
         elif template_name == "advanced":
             config = DEFAULT_CONFIG.copy()
             config.update(
@@ -70,7 +85,12 @@ class InitCommand:
                         "transformers": "./transformers",
                     },
                     "include": ["src/**/*"],
-                    "exclude": ["__pycache__", "transformers", "*.pyc", ".pytest_cache"],
+                    "exclude": [
+                        "__pycache__",
+                        "transformers",
+                        "*.pyc",
+                        ".pytest_cache",
+                    ],
                     "testing": {"framework": "pytest", "test_dir": "./tests"},
                 }
             )
@@ -81,21 +101,36 @@ class InitCommand:
     @staticmethod
     def get_key():
         """Get a single key press from the user."""
-        try:
-            fd = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
-            tty.setraw(sys.stdin.fileno())
-            key = sys.stdin.read(1)
+        if _USE_TERMIOS:
+            import termios
+            import tty
+            try:
+                fd = sys.stdin.fileno()
+                old_settings = termios.tcgetattr(fd)
+                tty.setraw(sys.stdin.fileno())
+                key = sys.stdin.read(1)
 
-            # Handle arrow keys (escape sequences)
-            if key == "\x1b":
-                key += sys.stdin.read(2)
+                # Handle arrow keys (escape sequences)
+                if key == "\x1b":
+                    key += sys.stdin.read(2)
 
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                return key
+            except Exception:
+                return input()
+
+        if _USE_MSVCRT:
+            import msvcrt
+            key = msvcrt.getch().decode("utf-8", errors="replace")  # type: ignore[attr-defined]
+            # Handle arrow keys (two-byte sequences: \x00 or \xe0 prefix)
+            if key in ("\x00", "\xe0"):
+                second = msvcrt.getch().decode("utf-8", errors="replace")  # type: ignore[attr-defined]
+                # Map Windows arrow key codes to Unix escape sequences
+                arrow_map = {"H": "\x1b[A", "P": "\x1b[B", "M": "\x1b[C", "K": "\x1b[D"}
+                return arrow_map.get(second, second)
             return key
-        except Exception:
-            # Fallback for systems without termios (like Windows)
-            return input()
+
+        return input()
 
     @staticmethod
     def prompt_for_targets(available_targets: Dict[str, Dict]) -> Dict[str, Dict]:
@@ -186,7 +221,10 @@ class InitCommand:
 
         # Select targets with multi-select
         available_targets = {
-            "pyspark": {"output": "./transformers/pyspark", "name": "PySpark (Apache Spark)"},
+            "pyspark": {
+                "output": "./transformers/pyspark",
+                "name": "PySpark (Apache Spark)",
+            },
         }
 
         selected_targets = InitCommand.prompt_for_targets(available_targets)
@@ -201,7 +239,7 @@ class InitCommand:
 
         # Update targets with user selections
         config["targets"] = selected_targets
-        
+
         # Set default target to the first selected target (or only target if single)
         target_keys = list(selected_targets.keys())
         if len(target_keys) == 1:
@@ -209,18 +247,26 @@ class InitCommand:
         elif len(target_keys) > 1:
             # Ask user to select default target
             print(highlight("\nSelect Default Target"))
-            print(dim("Which platform should be used by default when running 'datacompose add'?\n"))
+            print(
+                dim(
+                    "Which platform should be used by default when running 'datacompose add'?\n"
+                )
+            )
             for i, key in enumerate(target_keys, 1):
                 print(f"  {i}. {key}")
             print()
-            
+
             while True:
-                choice = input(f"Select default target (1-{len(target_keys)}): ").strip()
+                choice = input(
+                    f"Select default target (1-{len(target_keys)}): "
+                ).strip()
                 try:
                     choice_idx = int(choice) - 1
                     if 0 <= choice_idx < len(target_keys):
                         config["default_target"] = target_keys[choice_idx]
-                        print(dim(f"Default target set to: {target_keys[choice_idx]}\n"))
+                        print(
+                            dim(f"Default target set to: {target_keys[choice_idx]}\n")
+                        )
                         break
                     else:
                         print(error("Invalid selection. Please try again."))
@@ -298,7 +344,9 @@ class InitCommand:
                 return True
 
             # Create backup
-            backup_file = config_file.with_suffix(config_file.suffix + ".datacompose-backup")
+            backup_file = config_file.with_suffix(
+                config_file.suffix + ".datacompose-backup"
+            )
             try:
                 with open(backup_file, "w") as f:
                     f.write(content)
@@ -338,7 +386,9 @@ class InitCommand:
         try:
             print()  # Add some spacing
             response = (
-                input(highlight("Set up tab completion for datacompose commands? (Y/n): "))
+                input(
+                    highlight("Set up tab completion for datacompose commands? (Y/n): ")
+                )
                 .strip()
                 .lower()
             )
@@ -429,13 +479,9 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
                 print(
                     "2. Source your shell config or restart terminal for tab completion"
                 )
-                print(
-                    "3. Add your first transformer: datacompose add emails"
-                )
+                print("3. Add your first transformer: datacompose add emails")
             else:
-                print(
-                    "2. Add your first transformer: datacompose add emails"
-                )
+                print("2. Add your first transformer: datacompose add emails")
                 if not skip_completion:
                     print(
                         "4. Set up tab completion: echo 'eval \"$(register-python-argcomplete datacompose)\"' >> ~/.bashrc"
@@ -444,22 +490,14 @@ def _run_init(force, output, verbose, yes, skip_completion) -> int:
             print(success("✓ Directory structure created"))
             if completion_setup:
                 print(success("✓ Tab completion configured"))
-                print(
-                    highlight(
-                        "\nRun 'datacompose add emails' to get started"
-                    )
-                )
+                print(highlight("\nRun 'datacompose add emails' to get started"))
                 print(
                     dim(
                         "Restart your terminal or run 'source ~/.bashrc' to enable tab completion"
                     )
                 )
             else:
-                print(
-                    highlight(
-                        "\nRun 'datacompose add emails' to get started"
-                    )
-                )
+                print(highlight("\nRun 'datacompose add emails' to get started"))
                 if not skip_completion and not yes:
                     print(
                         dim(

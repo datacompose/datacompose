@@ -67,6 +67,7 @@ dev = [
     "black>=23.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
+    "bump-my-version>=0.28.0",
 ]
 docs = [
     "mkdocs>=1.5.3",
@@ -97,3 +98,35 @@ dev = [
     "duckdb>=1.3.2",
     "pyspark>=3.5.8",
 ]
+
+[tool.bumpversion]
+current_version = "0.5.0"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+message = "chore: bump version to {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "datacompose/cli/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "datacompose/operators/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "datacompose/cli/main.py"
+search = 'version_option("{current_version}"'
+replace = 'version_option("{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "## [Unreleased]"
+replace = "## [Unreleased]\n\n## [{new_version}] - {now:%Y-%m-%d}"
